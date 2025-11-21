@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+main.py - Wiki Translator MAIN
+Modular tuzilmaning orchestra diriжёra.
+"""
+
+import sys
+import time
+from pathlib import Path
+
+# Ensure Pywikibot does not try to load local user-config.py
+import os
+os.environ.setdefault("PYWIKIBOT_NO_USER_CONFIG", "2")
+
+# Configure pywikibot BEFORE import
+import pywikibot
+pywikibot.config.maxlag = 5
+pywikibot.config.put_throttle = 1
+pywikibot.config.noisysleep = False
+pywikibot.config.max_retries = 3
+pywikibot.config.retry_wait = 10
+
+import config
+from utils.file_handler import FileHandler
+from utils.localization import LocalizationManager
+from utils.logger import logger
+from core.cache_manager import WikiCache
+from core.quality_checker import QualityChecker
+from core.wikidata_fetcher import WikidataFetcher
+from core.translator import WikiTranslator
+from core.processor import WikiTextProcessor
+
+
+def print_banner():
+    """Dastur bannerini chiqarish."""
+    banner = """
+    ╔════════════════════════════════════════╗
+    ║     WIKI TRANSLATOR - O'zbek Tilga     ║
+    ║   Inglizcha Vikipediyadan O'zbekchaga   ║
+    ║            v2.0 - Modular              ║
+    ╚════════════════════════════════════════╝
+    """
+    print(banner)
+
+
+def main(input_file: str, output_file: str):
+    """
+    ASOSIY TARJIMA JARAYONI.
+    
+    Phase 1: PREPARE - Wikitext'ni QID placeholder'lari bilan tayyorlash
+    Phase 2: TRANSLATE - AI orqali tarjima
+    Phase 3: FINALIZE - Placeholder'larni hal qilish
+    Phase 4: LOCALIZE - O'zbekcha stilga moslashtirish
+    
+    Args:
+        input_file: Inglizcha Wikipedia maqolasi
+        output_file: O'zbekcha Vikipeya maqolasi
+    """
+    start_time = time.time()
+    
+    logger.section("🚀 BOSHLASH")
+    
+    # ==================== 0. INITIALIZE ====================
+    
+    logger.info(f"📖 Fayl o'qilmoqda: {input_file}")
+    raw_text = FileHandler.read_file(input_file)
+    
+    if not raw_text:
+        logger.fail(f"Fayl bo'sh yoki topilmadi: {input_file}")
+        return False
+    
+    logger.success(f"Yuklandi ({len(raw_text)} belgi)")
+    
+    # Manager'larni initialize qilish
+    cache = WikiCache()
+    fetcher = WikidataFetcher(cache)
+    processor = WikiTextProcessor(fetcher, cache)
+    translator = WikiTranslator()
+    localization = LocalizationManager()
+    quality_checker = QualityChecker()
+    
+    logger.success(f"Tizimlar initialize qilindi")
+    logger.info(f"  Cache: {cache.get_cache_size()['total']} yozuv")
+    logger.info(f"  Localization: {len(localization.map)} ta almashtirish")
+    
+    # ==================== PHASE 1: PREPARE ====================
+    
+    logger.section("📝 PHASE 1: PREPARE")
+    prep_start = time.time()
+    
+    try:
+        prepared_text, link_map, cat_map, tpl_map, ref_map = processor.prepare(raw_text)
+        prep_time = time.time() - prep_start
+        logger.info(f"  ⏱️  Vaqt: {prep_time:.2f}s")
+    except Exception as e:
+        logger.critical(f"Prepare phase'da xato: {e}")
+        return False
+    
+    # ==================== PHASE 2: TRANSLATE ====================
+    
+    logger.section("🤖 PHASE 2: TRANSLATE")
+    trans_start = time.time()
+    
+    try:
+        translated_text = translator.translate(prepared_text)
+        if not translated_text:
+            logger.fail("Tarjima muvaffaq bo'lmadi")
+            return False
+        trans_time = time.time() - trans_start
+        logger.info(f"  ⏱️  Vaqt: {trans_time:.2f}s")
+    except Exception as e:
+        logger.critical(f"Translate phase'da xato: {e}")
+        return False
+    
+    # ==================== PHASE 3: FINALIZE ====================
+    
+    logger.section("🔧 PHASE 3: FINALIZE")
+    final_start = time.time()
+    
+    try:
+        finalized_text = processor.finalize(translated_text, ref_map)
+        final_time = time.time() - final_start
+        logger.info(f"  ⏱️  Vaqt: {final_time:.2f}s")
+    except Exception as e:
+        logger.critical(f"Finalize phase'da xato: {e}")
+        return False
+    
+    # ==================== PHASE 4: LOCALIZE ====================
+    
+    logger.section("🌐 PHASE 4: LOCALIZE")
+    loc_start = time.time()
+    
+    try:
+        result = localization.apply(finalized_text)
+        loc_time = time.time() - loc_start
+        logger.info(f"  ⏱️  Vaqt: {loc_time:.2f}s")
+    except Exception as e:
+        logger.critical(f"Localize phase'da xato: {e}")
+        return False
+    
+    # ==================== QUALITY CHECK ====================
+    
+    logger.section("✅ QUALITY CHECK")
+    
+    try:
+        issues = quality_checker.check(result)
+        quality_checker.print_report()
+    except Exception as e:
+        logger.warning(f"Quality check'da xato: {e}")
+    
+    # ==================== SAVE ====================
+    
+    logger.section("💾 SAVE")
+    logger.info(f"Yozilmoqda: {output_file}")
+    
+    if FileHandler.write_file(output_file, result):
+        logger.success(f"Saqlab qo'yildi ({len(result)} belgi)")
+    else:
+        logger.fail("Fayl yozishda xato!")
+        return False
+    
+    # ==================== STATISTICS ====================
+    
+    logger.section("📊 STATISTIKA")
+    elapsed = time.time() - start_time
+    
+    logger.stats(
+        "Tarjima Natijalari",
+        input_size=f"{len(raw_text)} belgi",
+        output_size=f"{len(result)} belgi",
+        size_change=f"{len(result) - len(raw_text):+d} ({100*(len(result)-len(raw_text))/len(raw_text):+.1f}%)",
+        links=len(link_map),
+        categories=len(cat_map),
+        templates=len(tpl_map),
+        errors=quality_checker.get_error_count(),
+        warnings=quality_checker.get_warning_count(),
+    )
+    
+    logger.stats(
+        "Vaqt Analizi",
+        prepare=f"{prep_time:.2f}s",
+        translate=f"{trans_time:.2f}s",
+        finalize=f"{final_time:.2f}s",
+        localize=f"{loc_time:.2f}s",
+        total=f"{elapsed:.2f}s",
+    )
+    
+    cache.print_stats()
+    translator.print_stats()
+    localization.print_stats()
+    
+    # ==================== FINAL ====================
+    
+    logger.section("🎉 YAKUNIY")
+    logger.success("Tarjima muvaffaqiyatli tugadi!")
+    logger.info(f"Natija: {output_file}\n")
+    
+    return True
+
+
+def validate_inputs(input_file: str, output_file: str) -> bool:
+    """Kirish parametrlarini tekshirish."""
+    if not Path(input_file).exists():
+        print(f"❌ Fayl topilmadi: {input_file}")
+        return False
+    
+    return True
+
+
+if __name__ == "__main__":
+    print_banner()
+    
+    # Argumentlarni tekshirish
+    if len(sys.argv) != 3:
+        print("Foydalanish: python main.py input_en.txt output_uz.txt")
+        sys.exit(1)
+    
+    input_file, output_file = sys.argv[1], sys.argv[2]
+    
+    # Validate
+    if not validate_inputs(input_file, output_file):
+        sys.exit(1)
+    
+    # Jarayoni boshlash
+    try:
+        success = main(input_file, output_file)
+        sys.exit(0 if success else 1)
+    except KeyboardInterrupt:
+        logger.warning("\n⚠️  Foydalanuvchi tomonidan to'xtatildi")
+        sys.exit(1)
+    except Exception as e:
+        logger.critical(f"Kutilmagan xato: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

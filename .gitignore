@@ -1,0 +1,5 @@
+__pycache__
+translation.log
+.idea/
+.vscode/
+apicache
