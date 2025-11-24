@@ -316,10 +316,10 @@ def fix_year_with_dash(wikitext: str) -> str:
     """
     
     # Pattern 1: YYYY yil → YYYY-yil
-    wikitext = re.sub(r'(\d{4})\s+(yil(?:da|lar[ai]|da)?)', r'\1-\2', wikitext)
+    wikitext = re.sub(r'(\d+)\s+(yil(?:da|lar(?:i|da)?)?)', r'\1-\2', wikitext)
     
-    # Pattern 2: YYYY/YY yillarda → YYYY/YY-yillarda
-    wikitext = re.sub(r'(\d{4}/\d{2})\s+(yil(?:da|lar[ai]|da)?)', r'\1-\2', wikitext)
+    # Pattern 2: {{Circa|910}} yilda → {{Circa|910}}-yilda
+    wikitext = re.sub(r'(\{\{\s*Circa[^}]*\}\})\s+(yil(?:da|lar(?:i|da)?)?)', r'\1-\2', wikitext)
     
     return wikitext
 

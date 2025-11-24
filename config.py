@@ -14,7 +14,7 @@ from pathlib import Path
 # ============================================================
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 # ============================================================
 # Wikipedia Sozlamalari
@@ -90,7 +90,7 @@ LOG_FILE = Path("translation.log")
 # Tarjima Prompt Sozlamalari
 # ============================================================
 
-TRANSLATION_SYSTEM_PROMPT = "Siz o'zbekcha Vikipediya muharririsiz."
+TRANSLATION_SYSTEM_PROMPT = "Siz oʻzbekcha Vikipediya muharririsiz."
 
 TRANSLATION_USER_PROMPT = """
 Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:

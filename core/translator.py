@@ -40,7 +40,7 @@ class WikiTranslator:
             Tarjima qilingan matn yoki None agar xato bo'lsa
         """
         try:
-            logger.info(f"🤖 Tarjima qilinmoqda ({self.model})...")
+            logger.info(f"Tarjima qilinmoqda ({self.model})...")
             
             response = self.client.chat.completions.create(
                 model=self.model,
