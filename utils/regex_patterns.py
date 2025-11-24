@@ -37,7 +37,7 @@ class RegexPatterns:
     REF_SELF_CLOSING = r'<ref[^>]*/\s*>'
     
     # SFN andoza: {{sfn|...}} yoki {{harvnb|...}} (manbalar kabi)
-    SFN_TEMPLATE = r'\{\{(?:sfn|harvnb)\s*\|[^}]*\}\}'
+    SFN_TEMPLATE = r'\{\{sfn\s*\|[^}]*\}\}'
     
     # Siqilgan manba: REF_a1b2c3d4
     REF_PLACEHOLDER = r'REF_[a-f0-9]{8}'
@@ -344,7 +344,7 @@ def compress_references_safe(wikitext: str) -> tuple:
     
     def replace_ref(match):
         ref_content = match.group(0)
-        if len(ref_content) > 200:  # REF_COMPRESS_THRESHOLD
+        if len(ref_content) > 20:  # REF_COMPRESS_THRESHOLD
             ref_id = hashlib.md5(ref_content.encode()).hexdigest()[:8]
             placeholder = f"<ref>REF_{ref_id}</ref>"
             ref_map[ref_id] = ref_content
@@ -363,21 +363,53 @@ def compress_references_safe(wikitext: str) -> tuple:
 
 def fix_punctuation_with_sfn(wikitext: str) -> str:
     """
-    SFN andozalardan oldin qoʻyilgan tinish belgilarini keyinga surish.
-    
-    Namuna:
-    .{{sfn|Qandaydir matn}} → {{sfn|Qandaydir matn}}.
-    ,{{sfn|...}} → {{sfn|...}},
-    
-    Xuddi <ref> kabi.
+    SFN oldidagi tinish belgilarini to'g'ri joyga surish.
     """
-    
-    # Tinish belgisi SFN dan oldin
-    pattern = r'([.,;!?])\s*(\{\{(?:sfn|harvnb)\s*\|[^}]*\}\})'
-    replacement = r'\2\1'
-    
-    return re.sub(pattern, replacement, wikitext)
 
+    # Step 1: SFN oldidagi tinish belgisini SFN oxiriga surish
+    wikitext = re.sub(
+        r'([.,;!?])\s*(\{\{sfn\s*\|[^}]*\}\})',
+        r'\2\1',
+        wikitext, flags=re.IGNORECASE
+    )
+
+    # Step 2: </ref>.{{sfn}} → </ref>{{sfn}}.
+    wikitext = re.sub(
+        r'(</ref>)([.,;!?])(\s*)(\{\{sfn\s*\|[^}]*\}\})',
+        r'\1\3\4\2',
+        wikitext, flags=re.IGNORECASE
+    )
+
+    # Step 3: {{sfn}}.{{sfn}} → {{sfn}}{{sfn}}
+    wikitext = re.sub(
+        r'(\}\})([.,;!?])(\s*)(\{\{sfn)',
+        r'\1\3\4',
+        wikitext, flags=re.IGNORECASE
+    )
+
+    # Step 4: Ketma-ket sfn/ref zanjirlarida ortiqcha tinishlarni tozalash
+    for _ in range(5):
+        wikitext = re.sub(
+            r'(\}\}|</ref>)([.,;!?])(\s*)(\{\{sfn|<ref)',
+            r'\1\3\4',
+            wikitext, flags=re.IGNORECASE
+        )
+
+    # Step 5: Oxirgi sfn yoki </ref> dan keyin kerak bo'lsa nuqta qo'yish
+    wikitext = re.sub(
+        r'(\}\}|</ref>)(\s+)(?![.,;!?<{\[])',
+        r'\1.\2',
+        wikitext, flags=re.IGNORECASE
+    )
+
+    # Step 6: alohida
+    wikitext = re.sub(
+        r'([.,;!?])\s*(\{\{sfn\s*\|[^}]*\}\})',
+        r'\2',
+        wikitext, flags=re.IGNORECASE
+    )
+
+    return wikitext
 
 # ========== COMBINE ALL FIXES ==========
 
@@ -397,7 +429,10 @@ def apply_all_fixes(wikitext: str) -> str:
     # 3. -lik suffix capitalization fix
     wikitext = fix_lik_suffix_capitalization(wikitext)
     
-    # 4. SFN punctuation fix
+    # 4. Punctuation with refs fix (LEKIN SFN'dan oldin)
+    wikitext = fix_punctuation_with_refs(wikitext)
+    
+    # 5. SFN punctuation fix (Ref'dan KEYIN qo'llash kerak)
     wikitext = fix_punctuation_with_sfn(wikitext)
     
     return wikitext
