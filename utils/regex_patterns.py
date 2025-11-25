@@ -397,12 +397,13 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
 
     # Step 5: Oxirgi sfn yoki </ref> dan keyin kerak bo'lsa nuqta qo'yish
     wikitext = re.sub(
-        r'(\}\}|</ref>)(\s+)(?![.,;!?<{\[])',
-        r'\1.\2',
-        wikitext, flags=re.IGNORECASE
+    r'(\{\{sfn\s*\|[^}]*\}\})(\s+)(?![.,;!?<{\[])',
+    r'\1.\2',
+    wikitext,
+    flags=re.IGNORECASE
     )
 
-    # Step 6: alohida
+    # Step 6: sfndan oldingi nuqtani olib tashlash
     wikitext = re.sub(
         r'([.,;!?])\s*(\{\{sfn\s*\|[^}]*\}\})',
         r'\2',
