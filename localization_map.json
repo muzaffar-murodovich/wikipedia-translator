@@ -7,6 +7,8 @@
     "== Biography ==": "== Hayoti ==",  
     "Tashqi havolalar =": "Havolalar =",
     "Tashqi havolalar=": "Havolalar=",
+    "=Tashqi manbalar=": "= Havolalar =",
+    "= Tashqi manbalar =": "=Havolalar=",
     "= Shuningdek qarang =": "= Yana qarang =",
     "=Shuningdek qarang=": "= Yana qarang =",
     "== See also ==": "= Yana qarang =",
@@ -31,6 +33,7 @@
     "Islomiy Oltin Asr": "Islom oltin davri",
     "[[Islom asrining oltin davri]]": "[[Islom oltin davri]]",
     "[[Islomning oltin asri]]": "[[Islom oltin davri]]",
+    "[[Islom oltin davri|Islomning oltin davri]]":"[[Islom oltin davri]]",
     
     "|hadis olimi]]": "|hadis ulamosi]]",
     "[[Islamic scholar|": "[[Ulamo|",
@@ -86,6 +89,9 @@
     "nabira)": "nabirasi)",
 
     "Islomiy fiqh": "fiqh",
+    "laqab": "taxallus",
+    "Fatimiy":"Fotimiy",
+    "Fotimid": "Fotimiy",
 
     "musulmon islom olimlari": "ulamolar",
     "musulmon olim": "ulamo",
