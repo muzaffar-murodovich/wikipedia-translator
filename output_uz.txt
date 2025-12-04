@@ -1,0 +1,47 @@
+{{Qisqa tavsif|Suriya nasroniy tabibi, farmatsevt, shoir, musiqachi va xattot}}
+{{Yozuvchi bilgiqutisi| name = Ibn al-Tilmīdh <br> ابن التلمیذ
+| birth_name = Habbat-allah Ibn Said <br> أبو الحسن هبة الله بن صاعد بن هبة الله بن إبراهيم البغدادى النصرانى
+| birth_date = 1074
+| birth_place = [[Bagʻdod]], [[Bagʻdod xalifaligi|Abbosiy xalifaligi]], hozirgi [[Iroq]]
+| death_date = 11 April 1165 (yoshi 92 da)
+| death_place = [[Bagʻdod]], [[Bagʻdod xalifaligi|Abbosiy xalifaligi]], hozirgi [[Iroq]]
+| occupation = [[Shifokor|tabib]], [[Farmakologiya|farmatsevt]], [[Shoir|shoir]], [[Musiqachi|musiqachi]], [[Kalligrafiya|xattot]], <br> [[Shifokor|tabib]] sifatida [[Al-ʻAdudiy shifoxonasi]]da, [[Bagʻdod]], hozirgi [[Iroq]], <br> xalifa [[Al-Mustadiy|Al-Mustadi]]ning shaxsiy tabibi
+| notableworks = [[Abu Ali ibn Sino|Ibn Sino]]ning [[Tib qonunlari|«Tib qonunlari»]] asariga yozilgan chekka sharh, <br> «Al-Aqrābādhīn al-Kabir», <br> «Maqālah fī al-faṣd»
+}}{{Use dmy dates|date=October 2014}}
+
+'''Amin ad-Davla Abu-l-Hasan Hibatulloh ibn Saʼid ibn al-Tilmīdh''' ({{Lang-ar|هبة الله بن صاعد ابن التلميذ}}; 1074 – 1165-yil 11-aprel) oʻrta asr [[Islom oltin davri|islom sivilizatsiyasi]] davridagi [[Xristian arablar|nasroniy arab]] tabibi, [[farmatsevt]], shoir, musiqachi va [[Kalligrafiya|xattot]] edi<ref>{{Cite journal|last=Meyerhof|first=M.|date=2012-04-24|title=Ibn al-Tilmīd̲h̲|url=https://referenceworks.brillonline.com/entries/encyclopaedia-of-islam-2/ibn-al-tilmidh-SIM_3393?lang=en|journal=Encyclopaedia of Islam, Second Edition|language=en}}</ref><ref>{{Citation |last=Käs |first=Fabian |title=Ibn al-Tilmīdh's Book on Simple Drugs: A Christian Physician from Baghdad on the Arabic, Greek, Syriac, and Persian Nomenclature of Plants and Minerals |date=2023 |url=https://www.cambridge.org/core/books/drugs-in-the-medieval-mediterranean/ibn-altilmidhs-book-on-simple-drugs/AE2990B32C3F44DE02302AFA495CFCAF |work=Drugs in the Medieval Mediterranean: Transmission and Circulation of Pharmacological Knowledge |pages=37–57 |editor-last=Stathakopoulos |editor-first=Dionysios |publisher=Cambridge University Press |doi=10.1017/9781009389792.002 |isbn=978-1-009-38979-2 |editor2-last=Bouras-Vallianatos |editor2-first=Petros|url-access=subscription }}</ref>.
+
+==Hayoti==
+Ibn al-Tilmidh [[Bagʻdod]]dagi [[ʻAḍudiy shifoxonasi]]da ishlagan, u yerda oxir-oqibat bosh tabib, shuningdek xalifa [[Al-Mustadiy|Al-Mustadi]]ning [[court physician|saroy tabibi]] va Bagʻdoddagi tabiblarni litsenziyalash uchun masʼul shaxs boʻlgan<ref name="chipman">{{cite book|last=Chipman|first=Leigh|title=The world of pharmacy and pharmacists in Mamlūk Cairo|year=2010|publisher=Brill|location=Leiden|isbn=978-90-04-17606-5|pages=31–32}}</ref>. U [[Arab tili|arab]], [[Fors tili|fors]], [[Yunon tili|yunon]] va [[Suryoniy tili|suriyon]] tillarini mukammal egallagan. Al-Tilmidh ulamoi [[al-Badiʼ al-Asturlobiy]]ning doʻsti boʻlib, u bilan birga koʻpincha [[Abu-l-Barakot]]ga qarshi fikr bildirgan<ref>{{cite book |last1=Griffel |first1=Frank |title=The Formation of Post-Classical Philosophy in Islam |date=8 June 2021 |publisher=Oxford University Press |isbn=978-0-19-088634-9 |page=122 |url=https://books.google.com/books?id=Kc0vEAAAQBAJ |access-date=12 March 2024 |language=en}}</ref>.
+
+U bir necha tibbiy asarlar tuzgan boʻlib, ulardan eng taʼsirchani «Al-Aqrābādhīn al-Kabir» boʻlib, u farmakopeyadir va islom sivilizatsiyasidagi shifoxonalarda standart farmakologik asarga aylangan hamda undan oldingi [[Sabur ibn Sahl]]ning asarini siqib chiqargan<ref name="chipman" /> Uning sheʼriyati ichida topishmoqlar ham bor edi: [[Abu al-Maʼoliy al-Haziriy]] oʻzining «Kitāb al-iʼjāz fī l-aḥājī wa-l-alghāz» (“Topishmoq va yer osti soʻz oʻyinlari haqida betakror kitob”) asarida ularning beshtasini va al-Tilmidhning yana bir topishmoqqa yozgan sheʼriy yechimini keltiradi<ref name=":0">Nefeli Papoutsakis, ‘Abū l-Maʿālī al-Ḥaẓīrī (d. 568/1172) and his ''Inimitable Book on Quizzes and Riddles''’, ''Wiener Zeitschrift für die Kunde des Morgenlandes'', 109 (2019), 251–69.</ref>.{{Rp|266}}
+
+==Asarlari==
+* ''[[Abu Ali ibn Sino|Ibn Sino]]ning [[Tib qonunlari|«Tib qonunlari»]] asariga chekka sharh''
+* ''Al-Aqrābādhīn al-Kabir''
+* ''Maqālah fī al-faṣd''
+
+== Manbalar ==
+{{Manbalar}}
+
+==Adabiyot==
+* {{Kitob manbasi|last=Kahl|first=Oliver|title=The dispensatory of Ibn at-Tilmīd̲ : Arabic text, English translation, study and glossaries|year=2007|publisher=Brill|isbn=978-90-04-15620-3}}
+
+
+
+{{Tashqi havolalar}}
+
+{{DEFAULTSORT:Ibn al-Tilmidh}}
+[[Turkum:1074-yilda tugʻilganlar]]
+[[Turkum:1165-yilda vafot etganlar]]
+[[Turkum:Oʻrta asr islom olamining farmakologlari]]
+[[Turkum:12-asr tabiblari]]
+[[Turkum:Oʻrta asr ossuriy tabiblari]]
+[[Turkum:Abbosiylar xalifaligidan chiqqan tabiblar]]
+[[Turkum:Abbosiylar xalifaligidan chiqqan musiqachilar]]
+[[Turkum:Iroqlik xattotlar]]
+[[Turkum:12-asr arab tilidagi shoirlar]]
+[[Turkum:XII asr arablari]]
+[[Turkum:XI asr arablari]]
+[[Turkum:Abbosiylar xalifaligidan chiqqan xattotlar]]
+[[Turkum:Suriyon yozuvchilari]]
