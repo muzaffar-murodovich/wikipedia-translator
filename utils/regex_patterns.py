@@ -197,34 +197,73 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
     
     Transformations:
     - text.<ref>...</ref>  →  text<ref>...</ref>.
+    - text.<ref name="x"/>  →  text<ref name="x"/>.
     - </ref>.<ref> → </ref><ref>.
+    - </ref>. → </ref>. (qoldirish)
+    - <ref/> (oxirida) → <ref/>. (nuqta qo'shish)
     """
-    # 1. Tinish belgisini manba oldidan keyin joylashtirish
+    
+    # 1. Tinish belgisini manba oldidan keyin joylashtirish (NORMAL ref)
     wikitext = re.sub(
-        RegexPatterns.PUNCT_BEFORE_REF,
+        r'([.,;!?])\s*(<ref[^/>]*>.*?</ref>)',
         r'\2\1',
         wikitext,
         flags=re.DOTALL
     )
     
-    # 2. Ketma-ket manbalar orasidagi tinish belgisini olib tashlash
+    # 2. Tinish belgisini SELF-CLOSING ref oldidan keyin joylashtirish
     wikitext = re.sub(
-        RegexPatterns.PUNCT_BETWEEN_REFS,
+        r'([.,;!?])\s*(<ref[^>]*/\s*>)',
+        r'\2\1',
+        wikitext
+    )
+    
+    # 3. Ketma-ket manbalar orasidagi tinish belgisini olib tashlash
+    # </ref>.<ref> → </ref><ref>
+    wikitext = re.sub(
+        r'(</ref>)([.,;!?])(\s*)(<ref)',
         r'\1\3\4',
         wikitext,
         flags=re.DOTALL
     )
     
-    # 3. Manba oxirida tinish belgisi qo'shish (agar bo'lmasa)
+    # 4. Self-closing ref'lar orasidagi tinish belgisini olib tashlash
+    # <ref />.<ref /> → <ref /><ref />
     wikitext = re.sub(
-        RegexPatterns.PUNCT_AFTER_REF_END,
+        r'(/\s*>)([.,;!?])(\s*)(<ref)',
+        r'\1\3\4',
+        wikitext
+    )
+    
+    # 5. Normal ref va self-closing ref aralash ketma-ketligi
+    # </ref>.<ref /> → </ref><ref />
+    wikitext = re.sub(
+        r'(</ref>|/\s*>)([.,;!?])(\s*)(<ref)',
+        r'\1\3\4',
+        wikitext
+    )
+    
+    # 6. NORMAL ref oxirida nuqta qo'shish (agar yo'q bo'lsa va kerakli kontekst bo'lsa)
+    # </ref> (probel yoki satir oxiri, lekin ref emas)
+    wikitext = re.sub(
+        r'(</ref>)(\s+)(?![.,;!?<{\[])',
         r'\1.\2',
         wikitext
     )
     
-    # 4. Duplikat tinish belgilarini to'g'rilash
+    # 7. SELF-CLOSING ref oxirida nuqta qo'shish (agar yo'q bo'lsa)
+    # <ref .../> (probel yoki satir oxiri, lekin ref yoki sfn emas)
     wikitext = re.sub(
-        RegexPatterns.DUPLICATE_PUNCT,
+        r'(/\s*>)(\s+)(?![.,;!?<{\[])',
+        r'\1.\2',
+        wikitext
+    )
+    
+    # 8. Duplikat tinish belgilarini to'g'rilash
+    # </ref>.. → </ref>.
+    # <ref />.. → <ref />.
+    wikitext = re.sub(
+        r'(</ref>|/\s*>)([.,;!?])\2+',
         r'\1\2',
         wikitext
     )

@@ -103,7 +103,7 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
 
 2) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
 
-3) Ismlar: Agar biror ism oʻzbekchaga yaqin boʻlsa, uni oʻzbekchaga moslab yozing. Masalan, "Abdullah Maroofi" emas, "Abdulloh Marufiy" deb yozing. Oʻzbek tilida "w" harfi yoʻq. Shuning uchun ismlarda, joy nomlarida "w" ning oʻrniga "v" harfini ishlating.
+3) Ismlar: Agar biror ism oʻzbekchaga yaqin boʻlsa, uni oʻzbekchaga moslab yozing. Masalan, "Abd Allah Maroofi" emas, "Abdulloh Marufiy" deb yozing. Oʻzbek tilida "w" harfi yoʻq. Shuning uchun kishi ismlarida, joy nomlarida "w" ning oʻrniga "v" harfini ishlating.
 
 4) Izoh yozmang. Faqat wikitext chiqaring.
 

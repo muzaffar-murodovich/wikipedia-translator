@@ -4,7 +4,8 @@
 
     "Erta hayoti va taʼlimi": "Yoshligi",
     "Erta hayoti va ta'limi": "Yoshligi",
-    "== Biography ==": "== Hayoti ==",  
+    "== Biography ==": "== Hayoti ==",
+    "== Biografiya ==": "== Hayoti ==",
     "Tashqi havolalar =": "Havolalar =",
     "Tashqi havolalar=": "Havolalar=",
     "=Tashqi manbalar=": "= Havolalar =",
@@ -20,6 +21,7 @@
     "Ashariylar": "Ashʼariylar",
     "[[Ashari]]": "[[Ashʼariylar]]",
     "[[Ashʼariylar|Ash'ariy]]": "[[Ashʼariylar|Ashʼariy]]",
+    "[[Ashʼariylar|Ashariy]]": "[[Ashʼariylar|Ashʼariy]]",
 
     "Fotimidlar": "Fotimiylar",
     "Malikilar": "Molikiylar",
@@ -34,6 +36,8 @@
     "[[Islom asrining oltin davri]]": "[[Islom oltin davri]]",
     "[[Islomning oltin asri]]": "[[Islom oltin davri]]",
     "[[Islom oltin davri|Islomning oltin davri]]":"[[Islom oltin davri]]",
+    "|Islomiy oltin davri]]": "|Islom oltin davri]]",
+    "|Islom oltin asri]]": "]]",
     
     "|hadis olimi]]": "|hadis ulamosi]]",
     "[[Islamic scholar|": "[[Ulamo|",
@@ -92,6 +96,7 @@
     "laqab": "taxallus",
     "Fatimiy":"Fotimiy",
     "Fotimid": "Fotimiy",
+    "|Marrakesh]]": "|Marokash]]",
 
     "musulmon islom olimlari": "ulamolar",
     "musulmon olim": "ulamo",
@@ -122,6 +127,7 @@
     "-asr Islom olimlari": "-asr ulamolari",
     "-asr islom olimlari": "-asr ulamolari",
     "[[Turkum:Aligarh Muslim universiteti bitiruvchilari]]": "[[Turkum:Aligarx musulmonlar universiteti bitiruvchilari]]",
+    ". keyinchalik": ". Keyinchalik",
 
     "```": ""
 }

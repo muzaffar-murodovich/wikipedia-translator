@@ -34,16 +34,16 @@ from core.processor import WikiTextProcessor
 
 
 def print_banner():
-    """Dastur bannerini chiqarish."""
-    banner = """
-    ╔════════════════════════════════════════╗
-    ║     WIKI TRANSLATOR - O'zbek Tilga     ║
-    ║   Inglizcha Vikipediyadan O'zbekchaga   ║
-    ║            v2.0 - Modular              ║
-    ╚════════════════════════════════════════╝
-    """
-    print(banner)
-
+    # """Dastur bannerini chiqarish."""
+    # banner = """
+    # ╔════════════════════════════════════════╗
+    # ║     WIKI TRANSLATOR - O'zbek Tilga     ║
+    # ║   Inglizcha Vikipediyadan O'zbekchaga  ║
+    # ║            v2.0 - Modular              ║
+    # ╚════════════════════════════════════════╝
+    # """
+    # print(banner)
+    pass
 
 def main(input_file: str, output_file: str):
     """
