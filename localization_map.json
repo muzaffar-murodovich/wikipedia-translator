@@ -33,11 +33,13 @@
     "[[Shofi'i]]": "[[Shofiʼiylik]]",
     "Shayx al-Islom": "Shayx ul-islom",
     "Islomiy Oltin Asr": "Islom oltin davri",
+    "[[Islom oltin davri|Islom oltin davri]]": "[[Islom oltin davri]]",
     "[[Islom asrining oltin davri]]": "[[Islom oltin davri]]",
     "[[Islomning oltin asri]]": "[[Islom oltin davri]]",
     "[[Islom oltin davri|Islomning oltin davri]]":"[[Islom oltin davri]]",
     "|Islomiy oltin davri]]": "|Islom oltin davri]]",
     "|Islom oltin asri]]": "]]",
+    "[[Islom oltin davri|Islom uygʻonish davri]]": "[[Islom oltin davri]]",
     
     "|hadis olimi]]": "|hadis ulamosi]]",
     "[[Islamic scholar|": "[[Ulamo|",
@@ -68,7 +70,7 @@
     ", [[Tarjimon]]": ", [[tarjimon]]",
     ", [[Olim]]": ", [[olim]]",
     ", [[Hadis|Hadith]]": ", [[hadis]]",
-
+    ", [[Matematika]]": ", [[matematika]]",
     "= [[Hadis|Hadith]]": "= [[hadis]]",
     "= [[Ulamo|Olim]]": "= [[Ulamo]]",
     "honorific_prefix = Mawlāna": "honorific_prefix = Mavlono",
@@ -97,6 +99,12 @@
     "Fatimiy":"Fotimiy",
     "Fotimid": "Fotimiy",
     "|Marrakesh]]": "|Marokash]]",
+    "qozı": "qozi",
+    ", [[Qozi|Qozı]]":", [[qozi]]",
+    ", [[Alloma]]": ", [[alloma]]",
+    ", [[Faqih|Fuqaho]]": ", [[faqih]]",
+    ", [[Arab tili grammatikasi|Grammatik]]":", [[Arab tili grammatikasi|grammatik]]",
+    ", [[Tilshunoslik|Tilshunos]]": ", [[Tilshunoslik|tilshunos]]",
 
     "musulmon islom olimlari": "ulamolar",
     "musulmon olim": "ulamo",
@@ -108,6 +116,7 @@
     "iy islom olimlari]]": "iy ulamolar]]",
     "islomiy olim": "ulamo",
     "lik]] islom olimi": "lik]] ulamo",
+    "al-Andalus]]lik": "al-andalus]]lik",
 
     "[[Mavlono|Mavlona]]": "[[Mavlono]]",
     ", Mavlana": ", mavlono",
@@ -128,6 +137,10 @@
     "-asr islom olimlari": "-asr ulamolari",
     "[[Turkum:Aligarh Muslim universiteti bitiruvchilari]]": "[[Turkum:Aligarx musulmonlar universiteti bitiruvchilari]]",
     ". keyinchalik": ". Keyinchalik",
+    "abdulmalik": "Abdulmalik",
+    "-yil avval": " yil avval",
 
+    "<references/>.": "<references/>",
+    "taxm. ": "taxminan ",
     "```": ""
 }
