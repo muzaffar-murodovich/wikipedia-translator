@@ -66,13 +66,14 @@
     ", [[Arab tili]]": ", [[arab tili]]",
     ", [[Tarixchi]]": ", [[tarixchi]]",
     ", [[Nasabshunos]]": ", [[nasabshunos]]",
-    ", [[Ulamo|Olim]]": ", [[ulamo]]",
     ", [[Tarjimon]]": ", [[tarjimon]]",
     ", [[Olim]]": ", [[olim]]",
     ", [[Hadis|Hadith]]": ", [[hadis]]",
     ", [[Matematika]]": ", [[matematika]]",
     "= [[Hadis|Hadith]]": "= [[hadis]]",
     "= [[Ulamo|Olim]]": "= [[Ulamo]]",
+    "= [[Ulamo|olim]]": "= [[Ulamo]]",
+    ", [[Ulamo|Olim]]": ", [[ulamo]]",
     "honorific_prefix = Mawlāna": "honorific_prefix = Mavlono",
 
     "|Sunni Islom]": "|Sunniy]",
@@ -142,5 +143,7 @@
 
     "<references/>.": "<references/>",
     "taxm. ": "taxminan ",
+    "vaf. ": "vaf. ",
+    "|Sanʼa]": "]",
     "```": ""
 }
