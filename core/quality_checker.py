@@ -137,30 +137,31 @@ class QualityChecker:
     
     def print_report(self):
         """Tekshiruv natijalari ko'rsatish."""
-        if not self.issues:
-            logger.success("Sifat tekshiruvi: Xatolar topilmadi!")
-            return
+        # if not self.issues:
+        #     logger.success("Sifat tekshiruvi: Xatolar topilmadi!")
+        #     return
         
-        logger.section("SIFAT TEKSHIRUVI NATIJALARI")
+        # logger.section("SIFAT TEKSHIRUVI NATIJALARI")
         
-        errors = [i for i in self.issues if i.severity == "error"]
-        warnings = [i for i in self.issues if i.severity == "warning"]
+        # errors = [i for i in self.issues if i.severity == "error"]
+        # warnings = [i for i in self.issues if i.severity == "warning"]
         
-        if errors:
-            logger.info("🔴 XATOLAR:")
-            for issue in errors:
-                logger.error(f"  {issue}")
+        # if errors:
+        #     logger.info("🔴 XATOLAR:")
+        #     for issue in errors:
+        #         logger.error(f"  {issue}")
         
-        if warnings:
-            logger.info("🟡 OGOHLANTIRISHLAR:")
-            for issue in warnings:
-                logger.warning(f"  {issue}")
+        # if warnings:
+        #     logger.info("🟡 OGOHLANTIRISHLAR:")
+        #     for issue in warnings:
+        #         logger.warning(f"  {issue}")
         
-        # Xulosa
-        logger.info(f"\nJami muammo: {len(self.issues)}")
+        # # Xulosa
+        # logger.info(f"\nJami muammo: {len(self.issues)}")
         
-        if errors:
-            logger.warning("⚠️  Xatolar tuzatilmaguncha maqola to'liq bo'lmaydi!")
+        # if errors:
+        #     logger.warning("⚠️  Xatolar tuzatilmaguncha maqola to'liq bo'lmaydi!")
+        pass
     
     def has_errors(self) -> bool:
         """Xato borligini tekshirish."""

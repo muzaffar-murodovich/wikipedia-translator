@@ -60,7 +60,7 @@ def main(input_file: str, output_file: str):
     """
     start_time = time.time()
     
-    logger.section("🚀 BOSHLASH")
+    # logger.section("🚀 BOSHLASH")
     
     # ==================== 0. INITIALIZE ====================
     
@@ -193,7 +193,7 @@ def main(input_file: str, output_file: str):
     
     # ==================== FINAL ====================
     
-    logger.section("🎉 YAKUNIY")
+    # logger.section("🎉 YAKUNIY")
     logger.success("Tarjima muvaffaqiyatli tugadi!")
     logger.info(f"Natija: {output_file}\n")
     
