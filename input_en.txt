@@ -1,0 +1,24 @@
+{{Short description|9th-century Idrisid prince of Morocca}}
+'''Al-Qasim ibn Idris''' was an [[Idrisid]] prince and ruler in parts of [[Morocco]] during the 9th century.
+
+==Life==
+Al-Qasim was a younger son of the second [[Idrisid]] ruler of [[Morocco]], [[Idris II]] ({{reign|808|828}}).{{sfn|Eustache|1971|pp=1035, 1036}}{{sfn|Benchekroun|2018}} Upon the death of Idris II, al-Qasim's oldest brother [[Muhammad ibn Idris|Muhammad]] succeeded to the throne, but divided much of the country among his younger brothers. Thus al-Qasim received rule over [[Tangier]] and [[Basra, Morocco|Basra]] in the north.{{sfn|Eustache|1971|p=1035}}
+
+When another brother, Isa, rose in revolt, al-Qasim refused to support Muhammad, and was attacked and deprived of his domains by another brother, [[Umar ibn Idris|Umar]].{{sfn|Eustache|1971|p=1035}} Al-Qasim outlived his brother and the latter's sons, and in the reign of his great-nephew, [[Yahya ibn Yahya|Yahya II]] ({{reign|863|866}}), his family received governance of the western half of the Idrisid capital, [[Fes]], along with the eastern frontier provinces of the [[Berbers|Berber]] tribes of [[Luwata]] and [[Kutama]].{{sfn|Eustache|1971|p=1035}}
+
+Towards the end of the 9th century, the family of al-Qasim remained in control of northern Morocco (Tangier, Basra, [[Ceuta]]), and his son, [[Yahya ibn al-Qasim|Yahya III]], ruled over Fes for a while after evicting the [[Kharijite]] rebel [[Abd al-Razzaq]] from the city.{{sfn|Benchekroun|2018}} The last Idrisid rulers all descended from al-Qasim via his son Muhammad.{{sfn|Benchekroun|2018}}{{sfn|Eustache|1971|p=1036}}
+
+==References==
+{{reflist|30em}}
+
+==Sources==
+* {{EI3|last=Benchekroun|first=Chafik T.|title=Idrīsids|year=2018|doi=10.1163/1573-3912_ei3_COM_32374}}
+* {{EI2 | last = Eustache | first = D. | title = Idrīsids | volume = 3 | pages = 1035–1037 | doi =10.1163/1573-3912_islam_SIM_3495}}
+
+{{DEFAULTSORT:Qasim ibn Idris}}
+[[Category:Idrisid dynasty]]
+[[Category:Royalty from Fez, Morocco]]
+[[Category:9th-century monarchs in Africa]]
+[[Category:9th-century Moroccan people]]
+[[Category:Year of birth unknown]]
+[[Category:9th-century Arab people]]
