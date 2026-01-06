@@ -6,6 +6,7 @@
     "Erta hayoti va ta'limi": "Yoshligi",
     "== Biography ==": "== Hayoti ==",
     "== Biografiya ==": "== Hayoti ==",
+    "==Biografiya==": "== Hayoti ==",
     "Tashqi havolalar =": "Havolalar =",
     "Tashqi havolalar=": "Havolalar=",
     "=Tashqi manbalar=": "= Havolalar =",
@@ -142,8 +143,11 @@
     "abdulmalik": "Abdulmalik",
     "-yil avval": " yil avval",
     "malik": "Malik",
+    "molik": "Molik",
 
     "<references/>.": "<references/>",
+    "<references />.":"<references />",
+    
     "taxm. ": "taxminan ",
     "vaf. ": "vaf. ",
     "|Sanʼa]": "]",
