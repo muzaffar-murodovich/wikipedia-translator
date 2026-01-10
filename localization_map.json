@@ -142,14 +142,15 @@
     ". keyinchalik": ". Keyinchalik",
     "abdulmalik": "Abdulmalik",
     "-yil avval": " yil avval",
-    "malik": "Malik",
-    "molik": "Molik",
+    " malik": " Malik",
+    " molik": " Molik",
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
     
     "taxm. ": "taxminan ",
-    "vaf. ": "vaf. ",
+    "vaf. ": "vafoti ",
+    "ref>. – ": "ref> — ",
     "|Sanʼa]": "]",
     "|Sanoʼa]]": "]]",
     "|Siston]": "]",
