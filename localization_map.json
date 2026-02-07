@@ -101,6 +101,7 @@
     "laqab": "taxallus",
     "Fatimiy":"Fotimiy",
     "Fotimid": "Fotimiy",
+    "Laxmidlar": "Laxmiylar",
     "|Marrakesh]]": "|Marokash]]",
     "qozı": "qozi",
     ", [[Qozi|Qozı]]":", [[qozi]]",
@@ -141,7 +142,8 @@
     "-yil avval": " yil avval",
     " malik": " Malik",
     " molik": " Molik",
-
+    "-malik": "-malik",
+    
     "<references/>.": "<references/>",
     "<references />.":"<references />",
 
