@@ -43,6 +43,6 @@ def check_category_translations(category_name, target_lang="uz"):
     print(f"Not found: {not_found}")
 
 
-category = "Category:8th-century people from the Umayyad Caliphate"
+category = "Category:14th-century Iranian people"
 if __name__ == "__main__":
     check_category_translations(category, target_lang="uz")

@@ -30,8 +30,15 @@
     "Hanbalilar": "Hanbaliylar",
     "|Naqshbandi]]": "|Naqshbandiy]]",
     "|Maturidiy]]": "|Moturidiy]]",
+    "Baduspanidlar": "Baduspaniylar",
 
     "Shayx al-Islom": "Shayx ul-islom",
+    "Shams ad-Din": "Shamsiddin",
+    "Qutb ad-Din": "Qutbiddin",
+    "Faxr ad-Din": "Faxriddin",
+    "Kamol ad-Din": "Kamoliddin",
+    "Sharaf ad-Din": "Sharofiddin",
+
     "[[Islom|Islam]]": "[[Islom]]",
     "Islomiy Oltin Asr": "Islom oltin davri",
     "[[Islom oltin davri|Islom oltin davri]]": "[[Islom oltin davri]]",
@@ -155,6 +162,7 @@
     "|Sanoʼa]]": "]]",
     "|Siston]": "]",
     "[[Seyiston|Sijiston]]": "[[Seyiston]]",
+    "Siston": "Seyiston",
     "[Fos|Fes]": "[Fos]",
     "[[Fos|Fas]]": "[[Fos]]",
     "```": ""
