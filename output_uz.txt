@@ -1,0 +1,36 @@
+{{Davlat arbobi bilgiqutisi| name                 = Nosir ad-Din Shahriyor
+| office1              = [[Rustamdar]]ning ''[[ustandari]]''
+| term_start1          = 1317
+| term_end1            = 1325
+| predecessor1         = [[Shams al-Muluk Muhammad]]
+| successor1           = [[Toj ad-Davla Ziyar|Taj al-Dawla Ziyar]]
+
+| death_date           = 
+
+| relatives            = [[Shams al-Muluk Muhammad]] (aka)<br/>[[Shah-Kayxusrav]] (qayni)
+| module               =
+{{qirollik bilgiqutisi| embed                = yes
+| dynasty              = [[Baduspanid]]
+}}}}
+'''Nosir ad-Din Shahriyor''' 1317-yildan 1325-yilgacha [[Rustamdar]]ning [[Baduspanid]] hukmdori (''[[ustandar]]'') bo‘lgan. U [[Shams al-Muluk Muhammad]]ning ukasi va vorisi edi{{Sfn|Madelung|1988|pp=385–391}}.
+
+Uning hukmronligi davrida Shahriyor [[Moʻgʻullar davlati|mo‘g‘ullar]]ning [[Hulokuiylar davlati|Ilxoniylar]] davlati bilan barcha aloqalarni uzdi va mo‘g‘ul qo‘mondoni Mu’min hamda uning o‘g‘li [[Kutlushah]], shuningdek [[Sari]]ning qudratli Kiya Jaloliy oilasiga qarshi qaynisi — [[Bavandid]] hukmdori [[Shah-Kayxusrav]]ni ({{hukmronlik|1310|1328}}) qo‘llab-quvvatladi. Shahriyor 1325-yilda jiyani Iskandar tomonidan, taxtni egallagan akasi [[Toj ad-Davla Ziyar|Taj al-Dawla Ziyar]]ning ig‘vosi bilan o‘ldirildi{{Sfn|Madelung|1988|pp=385–391}}.
+
+== Manbalar ==
+{{Manbalar}}
+
+== Manbalar ==
+* {{Ensiklopediya manbasi| title = Baduspaniylar | last = Madelung | first = Wilferd | author-link = Wilferd Madelung | url = https://iranicaonline.org/articles/baduspanids | encyclopedia  = Encyclopædia Iranica, onlayn nashr, III jild, 4-faskikul | pages = 385–391 | publisher = Encyclopædia Iranica Foundation | location = Nyu-York | year = 1988 }}
+
+{{Start box}}
+{{S-bef| before=[[Shams al-Muluk Muhammad]]}}
+{{S-ttl| title=''[[Ustandar]]'' of the [[Baduspaniylar]]| years=1317–1325}}
+{{S-aft| after=[[Toj ad-Davla Ziyar|Taj al-Dawla Ziyar]]}}
+{{S-end}}
+
+
+[[Turkum:14-asr Eron kishilari]]
+[[Turkum:Yaqin Sharqdagi 14-asr monarxlari]]
+[[Turkum:Baduspaniylar]]
+[[Turkum:1325-yilda vafot etganlar]]
+[[Turkum:Tugʻilgan yili nomaʼlum boʻlgan kishilar]]

@@ -1,0 +1,45 @@
+{{Infobox officeholder
+| name                 = Nasir al-Din Shahriyar
+| native_name          =
+| image                =
+| alt                  =
+| caption              =
+| office1              = ''[[Ustandar]]'' of [[Ruyan (district)|Rustamdar]]
+| term_start1          = 1317
+| term_end1            = 1325
+| predecessor1         = [[Shams al-Muluk Muhammad]]
+| successor1           = [[Taj al-Dawla Ziyar]]
+| birth_date           = 
+| birth_place          =
+| death_date           = {{death year|1325}}
+| death_place          = 
+| parents              =
+| children             =
+| relatives            = [[Shams al-Muluk Muhammad]] (brother)<br/>[[Shah-Kaykhusraw]] (brother-in-law)
+| module               =
+{{Infobox royalty
+| embed                = yes
+| dynasty              = [[Baduspanid]]
+}}}}
+'''Nasir al-Din Shahriyar''' was the [[Baduspanid]] ruler (''[[ustandar]]'') of [[Ruyan (district)|Rustamdar]] from 1317 to 1325. He was the brother and successor of [[Shams al-Muluk Muhammad]].{{sfn|Madelung|1988|pp=385–391}}
+
+During his reign, Shahriyar cut all contact with the [[Mongol Empire|Mongol]] [[Ilkhanate]], and supported his brother-in-law, the [[Bavand dynasty|Bavandid]] ruler [[Shah-Kaykhusraw]] ({{reign|1310|1328}}) against the Mongol commander Mu'min and his son [[Kutlushah]], and the powerful Kiya Jalali family of [[Sari, Iran|Sari]]. Shahriyar was murdered in 1325 by his nephew Iskandar at the instigation of brother [[Taj al-Dawla Ziyar]], who took the throne.{{sfn|Madelung|1988|pp=385–391}}
+
+== References ==
+{{reflist}}
+
+== Sources ==
+* {{cite encyclopedia | title = Baduspanids | last = Madelung | first = Wilferd | author-link = Wilferd Madelung | url = https://iranicaonline.org/articles/baduspanids | encyclopedia  = Encyclopædia Iranica, online edition, Vol. III, Fasc. 4 | pages = 385–391 | publisher = Encyclopædia Iranica Foundation | location = New York | year = 1988 }}
+
+{{s-start}}
+{{S-bef | before=[[Shams al-Muluk Muhammad]]}}
+{{S-ttl | title=''[[Ustandar]]'' of the [[Baduspanids]]| years=1317–1325}}
+{{S-aft | after=[[Taj al-Dawla Ziyar]]}}
+{{s-end}}
+{{Baduspanids}}
+
+[[Category:14th-century Iranian people]]
+[[Category:14th-century monarchs in the Middle East]]
+[[Category:Baduspanids]]
+[[Category:1325 deaths]]
+[[Category:Year of birth unknown]]
