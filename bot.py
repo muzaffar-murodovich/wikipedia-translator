@@ -39,6 +39,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 active_tasks: dict[int, asyncio.Task] = {}
+conversation_histories: dict[int, list[dict]] = {}
 
 
 # ── Agent system prompt ───────────────────────────────────────────────────────
@@ -92,14 +93,23 @@ Foydalanuvchi botning o'zini o'zgartirish yoki yangi xususiyat qo'shishni so'ras
 
 # ── Agent ishga tushirish ─────────────────────────────────────────────────────
 
-async def run_agent(user_message: str, on_turn=None) -> tuple[str, list[Path]]:
+async def run_agent(user_message: str, history: list[dict] | None = None, on_turn=None) -> tuple[str, list[Path]]:
     """Agent'ni ishga tushirish va SEND_FILE yo'llarini javobdan ajratib olish."""
     start_time = time.time()
     text_parts: list[str] = []
     turn_count = 0
 
+    if history:
+        lines = []
+        for m in history[-20:]:
+            role = "Foydalanuvchi" if m["role"] == "user" else "Siz"
+            lines.append(f"{role}: {m['content']}")
+        prompt = "Oldingi suhbat:\n" + "\n".join(lines) + "\n\nJoriy xabar: " + user_message
+    else:
+        prompt = user_message
+
     async for message in query(
-        prompt=user_message,
+        prompt=prompt,
         options=ClaudeAgentOptions(
             system_prompt=AGENT_SYSTEM_PROMPT,
             cwd=str(PROJECT_DIR),
@@ -152,8 +162,17 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "- config.py faylini ko'rsat\n"
         "- Botga yangi /help buyrug'i qo'sh\n\n"
         "Maksimum vaqt: 5 daqiqa\n"
+        "Yangi suhbat: /upd\n"
         "Bekor qilish: /cancel"
     )
+
+
+async def cmd_upd(update: Update, _context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if not is_allowed(user_id):
+        return
+    conversation_histories.pop(user_id, None)
+    await update.message.reply_text("Yangi suhbat boshlandi.")
 
 
 async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -214,10 +233,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async def agent_task():
         ticker = asyncio.create_task(progress_ticker())
         try:
+            history = conversation_histories.get(user_id, [])
             response_text, output_files = await asyncio.wait_for(
-                run_agent(user_text, on_turn=on_turn),
+                run_agent(user_text, history=history, on_turn=on_turn),
                 timeout=AGENT_TIMEOUT_SEC,
             )
+
+            # Tarixni yangilash
+            hist = conversation_histories.setdefault(user_id, [])
+            hist.append({"role": "user", "content": user_text})
+            hist.append({"role": "assistant", "content": response_text})
 
             # Matnli javob
             if len(response_text) > 4000:
@@ -265,6 +290,7 @@ def main():
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CommandHandler("upd", cmd_upd))
     app.add_handler(CommandHandler("cancel", cmd_cancel))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.run_polling(drop_pending_updates=True)
