@@ -13,7 +13,8 @@ from pathlib import Path
 # OpenAI Sozlamalari
 # ============================================================
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = "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"
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 # ============================================================
@@ -128,4 +129,38 @@ ERROR_MESSAGES = {
 # ============================================================
 
 VERBOSE = True  # Batafsil xabarlar chiqarish
-DEBUG = False   # Debug rejimi
+DEBUG = False   # Debug rejimi# config.py ga QO'SHISH KERAK BO'LGAN YANGI SOZLAMALAR
+# Mavjud config.py faylingizning pastiga qo'shing
+
+# ============================================================
+# AI Provider Sozlamalari
+# ============================================================
+
+import os
+
+# "claude" yoki "openai" — qaysi API ishlatilishini belgilaydi
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai")
+
+# Claude sozlamalari
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+
+# ============================================================
+# Telegram Sozlamalari
+# ============================================================
+
+TELEGRAM_TOKEN = "5800257941:AAHvixqllrdWAuavbQNpwgalzQrI9wkF5vs"
+
+# Faqat shu Telegram user ID'lardan buyruq qabul qilinadi
+# Bo'sh qoldiring = hamma foydalanishi mumkin
+# Topish: @userinfobot ga /start yuboring
+ALLOWED_USER_IDS = [694727943]  # [123456789, 987654321]
+
+# ============================================================
+# Wikipedia Sozlamalari (bot uchun)
+# ============================================================
+
+# Vaqtinchalik fayl papkasi (bot uchun)
+from pathlib import Path
+TEMP_DIR = Path("temp_wiki")
+TEMP_DIR.mkdir(exist_ok=True)

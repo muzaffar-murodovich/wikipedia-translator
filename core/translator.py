@@ -2,14 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-core/translator.py - OpenAI orqali tarjima
-Placeholder'larni saqlab, matnni AI'ga yuborish.
+core/translator.py - Claude va OpenAI orqali tarjima
+AI_PROVIDER = "claude" yoki "openai" deb config'da sozlang.
 """
 
 from typing import Optional
-
-from openai import OpenAI
-
 import config
 from utils.logger import logger
 
@@ -17,70 +14,88 @@ from utils.logger import logger
 class WikiTranslator:
     """
     Wikipedia maqolalarini o'zbek tiliga tarjima qilish.
+    Claude yoki OpenAI — config.AI_PROVIDER ga qarab tanlanadi.
     """
-    
+
     def __init__(self):
-        """Initialize."""
-        self.client = OpenAI(api_key=config.OPENAI_API_KEY)
-        self.model = config.OPENAI_MODEL
-        self.stats = {
-            "translations": 0,
-            "tokens_used": 0,
-            "cost": 0.0
-        }
-    
+        self.provider = getattr(config, "AI_PROVIDER", "openai").lower()
+        self.stats = {"translations": 0, "tokens_used": 0}
+
+        if self.provider == "claude":
+            import anthropic
+            self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+            self.model = getattr(config, "CLAUDE_MODEL", "claude-sonnet-4-6")
+            logger.info(f"🤖 Provider: Claude ({self.model})")
+        else:
+            from openai import OpenAI
+            self.client = OpenAI(api_key=config.OPENAI_API_KEY)
+            self.model = getattr(config, "OPENAI_MODEL", "gpt-4o")
+            logger.info(f"🤖 Provider: OpenAI ({self.model})")
+
     def translate(self, prepared_text: str) -> Optional[str]:
         """
         Matnni o'zbek tiliga tarjima qilish.
-        
+
         Args:
             prepared_text: Tayyorlangan matn (placeholder'lar bilan)
-        
+
         Returns:
-            Tarjima qilingan matn yoki None agar xato bo'lsa
+            Tarjima qilingan matn yoki None
         """
+        user_prompt = config.TRANSLATION_USER_PROMPT.format(text=prepared_text)
+
         try:
-            logger.info(f"Tarjima qilinmoqda ({self.model})...")
-            
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": config.TRANSLATION_SYSTEM_PROMPT
-                    },
-                    {
-                        "role": "user",
-                        "content": self._format_user_prompt(prepared_text)
-                    }
-                ],
-            )
-            
-            translated_text = response.choices[0].message.content
-            
-            # Statistika yangilash
-            self.stats["translations"] += 1
-            if hasattr(response, 'usage'):
-                self.stats["tokens_used"] += response.usage.total_tokens
-            
-            logger.success(f"Tarjima tugadi ({len(translated_text)} belgi)")
-            return translated_text
-        
+            if self.provider == "openai":
+                return self._translate_openai(user_prompt)
+            else:
+                return self._translate_claude(user_prompt)
         except Exception as e:
-            logger.fail(f"Tarjima xatosi: {e}")
+            logger.fail(f"Tarjima xatosi ({self.provider}): {e}")
             return None
-    
-    def _format_user_prompt(self, text: str) -> str:
-        """
-        Foydalanuvchi prompt'ni formatlash.
-        Config'dan olingan prompt'ni matnni qo'shish.
-        """
-        return config.TRANSLATION_USER_PROMPT.format(text=text)
-    
+
+    def _translate_claude(self, user_prompt: str) -> Optional[str]:
+        """Claude API orqali tarjima."""
+        logger.info(f"Tarjima qilinmoqda (Claude: {self.model})...")
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=8096,
+            system=config.TRANSLATION_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        translated = response.content[0].text
+        self.stats["translations"] += 1
+        self.stats["tokens_used"] += (
+            response.usage.input_tokens + response.usage.output_tokens
+        )
+        logger.success(f"Tarjima tugadi ({len(translated)} belgi)")
+        return translated
+
+    def _translate_openai(self, user_prompt: str) -> Optional[str]:
+        """OpenAI API orqali tarjima."""
+        logger.info(f"Tarjima qilinmoqda (OpenAI: {self.model})...")
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": config.TRANSLATION_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+
+        translated = response.choices[0].message.content
+        self.stats["translations"] += 1
+        if hasattr(response, "usage"):
+            self.stats["tokens_used"] += response.usage.total_tokens
+        logger.success(f"Tarjima tugadi ({len(translated)} belgi)")
+        return translated
+
     def print_stats(self):
-        """Statistika chiqarish."""
         logger.stats(
             "Tarjima Statistikasi",
+            provider=self.provider,
+            model=self.model,
             translations=self.stats["translations"],
             tokens_used=self.stats["tokens_used"],
         )

@@ -8,8 +8,9 @@ pywikibot = "*"
 openai = "*"
 aiohttp = "*"
 telegram = "*"
-python-telegram-bot = "*"
 anthropic = "*"
+python-telegram-bot = "*"
+claude-agent-sdk = "*"
 
 [dev-packages]
 
