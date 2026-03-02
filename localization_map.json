@@ -18,6 +18,8 @@
     "==References==": "== Manbalar ==",
     "==Sources==": "==Manbalar==",
     "== Sources ==": "==Manbalar==",
+    "==Bibliography==": "==Adabiyotlar==",
+    "== Bibliography ==": "==Adabiyotlar==",
 
     "[[muhaddis|hadis olimi]]": "[[muhaddis]]",
     "Ashariylar": "Ashʼariylar",
@@ -132,7 +134,10 @@
     "islomiy olim": "ulamo",
     "lik]] islom olimi": "lik]] ulamo",
     "al-Andalus]]lik": "al-andalus]]lik",
+    "dan bo‘lganlar": "lik kishilar",
+
     "Ilxoniy": "Hulokuiy",
+    "Nur al-Din": "Nuriddin",
 
     "[[Mavlono|Mavlona]]": "[[Mavlono]]",
     ", Mavlana": ", mavlono",
@@ -154,7 +159,7 @@
     "-yil avval": " yil avval",
     " molik": " Molik",
     "-malik": "-malik",
-    
+
     "<references/>.": "<references/>",
     "<references />.":"<references />",
 
