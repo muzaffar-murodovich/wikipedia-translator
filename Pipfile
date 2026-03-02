@@ -9,6 +9,7 @@ openai = "*"
 aiohttp = "*"
 telegram = "*"
 python-telegram-bot = "*"
+anthropic = "*"
 
 [dev-packages]
 

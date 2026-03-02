@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a397603a603d5c6d4853808f2b4715e96b38d478056d3f3bd04f4e283d39bd99"
+            "sha256": "57147ac843cd8c0f4ec1cb92d1c0c9b281a82543f4efe4dd4d375f631c163789"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -167,6 +167,15 @@
             "markers": "python_version >= '3.8'",
             "version": "==0.7.0"
         },
+        "anthropic": {
+            "hashes": [
+                "sha256:72f5f90e5aebe62dca316cb013629cfa24996b0f5a4593b8c3d712bc03c43c37",
+                "sha256:861c4c50f91ca45f942e091d83b60530ad6d4f98733bfe648065364da05d29e7"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.9'",
+            "version": "==0.84.0"
+        },
         "anyio": {
             "hashes": [
                 "sha256:41cfcc3a4c85d3f05c932da7c26d0201ac36f72abd4435ba90d0464a3ffed703",
@@ -185,11 +194,11 @@
         },
         "certifi": {
             "hashes": [
-                "sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c",
-                "sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120"
+                "sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa",
+                "sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2026.1.4"
+            "version": "==2026.2.25"
         },
         "charset-normalizer": {
             "hashes": [
@@ -317,6 +326,14 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==1.9.0"
+        },
+        "docstring-parser": {
+            "hashes": [
+                "sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912",
+                "sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==0.17.0"
         },
         "frozenlist": {
             "hashes": [
