@@ -1,0 +1,50 @@
+{{Not to be confused with|Safi al-Din al-Urmawi}}
+{{Infobox religious biography
+| era                = 
+| image              = 
+| caption            = 
+| name               = Sirāj al-Dīn Mahmūd ibn Abī Bakr Urmavī
+| birth_date         = 1198 C.E (594 AH)
+| birth_place        = [[Urmia]], [[West Azerbaijan]], [[Iran]]
+| death_date         = 1283 C.E (682 AH)
+| religion           = [[Islam]]
+| denomination       = [[Sunni Islam|Sunni]]
+| Maddhab            = [[Shafi'i]]
+| Creed              = 
+| main_interests     = [[Ilm ar-Rijal]]
+| influences         = 
+| influenced         = [[Fakhr al-Din al-Razi]]<ref>{{Cite book|last1=Krawietz, Tamer|first1=Birgit, Georges|title=Islamic Theology, Philosophy and Law: Debating Ibn Taymiyya and Ibn Qayyim al-Jawziyya|last2=Holtzman|first2=Livnatz|publisher=Walter De Gruyter|year=2013|isbn=978-3-11-028534-5|location=Berlin, Germany|page=72|chapter=Debating the Doctrine of jabr (Compulsion): Ibn Qayyim al-Jawziyya Reads Fakhr al-Dīn al-Rāzī}}</ref>
+| notable_ideas      = 
+| death_place        = [[Konya]], [[Anatolia]]<br />(modern-day [[Turkey]])
+| creed              = [[Ash'ari]]<ref>{{Cite book|last1=Krawietz, Tamer|first1=Birgit, Georges|title=Islamic Theology, Philosophy and Law: Debating Ibn Taymiyya and Ibn Qayyim al-Jawziyya|last2=Holtzman|first2=Livnatz|publisher=Walter De Gruyter|year=2013|isbn=978-3-11-028534-5|location=Berlin, Germany|page=72|chapter=Debating the Doctrine of jabr (Compulsion): Ibn Qayyim al-Jawziyya Reads Fakhr al-Dīn al-Rāzī}}</ref>
+}}
+'''Sirāj al-Dīn Mahmūd ibn Abī Bakr Urmavī''' (also spelled '''Urmawī'''; 1198–1283) was a [[Shafiʽi school|Shafiʽi]] jurist, logician and philosopher from [[Urmia]] in [[Azerbaijan (Iran)|Azerbaijan]], a region in north-western [[Iran]].{{sfn|Marlow|2010|pages=279-280}} He spent most of his scholarly life in [[Ayyubid dynasty|Ayyubid]]-ruled [[Cairo]], and from 1257 in [[Sultanate of Rum|Seljuk]]-ruled [[Konya]]. The [[Iranian diaspora]] he was part of, proficient in Persian and Arabic, contributed majorly to the [[Islamization]] and [[Persianization]] of [[Anatolia]].{{sfn|Marlow|2010|pages=279-280, 305}} Most of his extant works were written in Arabic but there is also one known work in Persian.{{sfn|Marlow|2010|pages=282-283}} He was an acquaintance of [[Rumi]].<ref name=":0">{{Cite journal|last=Çağrıcı|first=Mustafa|date=2009|title=SİRÂCEDDİN el-URMEVÎ|url=https://cdn2.islamansiklopedisi.org.tr/dosya/37/C37012242.pdf|journal=DV Islam Ansiklopedisi|language=tr|volume=37|pages=262–264}}</ref>
+
+== References ==
+{{Reflist}}
+
+== Sources ==
+* {{cite book |last1=Darling |first1=Linda T. |title=A History of Social Justice and Political Power in the Middle East: The Circle of Justice From Mesopotamia to Globalization |date=2013 |publisher=Routledge}}
+* {{cite journal |last1=Marlow |first1=Louise |title=A Thirteenth-Century Scholar in the Eastern Mediterranean: Sirāj al-Dīn Urmavī, Jurist, Logician, Diplomat |journal=Al-Masāq: Journal of the Medieval Mediterranean |date=2010 |volume=22 |issue=3 |pages=279–313 |doi=10.1080/09503110.2010.522386}}
+
+{{Portal bar|Biography|Islam}}
+{{Shafi'i scholars}}
+{{Ash'ari}}
+
+{{Authority control}}
+
+[[Category:1198 births]]
+[[Category:1283 deaths]]
+[[Category:People from Urmia]]
+[[Category:13th-century Iranian philosophers]]
+[[Category:Arabic-language Iranian writers]]
+[[Category:Iranian jurists]]
+[[Category:Iranian logicians]]
+[[Category:13th-century Persian-language writers]]
+[[Category:Sunni Muslim scholars of Islam]]
+[[Category:Shafi'is]]
+[[Category:Asharis]]
+[[Category:13th-century Muslim theologians]]
+[[Category:Scholars from the Sultanate of Rum]]
+[[Category:Scholars from the Ayyubid Sultanate]]
+[[Category:Qadis]]

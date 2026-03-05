@@ -20,11 +20,13 @@
     "== Sources ==": "==Manbalar==",
     "==Bibliography==": "==Adabiyotlar==",
     "== Bibliography ==": "==Adabiyotlar==",
+    "=== Bibliografiya ===": "==Adabiyotlar==",
 
     "[[muhaddis|hadis olimi]]": "[[muhaddis]]",
     "Ashariylar": "Ashʼariylar",
     "[[Ashʼariylar|Ash'ariy]]": "[[Ashʼariylar|Ashʼariy]]",
     "[[Ashʼariylar|Ashariy]]": "[[Ashʼariylar|Ashʼariy]]",
+    "[[Shofiʼiylik|Shofi'iy]]": "[[Shofiʼiylik|Shofiʼiy]]",
 
     "Fotimidlar": "Fotimiylar",
     "Malikilar": "Molikiylar",
@@ -33,6 +35,7 @@
     "|Naqshbandi]]": "|Naqshbandiy]]",
     "|Maturidiy]]": "|Moturidiy]]",
     "Baduspanidlar": "Baduspaniylar",
+    "Ilxoniy": "Hulokuiy",
 
     "Shayx al-Islom": "Shayx ul-islom",
     "Shams ad-Din": "Shamsiddin",
@@ -42,6 +45,9 @@
     "Sharaf ad-Din": "Sharofiddin",
     "Rukn ad-Din": "Rukniddin",
     "Jalol ad-Din": "Jaloladdin",
+    "Nur al-Din": "Nuriddin",
+    "Siroj ad-Din": "Sirojiddin",
+    "ul-Din": "ud-Din",
 
     "[[Islom|Islam]]": "[[Islom]]",
     "Islomiy Oltin Asr": "Islom oltin davri",
@@ -136,8 +142,7 @@
     "al-Andalus]]lik": "al-andalus]]lik",
     "dan bo‘lganlar": "lik kishilar",
 
-    "Ilxoniy": "Hulokuiy",
-    "Nur al-Din": "Nuriddin",
+    "Tugʻluq": "Tugʻloq",
 
     "[[Mavlono|Mavlona]]": "[[Mavlono]]",
     ", Mavlana": ", mavlono",
@@ -158,7 +163,7 @@
     "abdulmalik": "Abdulmalik",
     "-yil avval": " yil avval",
     " molik": " Molik",
-    "-malik": "-malik",
+    "-malik": "malik",
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
