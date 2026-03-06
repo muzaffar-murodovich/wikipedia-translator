@@ -11,7 +11,9 @@ import logging
 import time
 from pathlib import Path
 
+from dotenv import load_dotenv
 from telegram import Update
+from telegram.error import NetworkError, TimedOut
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -21,16 +23,28 @@ from telegram.ext import (
 )
 
 from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage, TextBlock
+from config import AGENT_SYSTEM_PROMPT, PROJECT_DIR
+from database import init_db, save_message, get_history, clear_history
 
 # ── Sozlamalar ────────────────────────────────────────────────────────────────
 
-TELEGRAM_TOKEN = "5800257941:AAHvixqllrdWAuavbQNpwgalzQrI9wkF5vs" #revoked
-PROJECT_DIR = Path(__file__).parent.resolve()
+# .env faylidan muhit o'zgaruvchilarini yuklash
+load_dotenv(Path(__file__).parent / ".env")
 
 # Faqat shu foydalanuvchiga javob beradi
-ALLOWED_USER_IDS: list[int] = [694727943]
+TELEGRAM_TOKEN: str = os.environ["TELEGRAM_TOKEN"]
+ALLOWED_USER_IDS: list[int] = [
+    int(uid.strip())
+    for uid in os.environ["ALLOWED_USER_IDS"].split(",")
+    if uid.strip()
+]
 
-AGENT_TIMEOUT_SEC = 5 * 60
+
+AGENT_TIMEOUT_SEC = 10 * 60
+
+# Bot to'xtatish uchun sentinel fayl (restart buyrug'i yaratadi)
+from config import PROJECT_DIR as _PROJECT_DIR
+STOP_FILE = _PROJECT_DIR / "stop.flag"
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -38,86 +52,15 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-active_tasks: dict[int, asyncio.Task] = {}
-conversation_histories: dict[int, list[dict]] = {}
+active_tasks: dict[tuple[int, int], asyncio.Task] = {}
 
-
-# ── Agent system prompt ───────────────────────────────────────────────────────
-
-AGENT_SYSTEM_PROMPT = f"""
-You are an intelligent agent working on the Wikipedia translation project.
-
-Project directory: {PROJECT_DIR}
-Bot file: {PROJECT_DIR}/bot.py
-
-## About the Project
-This project focuses on translating English Wikipedia articles into Uzbek.
-
-Main translation command (EXACTLY AS FOLLOWS):
-  cd {PROJECT_DIR} && python main.py {PROJECT_DIR}/temp_wiki/input_en.txt {PROJECT_DIR}/temp_wiki/ARTICLE_NAME.txt
-  (ARTICLE_NAME = English name of the article, e.g.: Avicenna.txt)
-
-## Downloading Wikipedia Articles — IMPORTANT RULE
-When asked to translate an article, ALWAYS download it in raw wikitext format. NEVER download plain text.
-
-Steps:
-1. Extract the article name from the URL
-   Example: https://en.wikipedia.org/wiki/Avicenna -> "Avicenna"
-
-2. Download raw wikitext (EXACTLY THIS command):
-   curl -s "https://en.wikipedia.org/w/index.php?title=ARTICLE_NAME&action=raw" > {PROJECT_DIR}/temp_wiki/input_en.txt
-
-3. If only the preamble (introduction) is needed — drop the part between the first "==" heading and == References ==:
-
-4. Then run the translation command:
-   cd {PROJECT_DIR} && python main.py {PROJECT_DIR}/temp_wiki/input_en.txt {PROJECT_DIR}/temp_wiki/ARTICLE_NAME.txt
-
-Note: Raw wikitext preserves [[links]], {{templates}}, <ref>references</ref>, and other codes. These codes are correctly processed by main.py.
-
-## File and Folder Permissions
-- You have full access to ALL files and folders within the project directory.
-- You can read, write, and modify any file.
-- Input file: {PROJECT_DIR}/temp_wiki/input_en.txt
-- Translation output file: {PROJECT_DIR}/temp_wiki/ARTICLE_NAME.txt
-- Always use Python to write files (not echo or shell redirection).
-
-## Sending Files — SEND_FILE Format
-When you need to send a file to the user, write it in this format in your response:
-SEND_FILE:{PROJECT_DIR}/path/to/file.txt
-
-If there are multiple files, write each on a separate line:
-SEND_FILE:{PROJECT_DIR}/core/quality_checker.py
-SEND_FILE:{PROJECT_DIR}/temp_wiki/Avicenna.txt
-
-Through this format, the bot will send the file to Telegram.
-
-## Modifying Its Own Code
-If the user asks to modify the bot itself or add a new feature:
-1. Read {PROJECT_DIR}/bot.py
-2. Create a backup: cp {PROJECT_DIR}/bot.py {PROJECT_DIR}/bot.backup.py
-3. Implement the changes
-4. Check syntax: python -m py_compile {PROJECT_DIR}/bot.py
-5. If there are no errors — consider it saved
-6. Restart: pkill -f bot.py && nohup python {PROJECT_DIR}/bot.py >> {PROJECT_DIR}/bot.log 2>&1 &
-7. Notify the user: "O'zgartirish kiritildi va bot qayta ishga tushirildi" (Changes applied and bot restarted)
-
-## Important Rules
-- NEVER use relative paths — only full paths ({PROJECT_DIR}/...)
-- If an error occurs — stop IMMEDIATELY and report it, do not retry
-- On Telegram:
-  1. Write results in UZBEK LANGUAGE
-  2. Write in plain text — do not use Markdown formatting (**, __, ``` etc.)
-  3. After completing one task, do not take on a new task automatically
-"""
 
 
 # ── Agent ishga tushirish ─────────────────────────────────────────────────────
 
-async def run_agent(user_message: str, history: list[dict] | None = None, on_turn=None) -> tuple[str, list[Path]]:
+async def run_agent(user_message: str, history: list[dict] | None = None) -> tuple[str, list[Path]]:
     """Agent'ni ishga tushirish va SEND_FILE yo'llarini javobdan ajratib olish."""
-    start_time = time.time()
     text_parts: list[str] = []
-    turn_count = 0
 
     if history:
         lines = []
@@ -139,9 +82,6 @@ async def run_agent(user_message: str, history: list[dict] | None = None, on_tur
         ),
     ):
         if isinstance(message, AssistantMessage):
-            turn_count += 1
-            if on_turn:
-                await on_turn(turn_count)
             for block in message.content:
                 if isinstance(block, TextBlock) and block.text.strip():
                     text_parts.append(block.text.strip())
@@ -171,38 +111,60 @@ def is_allowed(user_id: int) -> bool:
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update.effective_user.id):
+    user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
+    if not is_allowed(user_id):
         return
-    await update.message.reply_text(
-        "Wiki Agent Bot\n\n"
-        "Vazifangizni oddiy til bilan yozing.\n\n"
-        "Misollar:\n"
-        "- Avicenna maqolasini tarjima qil\n"
-        "- core/quality_checker.py faylini yuborgin\n"
-        "- config.py faylini ko'rsat\n"
-        "- Botga yangi /help buyrug'i qo'sh\n\n"
-        "Maksimum vaqt: 5 daqiqa\n"
-        "Yangi suhbat: /upd\n"
-        "Bekor qilish: /cancel"
-    )
+
+    task_key = (user_id, chat_id)
+    if task_key in active_tasks and not active_tasks[task_key].done():
+        await update.message.reply_text("Avvalgi vazifa hali tugalamagan. Bekor qilish: /cancel")
+        return
+
+    msg = await update.message.reply_text("...")
+
+    async def agent_task():
+        try:
+            history = get_history(user_id, bot_id=1, limit=20)
+            response_text, output_files = await asyncio.wait_for(
+                run_agent("Salom! Foydalanuvchi /start buyrug'ini bosdi. Qisqacha o'zingni tanishtir va nima qila olishingni ayt.", history=history),
+                timeout=AGENT_TIMEOUT_SEC,
+            )
+            await msg.edit_text(response_text)
+        except Exception as e:
+            await msg.edit_text(
+                "Salom! Men Wikipedia tarjima botiman.\n\n"
+                "Quyidagilarni so'rashingiz mumkin:\n"
+                "- Avicenna maqolasini tarjima qil\n"
+                "- Fayl yuborgin\n"
+                "- Kod o'zgartir\n\n"
+                "Yangi suhbat: /upd\n"
+                "Bekor qilish: /cancel"
+            )
+        finally:
+            active_tasks.pop(task_key, None)
+
+    task = asyncio.create_task(agent_task())
+    active_tasks[task_key] = task
 
 
 async def cmd_upd(update: Update, _context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if not is_allowed(user_id):
         return
-    conversation_histories.pop(user_id, None)
     await update.message.reply_text("Yangi suhbat boshlandi.")
 
 
 async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not is_allowed(user_id):
         return
-    task = active_tasks.get(user_id)
+    task_key = (user_id, chat_id)
+    task = active_tasks.get(task_key)
     if task and not task.done():
         task.cancel()
-        active_tasks.pop(user_id, None)
+        active_tasks.pop(task_key, None)
         await update.message.reply_text("Agent to'xtatildi.")
     else:
         await update.message.reply_text("Hozirda faol agent yo'q.")
@@ -210,6 +172,7 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not is_allowed(user_id):
         return
 
@@ -217,52 +180,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user_text:
         return
 
-    if user_id in active_tasks and not active_tasks[user_id].done():
+    task_key = (user_id, chat_id)
+    if task_key in active_tasks and not active_tasks[task_key].done():
         await update.message.reply_text("Avvalgi vazifa hali tugalamagan. Bekor qilish: /cancel")
         return
 
-    msg = await update.message.reply_text("Agent vazifani tahlil qilmoqda...")
+    msg = await update.message.reply_text("...")
     log.info(f"So'rov [{user_id}]: {user_text[:100]}")
 
-    elapsed = 0
-
-    async def on_turn(turn_num: int):
-        nonlocal elapsed
-        try:
-            await msg.edit_text(
-                f"Agent ishlayapti... (qadam {turn_num}/10)\n"
-                f"Ketgan vaqt: {elapsed//60}:{elapsed%60:02d}\n"
-                f"Bekor qilish: /cancel"
-            )
-        except Exception:
-            pass
-
-    async def progress_ticker():
-        nonlocal elapsed
-        while True:
-            await asyncio.sleep(60)
-            elapsed += 60
-            try:
-                await msg.edit_text(
-                    f"Agent ishlayapti... ({elapsed//60} daqiqa)\n"
-                    f"Bekor qilish: /cancel"
-                )
-            except Exception:
-                pass
-
     async def agent_task():
-        ticker = asyncio.create_task(progress_ticker())
         try:
-            history = conversation_histories.get(user_id, [])
+            # SQLite dan tarix yuklash (bot qayta ishga tushsa ham saqlanadi)
+            history = get_history(user_id, bot_id=1, limit=20)
             response_text, output_files = await asyncio.wait_for(
-                run_agent(user_text, history=history, on_turn=on_turn),
+                run_agent(user_text, history=history),
                 timeout=AGENT_TIMEOUT_SEC,
             )
 
-            # Tarixni yangilash
-            hist = conversation_histories.setdefault(user_id, [])
-            hist.append({"role": "user", "content": user_text})
-            hist.append({"role": "assistant", "content": response_text})
+            # Xabarlarni SQLite ga saqlash
+            save_message(user_id, "user", user_text, bot_id=1)
+            save_message(user_id, "assistant", response_text, bot_id=1)
 
             # Matnli javob
             if len(response_text) > 4000:
@@ -295,25 +232,103 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             log.error(f"Agent xatosi [{user_id}]: {e}", exc_info=True)
             await msg.edit_text(f"Xato: {str(e)[:300]}")
         finally:
-            ticker.cancel()
-            active_tasks.pop(user_id, None)
+            active_tasks.pop(task_key, None)
 
     task = asyncio.create_task(agent_task())
-    active_tasks[user_id] = task
+    active_tasks[task_key] = task
+
+
+# ── Global xato ushlagich ─────────────────────────────────────────────────────
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """NetworkError va TimedOut xatolarini jimgina qayd etadi, botni to'xtatmaydi."""
+    if isinstance(context.error, (NetworkError, TimedOut)):
+        log.warning(f"Tarmoq xatosi (davom etiladi): {context.error}")
+        return
+    log.error(f"Kutilmagan xato: {context.error}", exc_info=context.error)
 
 
 # ── Asosiy funksiya ───────────────────────────────────────────────────────────
 
-def main():
-    (PROJECT_DIR / "temp_wiki").mkdir(exist_ok=True)
-    log.info(f"Bot ishga tushmoqda | Papka: {PROJECT_DIR} | Ruxsat: {ALLOWED_USER_IDS}")
-
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
+def build_app():
+    """Yangi Application obyekti yaratish (retry tsiklida qayta ishlatish uchun)."""
+    app = (
+        Application.builder()
+        .token(TELEGRAM_TOKEN)
+        .connect_timeout(30)
+        .read_timeout(30)
+        .write_timeout(30)
+        .pool_timeout(30)
+        .build()
+    )
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("upd", cmd_upd))
     app.add_handler(CommandHandler("cancel", cmd_cancel))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling(drop_pending_updates=True)
+    app.add_error_handler(error_handler)
+    return app
+
+
+def main():
+    (PROJECT_DIR / "temp_wiki").mkdir(exist_ok=True)
+
+    my_pid = os.getpid()
+
+    # Ishga tushishda eski stop.flag ni o'chirish (avvalgi restart qoldig'i)
+    if STOP_FILE.exists():
+        try:
+            old_content = STOP_FILE.read_text().strip()
+            STOP_FILE.unlink()
+            log.warning(f"Ishga tushishda eski stop.flag o'chirildi (mazmun: '{old_content}')")
+        except Exception:
+            pass
+
+    # SQLite jadvallarini yaratish
+    init_db()
+
+    # Joriy PID ni faylga saqlash (restart uchun kerak)
+    pid_file = PROJECT_DIR / "bot.pid"
+    pid_file.write_text(str(my_pid))
+
+    log.info(f"Bot ishga tushmoqda | Papka: {PROJECT_DIR} | Ruxsat: {ALLOWED_USER_IDS} | PID: {my_pid}")
+
+    retry_delay = 5
+    while True:
+        try:
+            # Har urinishda yangi event loop yaratish (eski yopilgan loop muammosini hal qilish)
+            # run_polling() ichki event loopni yopadi, keyingi urinishda yopilgan loop ishlatilmasin
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            # Har urinishda yangi Application yaratiladi (eski holat muammosini oldini olish)
+            app = build_app()
+            app.run_polling(drop_pending_updates=True)
+
+            # run_polling normalda qaytdi — bu SIGTERM/SIGINT yoki Application.stop() demak.
+            # Har qanday holatda to'xtatiladi. Faqat XATOLAR qayta uriniladi.
+            log.info("run_polling to'xtadi (SIGTERM/SIGINT) — bot yakunlandi.")
+            break
+
+        except (KeyboardInterrupt, SystemExit):
+            log.info("Bot to'xtatildi (KeyboardInterrupt/SystemExit).")
+            break
+        except RuntimeError as e:
+            # "Event loop is closed" — run_polling SIGTERM sababi bilan to'xtadi
+            # Bu xato retry ga emas, chiqishga ishora qiladi
+            if "event loop" in str(e).lower():
+                log.info(f"Event loop yopildi (to'xtash signali qabul qilindi) — bot yakunlandi: {e}")
+                break
+            log.warning(f"RuntimeError, {retry_delay}s keyin qayta uriniladi: {e}")
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 30)
+        except (NetworkError, TimedOut) as e:
+            log.warning(f"Tarmoq xatosi, {retry_delay}s keyin qayta uriniladi: {e}")
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 30)
+        except Exception as e:
+            log.warning(f"Xato ({type(e).__name__}), {retry_delay}s keyin qayta uriniladi: {e}")
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 30)
 
 
 if __name__ == "__main__":

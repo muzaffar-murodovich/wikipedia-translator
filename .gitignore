@@ -1,6 +1,47 @@
-__pycache__
-translation.log
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
 .idea/
 .vscode/
-apicache
+
+# Environment & secrets
+.env
+config.env
+
+# Logs
+*.log
+output.log
+
+# PID files
+*.pid
+
+# Database
+*.db
+
+# Backup files
+*.backup.py
+
+# API cache
+apicache/
+
+# Temp wiki files
+temp_wiki/
+
+# Translation outputs
+input_en.txt
+output_uz.txt
 *.txt
+
+# Runtime control files
+stop.flag
+throttle.ctrl
+
+# Project summary (auto-generated)
+PROJECT_SUMMARY.txt
+localization_map.json
+
+# Pipfile lock (optional — uncomment if needed)
+# Pipfile.lock

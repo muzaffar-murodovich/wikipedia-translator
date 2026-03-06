@@ -47,6 +47,8 @@
     "Jalol ad-Din": "Jaloladdin",
     "Nur al-Din": "Nuriddin",
     "Siroj ad-Din": "Sirojiddin",
+    "Zahir ad-Din": "Zahiriddin",
+    "G‘iyos ad-Din": "G‘iyosiddin",
     "ul-Din": "ud-Din",
 
     "[[Islom|Islam]]": "[[Islom]]",
@@ -103,6 +105,7 @@
     "[[Moturidiylik|Maturidi]]": "[[Moturidiylik|Moturidiy]]",
     "|Maturidi]]": "|Moturidiy]]",
     "[[Dorul Ulum Deoband|Darul Uloom Deoband]]": "[[Dorul Ulum Deoband]]",
+    "[[Onadoʻli|Anadolu]]": "[[Onadoʻli]]",
 
     "(buyuk bobosi)": "(katta bobosi)",
     "(buyuk-buyuk bobosi)": "(bobosining bobosi)",
@@ -157,6 +160,10 @@
     "[[Turkum:Sunni imomlar]]": "[[Turkum:Sunniy imomlar]]",
     "[[Turkum:O'rta asr arab grammatikalar]]": "[[Turkum:Oʻrta asr arab grammatiklari]]",
     "[[Category:": "[[Turkum:",
+    "asr fors tilidagi yozuvchilar": "asr fors tili yozuvchilari",
+    "tilida ijod qilgan yozuvchilar": "tili yozuvchilari",
+    "tilida yozgan yozuvchilar": "tili yozuvchilari",
+    "tilida yozgan mualliflar": "tili yozuvchilari",
     "-asr Islom olimlari": "-asr ulamolari",
     "-asr islom olimlari": "-asr ulamolari",
     ". keyinchalik": ". Keyinchalik",
