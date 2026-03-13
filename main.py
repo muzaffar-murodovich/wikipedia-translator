@@ -6,6 +6,7 @@ main.py - Wiki Translator MAIN
 Modular tuzilmaning orchestra diriжёra.
 """
 
+import re
 import sys
 import time
 from pathlib import Path
@@ -151,15 +152,28 @@ def main(input_file: str, output_file: str):
         logger.warning(f"Quality check'da xato: {e}")
     
     # ==================== SAVE ====================
-    
+
     logger.section("💾 SAVE")
     logger.info(f"Yozilmoqda: {output_file}")
-    
+
     if FileHandler.write_file(output_file, result):
         logger.success(f"Saqlab qo'yildi ({len(result)} belgi)")
     else:
         logger.fail("Fayl yozishda xato!")
         return False
+
+    # temp_wiki papkasiga maqola nomi bilan saqlash
+    article_match = re.search(r"'''(.+?)'''", raw_text)
+    if article_match:
+        article_name = article_match.group(1).strip()
+        safe_name = re.sub(r'[\\/*?:"<>|]', '_', article_name)
+        temp_dir = Path("temp_wiki")
+        temp_dir.mkdir(exist_ok=True)
+        temp_path = temp_dir / f"{safe_name}.txt"
+        if FileHandler.write_file(str(temp_path), result):
+            logger.success(f"temp_wiki ga saqlandi: {temp_path}")
+        else:
+            logger.warning(f"temp_wiki ga yozishda xato: {temp_path}")
     
     # ==================== STATISTICS ====================
     
