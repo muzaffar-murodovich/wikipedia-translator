@@ -8,14 +8,16 @@ Barcha sozlamalar shu yerda. Bosh fayllarni tahrirlash shart emas!
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ============================================================
 # OpenAI Sozlamalari
 # ============================================================
 
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_KEY = "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"
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.1")
 
 # ============================================================
 # Wikipedia Sozlamalari
@@ -29,8 +31,8 @@ TARGET_LANG = "uz"  # O'zbek tiliga
 # Parallel Processing Sozlamalari
 # ============================================================
 
-MAX_WORKERS = 3                    # Parallel thread'lar soni
-REQUEST_DELAY = 0.5                # So'rovlar orasida 0.5 soniya
+MAX_WORKERS = 1                    # Parallel thread'lar soni
+REQUEST_DELAY = 10                 # So'rovlar orasida 10 soniya
 
 # ============================================================
 # Pywikibot Konfiguratsiyasi
@@ -38,10 +40,10 @@ REQUEST_DELAY = 0.5                # So'rovlar orasida 0.5 soniya
 
 PYWIKIBOT_CONFIG = {
     "maxlag": 5,                   # Server lag 5s dan oshsa kutish
-    "put_throttle": 1,             # Edits orasida 1s kutish
+    "put_throttle": 10,            # Edits orasida 10s kutish
     "noisysleep": False,           # "Sleeping..." xabarlarini yashirish
     "max_retries": 3,              # 3 marta urinish
-    "retry_wait": 10,              # Xato bo'lsa 10s kutish
+    "retry_wait": 30,              # Xato bo'lsa 30s kutish
 }
 
 # ============================================================
@@ -131,20 +133,3 @@ ERROR_MESSAGES = {
 VERBOSE = True  # Batafsil xabarlar chiqarish
 DEBUG = False   # Debug rejimi# config.py ga QO'SHISH KERAK BO'LGAN YANGI SOZLAMALAR
 # Mavjud config.py faylingizning pastiga qo'shing
-
-# ============================================================
-# AI Provider Sozlamalari
-# ============================================================
-
-import os
-
-# "claude" yoki "openai" — qaysi API ishlatilishini belgilaydi
-AI_PROVIDER = os.getenv("AI_PROVIDER", "openai")
-
-# Claude sozlamalari
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
-
-# ============================================================
-# Telegram Sozlamalari
-# ============================================================
