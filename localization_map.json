@@ -49,6 +49,7 @@
     "Siroj ad-Din": "Sirojiddin",
     "Zahir ad-Din": "Zahiriddin",
     "G‘iyos ad-Din": "G‘iyosiddin",
+    "Sadr ad-Din": "Sadriddin",
     "ul-Din": "ud-Din",
 
     "[[Islom|Islam]]": "[[Islom]]",
@@ -164,6 +165,8 @@
     "tilida ijod qilgan yozuvchilar": "tili yozuvchilari",
     "tilida yozgan yozuvchilar": "tili yozuvchilari",
     "tilida yozgan mualliflar": "tili yozuvchilari",
+    "tilida ijod qilgan shoirlar": "tili shoirlari",
+    "tilidagi shoirlar": "tili shoirlari",
     "-asr Islom olimlari": "-asr ulamolari",
     "-asr islom olimlari": "-asr ulamolari",
     ". keyinchalik": ". Keyinchalik",
@@ -171,6 +174,7 @@
     "-yil avval": " yil avval",
     " molik": " Molik",
     "-malik": "malik",
+    "eronlik": "eroniy",
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
