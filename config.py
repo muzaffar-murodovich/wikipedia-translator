@@ -29,8 +29,8 @@ TARGET_LANG = "uz"  # O'zbek tiliga
 # Parallel Processing Sozlamalari
 # ============================================================
 
-MAX_WORKERS = 3                    # Parallel thread'lar soni
-REQUEST_DELAY = 0.5                # So'rovlar orasida 0.5 soniya
+MAX_WORKERS = 1                    # Parallel thread'lar soni
+REQUEST_DELAY = 5                # So'rovlar orasida 0.5 soniya
 
 # ============================================================
 # Pywikibot Konfiguratsiyasi
