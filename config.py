@@ -13,8 +13,7 @@ from pathlib import Path
 # OpenAI Sozlamalari
 # ============================================================
 
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 # ============================================================
