@@ -7,13 +7,15 @@
     "== Biography ==": "== Hayoti ==",
     "== Biografiya ==": "== Hayoti ==",
     "==Biografiya==": "== Hayoti ==",
+    "== Tarjimai hol ==": "== Hayoti ==",
     "Tashqi havolalar =": "Havolalar =",
     "Tashqi havolalar=": "Havolalar=",
     "=Tashqi manbalar=": "= Havolalar =",
     "= Tashqi manbalar =": "=Havolalar=",
     "= Shuningdek qarang =": "= Yana qarang =",
     "=Shuningdek qarang=": "= Yana qarang =",
-    "== See also ==": "= Yana qarang =",
+    "== See also ==": "== Yana qarang ==",
+    "==See also==": "== Yana qarang ==",
     "== References ==": "== Manbalar ==",
     "==References==": "== Manbalar ==",
     "==Sources==": "==Manbalar==",
@@ -21,6 +23,8 @@
     "==Bibliography==": "==Adabiyotlar==",
     "== Bibliography ==": "==Adabiyotlar==",
     "=== Bibliografiya ===": "==Adabiyotlar==",
+    "== Further reading ==": "== Qo‘shimcha o‘qish uchun ==",
+    "== Qoʻshimcha oʻqish ==": "== Qoʻshimcha oʻqish uchun ==",
 
     "[[muhaddis|hadis olimi]]": "[[muhaddis]]",
     "Ashariylar": "Ashʼariylar",
@@ -37,6 +41,10 @@
     "Baduspanidlar": "Baduspaniylar",
     "Ilxoniy": "Hulokuiy",
 
+    "Abd al-Aziz": "Abdulaziz",
+    "Abd ar-Rahmon": "Abdurahmon",
+    "Abd-Alloh": "Abdulloh",
+
     "Shayx al-Islom": "Shayx ul-islom",
     "Shams ad-Din": "Shamsiddin",
     "Qutb ad-Din": "Qutbiddin",
@@ -51,6 +59,7 @@
     "G‘iyos ad-Din": "G‘iyosiddin",
     "Sadr ad-Din": "Sadriddin",
     "Zahir-ad-Din": "Zahiriddin",
+    "Shihob ad-Din": "Shahobiddin",
     "ul-Din": "ud-Din",
 
     "[[Islom|Islam]]": "[[Islom]]",
@@ -124,8 +133,11 @@
     "Fatimiy":"Fotimiy",
     "Fotimid": "Fotimiy",
     "Laxmidlar": "Laxmiylar",
+    "Shirvanshohlar": "Shirvonshohlar",
+    "Eldiguzidlar": "Eldiguziylar",
+
     "[[Amir Temur|Temur]]": "[[Amir Temur]]",
-    "|Marrakesh]]": "|Marokash]]",
+    "Marrakesh": "Marokash",
     "qozı": "qozi",
     ", [[Qozi|Qozı]]":", [[qozi]]",
     ", [[Alloma]]": ", [[alloma]]",
@@ -177,9 +189,12 @@
     " molik": " Molik",
     "-malik": "malik",
     "eronlik": "eroniy",
+    "Marrakeshlik": "Marokashlik",
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
+
+    "/ref>. (": "/ref> (",
 
     "taxm. ": "taxminan ",
     "vaf. ": "vafoti ",

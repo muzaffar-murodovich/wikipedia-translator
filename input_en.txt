@@ -1,0 +1,15 @@
+{{Short description|Syrian-born Yemeni adīb and astronomer}}
+'''Amīn al-Dīn Abu ʾl-Ghanāʾim Muslim ibn Maḥmūd al-Shayzarī'''<ref>{{harvnb|Sellheim|1997}} give his full name as Amīn al-Dīn Abu ʾl-Ghan̄aʾim Muslim ibn Abi ʾl-Thanāʾ Maḥmūd ibn Sanad al-Dawla Jamāl al-Mulk Abi ʾl-Faḍāʾil Niʿma ibn Sanad al-Dawla Abi ʾl-ʿAṭāʾ Arslān (Raslān) ibn Yaḥyā. {{harvnb|Brockelmann|2017|loc=vol. 1, p. 262}}, gives his ''[[laqab]]'' as Amīn al-Dawla.</ref> ({{floruit}} 1201–1225) was a Syrian-born Yemeni ''[[adīb]]'' and astronomer.
+
+Al-Shayzarī was born in [[Damascus]] into prominent family of ''[[mamālīk]]'' in the service of [[Usāma ibn Munqidh]], lord of [[Shayzar]] in Syria. His father was still living in 1169. Al-Shayzarī later moved to the court of [[Al-Muizz Ismail|al-Muʿizz Ismāʿīl ibn Ṭughtigīn]] ({{reign|1197|1201}}), [[Ayyubid]] governor of Yemen.{{sfn|Sellheim|1997}} He dedicated to him an anthology of ''[[Adab (Islam)|adab]]'' in twenty-five chapters, ''ʿAjāʾib al-ashʿār wa-gharāʾib al-akhbār'', of which a single medieval manuscript is preserved, dated 1291 and now in [[Peshawar]].<ref>{{harvnb|Sellheim|1997}}; {{harvnb|King|1983|p=22}}; {{harvnb|Brockelmann|2017|loc=suppl. vol. 1, p. 467}}.</ref> In 1225, he composed another anthology in sixteen books, ''Jamharat al-Islām dhāt al-nathr wa ʾl-niẓām'', for the Ayyubid governor [[Al-Mas'ud Yusuf|al-Masʿūd Ṣalāḥ al-Dīn Yūsuf]] ({{reign|1215|1229}}).<ref>{{harvnb|Sellheim|1997}}; {{harvnb|Brockelmann|2017|loc=vol. 1, p. 262}}.</ref> He included poems by himself and his son Aḥmad.{{sfn|Sellheim|1997}} The ''Jamharat'' is preserved in a single manuscript dated 1298 and now in [[Leiden]].<ref>{{harvnb|Sellheim|1997}}, citing {{harvnb|Ahmad|1956}} and the facsimile edition of {{harvnb|Sezgin|1986}}.</ref> A second work dedicated to al-Masʿūd is the ''ʿĀdāt al-nujūm'', known from a manuscript copied in 1665 or 1666 and now in [[Ṣanʿāʾ]]. It is an astronomical [[almanac]] similar to the ''[[Calendar of Córdoba]]''. It was not compiled for use in Yemen.{{sfn|King|1983|p=22}}
+
+Al-Shayzarī's date of death is unknown.{{sfn|Sellheim|1997}}
+
+==Notes==
+{{reflist}}
+
+[[Category:12th-century births]]
+[[Category:13th-century deaths]]
+[[Category:People from Damascus]]
+[[Category:13th-century Arabic-language poets]]
+[[Category:Medieval Syrian astronomers]]
