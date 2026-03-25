@@ -11,18 +11,20 @@ An **English-to-Uzbek Wikipedia article translator** that uses AI (Claude or Ope
 ```
 wikipedia-translator/
 ├── main.py                   # Entry point; orchestrates the 4-phase pipeline
+├── article_finder.py         # Auto-discovery: BFS category crawl + uz.wiki check
+├── seed_categories.json      # Root categories for auto-discovery (Islam topics)
 ├── config.py                 # All configuration (comments/values in Uzbek)
 ├── localization_map.json     # 130+ term replacement rules (auto-loaded)
 ├── config.env                # Environment variable overrides (empty template)
 ├── Pipfile / Pipfile.lock    # Python 3.12 dependencies (pipenv)
-├── input_en.txt              # Example English Wikipedia wikitext input
+├── input_en.txt              # English Wikipedia wikitext input (generated)
 ├── output_uz.txt             # Translated Uzbek output
 ├── core/
 │   ├── translator.py         # AI translation engine (Claude & OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
 │   ├── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
-│   └── quality_checker.py   # Post-translation QA checks
+│   └── quality_checker.py    # Post-translation QA checks
 └── utils/
     ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
     ├── localization.py       # Loads and applies localization_map.json
@@ -35,6 +37,82 @@ Cache lives in `.wiki_cache/` (gitignored) and grows automatically:
 - `qid_cache.json` — title → QID mappings
 - `sitelink_cache.json` — QID → Uzbek Wikipedia title mappings
 - `redirect_cache.json` — redirect resolution results
+- `finder_progress.json` — article finder progress (discovered articles, scanned categories, subcategory tree)
+
+---
+
+## Article Finder (`article_finder.py`)
+
+Automatically discovers English Wikipedia articles that are missing from Uzbek Wikipedia, using BFS crawling of seed categories.
+
+### Two modes
+
+```bash
+# Auto mode (no arguments) — crawls seed categories, shows pending articles
+python article_finder.py
+
+# Legacy mode — search a specific category
+python article_finder.py "11th-century Arabic-language poets"
+python article_finder.py "Islamic scholars" --max-size 50000
+```
+
+### How auto mode works
+
+```
+seed_categories.json (enabled, sorted by priority)
+    │
+    ├─ Load finder_progress.json
+    ├─ If pending articles exist → display them
+    └─ Otherwise → scan next categories:
+        ├─ crawl_category_tree() — BFS with depth limit
+        ├─ get_category_members() — articles per subcategory
+        ├─ check_uz_exists_batch_fast() — Wikidata batch API (50/request)
+        └─ Stop when 20+ pending articles found
+            │
+            ▼
+        Interactive menu:
+        [1-20] select article → download wikitext → save to input_en.txt
+        [n] next page | [p] prev page | [s] scan more | [i] stats | [0] quit
+```
+
+### Key functions
+
+| Function | Purpose |
+|---|---|
+| `_wiki_api()` | Centralized Wikipedia/Wikidata API helper |
+| `get_category_members()` | Fetch articles in a category (namespace=0) |
+| `get_subcategories()` | Fetch subcategories (`cmtype=subcat`) |
+| `crawl_category_tree()` | BFS crawl with depth limit and cycle prevention |
+| `check_uz_exists_batch_fast()` | Wikidata `wbgetentities` batch check (~50x faster than pywikibot) |
+| `estimate_trimmed()` | Trim article: keep intro + references, remove body sections |
+| `FinderProgress` class | Progress tracking via `.wiki_cache/finder_progress.json` |
+| `scan_categories()` | Orchestrates BFS crawl + article discovery |
+| `auto_discover()` | Main interactive loop |
+| `select_and_save()` | Download wikitext, offer trimming, save to `input_en.txt` |
+
+### `seed_categories.json`
+
+Defines root categories for auto-crawling. Each entry:
+```json
+{"name": "Islamic scholars", "depth": 2, "priority": 2, "enabled": true}
+```
+- `depth` — subcategory crawl limit (0 = only root)
+- `priority` — lower = scanned first
+- `enabled` — set `false` to skip without deleting
+
+### Article trimming
+
+For large articles (>`FINDER_TRIM_THRESHOLD` bytes), the finder offers to trim:
+1. Keep everything before the first `== ==` section header (intro)
+2. Remove body content
+3. Keep from `== References ==` (or Sources/Bibliography/Notes) onward
+4. Only if the trimmed result contains at least one `<ref`
+
+### Progress tracking (`FinderProgress`)
+
+Article statuses: `pending` → `translated` | `skipped` | `has_uz`
+
+Progress persists across runs in `.wiki_cache/finder_progress.json`. Previously scanned categories and known articles are not re-checked.
 
 ---
 
@@ -72,13 +150,17 @@ output_uz.txt  +  quality report
 
 ---
 
-## Running the Translator
+## Running
 
 ```bash
 # Install dependencies
 pipenv install
 
-# Run translation
+# 1. Find an article to translate (auto mode)
+python article_finder.py
+# → discovers articles, saves selected one to input_en.txt
+
+# 2. Translate
 python main.py input_en.txt output_uz.txt
 
 # Or pass a Wikipedia article URL / title directly (wiki_fetcher downloads it)
@@ -109,6 +191,7 @@ All configuration is in a single file. Comments and string values are written in
 - **Pywikibot tuning**: `maxlag=5`, `put_throttle=1`, `max_retries=3`
 - **Translation system prompt**: instructs the model to preserve QID placeholders and transliterate names (w→v rule for Uzbek)
 - **Fallback template mappings**: when Wikidata has no sitelink
+- **Article Finder**: `SEED_CATEGORIES_FILE`, `FINDER_PROGRESS_FILE`, `FINDER_MAX_DEPTH=3`, `FINDER_PAGE_SIZE=20`, `FINDER_TRIM_THRESHOLD=6000` (bytes)
 
 Do **not** hardcode API keys into `config.py`. Use environment variables.
 
@@ -190,6 +273,13 @@ No code changes needed — it is loaded automatically.
 ### New regex fix
 Add a static method to `utils/regex_patterns.py` and call it from `apply_all_fixes()`.
 
+### New seed category
+Add an entry to `seed_categories.json`:
+```json
+{"name": "Category name", "depth": 2, "priority": 5, "enabled": true}
+```
+No code changes needed. Delete `.wiki_cache/finder_progress.json` to force a fresh scan, or let it scan incrementally.
+
 ### New cache tier
 Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as existing tiers.
 
@@ -215,7 +305,8 @@ When adding new placeholder types or fixes, add corresponding checks to `quality
 
 - Development branch naming: `claude/<description>-<sessionId>`
 - Commit messages are short and descriptive in English.
-- **Never commit** `config.env`, API keys, `localization_map.json`, `output*.txt`, `*.log`, `.wiki_cache/`, or `temp_wiki/` — all excluded by `.gitignore`.
+- **Never commit** `config.env`, API keys, `localization_map.json`, `output*.txt`, `*.log`, `.wiki_cache/` (includes `finder_progress.json`), or `temp_wiki/` — all excluded by `.gitignore`.
+- `seed_categories.json` **is** committed — it defines which categories to crawl.
 - Push with: `git push -u origin <branch-name>`
 
 ---
