@@ -1,0 +1,61 @@
+{
+  "_comment": "Islom mavzusidagi asosiy kategoriyalar. depth: subcategoriya chuqurligi, priority: tartib (kichik = birinchi).",
+  "categories": [
+    {
+      "name": "Arabic-language poets by century",
+      "depth": 2,
+      "priority": 1,
+      "enabled": true
+    },
+    {
+      "name": "Islamic scholars",
+      "depth": 2,
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "name": "Hadith scholars",
+      "depth": 2,
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "name": "History of Islam",
+      "depth": 2,
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "name": "Islamic philosophers",
+      "depth": 2,
+      "priority": 4,
+      "enabled": true
+    },
+    {
+      "name": "Quran",
+      "depth": 2,
+      "priority": 4,
+      "enabled": true
+    },
+    {
+      "name": "Sunni Islam",
+      "depth": 2,
+      "priority": 5,
+      "enabled": true
+    },
+    {
+      "name": "Islam",
+      "depth": 1,
+      "priority": 10,
+      "enabled": false,
+      "note": "Juda keng kategoriya — faqat 1-chuqurlik bilan"
+    },
+    {
+      "name": "Muslims",
+      "depth": 1,
+      "priority": 9,
+      "enabled": false,
+      "note": "Juda ko'p maqolalar — keyinroq yoqish"
+    }
+  ]
+}
