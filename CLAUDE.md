@@ -294,7 +294,7 @@ There is no automated test suite. Validation is done by:
    - Empty wikilinks
    - Bracket mismatches
    - Unrestore reference hashes
-2. **Manual inspection** of `output_uz.txt` using rules in **`translation_rules.md`** (name transliteration, solar letters, wikilink consistency).
+2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules (name transliteration, solar letters, lead sentence structure, wikilink consistency).
 3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, translation counts).
 
 When adding new placeholder types or fixes, add corresponding checks to `quality_checker.py`.

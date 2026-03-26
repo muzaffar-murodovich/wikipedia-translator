@@ -137,4 +137,4 @@ SEED_CATEGORIES_FILE = Path("seed_categories.json")
 FINDER_PROGRESS_FILE = CACHE_DIR / "finder_progress.json"
 FINDER_MAX_DEPTH = 3              # Default subcategory chuqurligi
 FINDER_PAGE_SIZE = 20             # Bir sahifada ko'rsatiladigan maqolalar soni
-FINDER_TRIM_THRESHOLD = 6000    # Qisqartirish chegarasi (bayt)
+FINDER_TRIM_THRESHOLD = 9000    # Qisqartirish chegarasi (bayt)
