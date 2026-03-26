@@ -305,7 +305,7 @@ When adding new placeholder types or fixes, add corresponding checks to `quality
 
 - Development branch naming: `claude/<description>-<sessionId>`
 - Commit messages are short and descriptive in English.
-- **Never commit** `config.env`, API keys, `localization_map.json`, `output*.txt`, `*.log`, `.wiki_cache/` (includes `finder_progress.json`), or `temp_wiki/` — all excluded by `.gitignore`.
+- **Never commit** `config.env`, API keys, `output*.txt`, `*.log`, or `temp_wiki/` — all excluded by `.gitignore`.
 - `seed_categories.json` **is** committed — it defines which categories to crawl.
 - Push with: `git push -u origin <branch-name>`
 
