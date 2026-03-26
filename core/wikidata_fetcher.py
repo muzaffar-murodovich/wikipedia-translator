@@ -7,7 +7,10 @@ QID'larni topish, sitelink'larni olish, redirect'larni hal qilish.
 Parallel processing bilan optimallashtirilgan.
 """
 
+import json
 import time as time_module
+import urllib.parse
+import urllib.request
 from typing import Optional, Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -16,6 +19,8 @@ import pywikibot
 import config
 from core.cache_manager import WikiCache
 from utils.logger import logger
+
+_USER_AGENT = "WikiTranslatorBot/1.0 (Uzbek Wikipedia; uz.wikipedia.org)"
 
 
 class WikidataFetcher:
@@ -155,7 +160,158 @@ class WikidataFetcher:
             self.cache.set_sitelink(qid, target_site, None)
             return None
     
-    # ==================== BATCH OPERATIONS ====================
+    # ==================== FAST BATCH OPERATIONS ====================
+
+    def _wiki_api(self, params: dict, lang: str = "en", domain: str = "wikipedia") -> dict:
+        """Wikipedia/Wikidata API ga to'g'ridan-to'g'ri HTTP so'rov."""
+        params.setdefault("format", "json")
+        params.setdefault("formatversion", "2")
+        encoded = urllib.parse.urlencode(params)
+        if domain == "wikidata":
+            url = f"https://www.wikidata.org/w/api.php?{encoded}"
+        else:
+            url = f"https://{lang}.wikipedia.org/w/api.php?{encoded}"
+        req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    def batch_resolve_redirects(self, titles: List[str], site_code: str = "en") -> Dict[str, str]:
+        """
+        Ko'plab sarlavhalarning redirect'larini batch API bilan hal qilish.
+        Wikipedia action=query&redirects bilan 50 ta/so'rov.
+
+        Args:
+            titles: Sarlavhalar ro'yxati
+            site_code: Sayt kodi (en, uz)
+        Returns:
+            {original_title: resolved_title} dict
+        """
+        results = {}
+        uncached = []
+
+        # Cache'dan tekshirish
+        for title in titles:
+            cached = self.cache.get_redirect(site_code, title)
+            if cached is not None:
+                results[title] = cached
+            else:
+                uncached.append(title)
+
+        # Uncached sarlavhalarni batch API bilan hal qilish
+        for i in range(0, len(uncached), 50):
+            batch = uncached[i:i + 50]
+            joined = "|".join(batch)
+            try:
+                data = self._wiki_api({
+                    "action": "query",
+                    "titles": joined,
+                    "redirects": "1",
+                }, lang=site_code)
+
+                # Redirect mapping
+                redirect_map = {}
+                for r in data.get("query", {}).get("redirects", []):
+                    redirect_map[r["from"]] = r["to"]
+
+                # Normalized mapping (masalan, "abu_bakr" → "Abu Bakr")
+                normalized_map = {}
+                for n in data.get("query", {}).get("normalized", []):
+                    normalized_map[n["from"]] = n["to"]
+
+                for title in batch:
+                    lookup = normalized_map.get(title, title)
+                    resolved = redirect_map.get(lookup, lookup)
+                    results[title] = resolved
+                    self.cache.set_redirect(site_code, title, resolved)
+
+            except Exception as e:
+                logger.debug(f"Batch redirect xatosi: {e}")
+                for title in batch:
+                    results[title] = title
+                    self.cache.set_redirect(site_code, title, title)
+
+        return results
+
+    def batch_get_qids_fast(self, titles: List[str], site_code: str = "en") -> Dict[str, Optional[str]]:
+        """
+        Ko'plab maqolalarning QID va sitelink'larini batch API bilan olish.
+        Wikidata wbgetentities API bilan 50 ta/so'rov.
+        Bonus: uz/en sitelink'lar ham cache'ga tushadi (Phase 3 uchun).
+
+        Args:
+            titles: Maqola sarlavhalari (redirect hal qilingan)
+            site_code: Sayt kodi
+        Returns:
+            {title: QID} dict (QID yoki None)
+        """
+        results = {}
+        uncached = []
+
+        # Cache'dan tekshirish
+        for title in titles:
+            cached = self.cache.get_qid(site_code, title)
+            if cached is not None:
+                results[title] = cached
+            else:
+                uncached.append(title)
+
+        if not uncached:
+            return results
+
+        # Batch API bilan QID olish
+        site_db = f"{site_code}wiki"
+        for i in range(0, len(uncached), 50):
+            batch = uncached[i:i + 50]
+            joined = "|".join(batch)
+            try:
+                data = self._wiki_api({
+                    "action": "wbgetentities",
+                    "sites": site_db,
+                    "titles": joined,
+                    "props": "sitelinks",
+                }, domain="wikidata")
+
+                # Title → QID mapping yaratish
+                title_to_qid = {}
+                for entity_id, entity in data.get("entities", {}).items():
+                    if entity_id.startswith("-"):
+                        continue
+                    sitelinks = entity.get("sitelinks", {})
+
+                    # Source wiki title'dan mapping
+                    src_link = sitelinks.get(site_db, {})
+                    src_title = src_link.get("title", "")
+                    title_to_qid[src_title] = entity_id
+
+                    # Uz sitelink'ni cache'ga saqlash (Phase 3 uchun)
+                    uz_link = sitelinks.get("uzwiki", {})
+                    uz_title = uz_link.get("title") if uz_link else None
+                    self.cache.set_sitelink(entity_id, "uzwiki", uz_title)
+
+                    # En sitelink'ni ham saqlash (fallback uchun)
+                    if src_title:
+                        self.cache.set_sitelink(entity_id, f"{site_code}wiki", src_title)
+
+                for title in batch:
+                    qid = title_to_qid.get(title)
+                    if not qid:
+                        # Normalization bilan tekshirish
+                        for src_t, q in title_to_qid.items():
+                            if src_t.replace(" ", "_") == title.replace(" ", "_"):
+                                qid = q
+                                break
+                    results[title] = qid
+                    self.cache.set_qid(site_code, title, qid)
+
+            except Exception as e:
+                logger.debug(f"Batch QID xatosi: {e}")
+                for title in batch:
+                    results[title] = None
+                    self.cache.set_qid(site_code, title, None)
+
+        return results
+
+    # ==================== LEGACY BATCH OPERATIONS ====================
     
     def batch_get_qids(self, titles: List[str], site_code: str = "en") -> Dict[str, Optional[str]]:
         """

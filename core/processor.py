@@ -36,88 +36,133 @@ class WikiTextProcessor:
     
     def prepare(self, raw_wikitext: str) -> Tuple[str, Dict, Dict, Dict, Dict]:
         """
-        Wikitext'ni tarjimaga tayyorlash.
+        Wikitext'ni tarjimaga tayyorlash (batch API bilan optimallashtirilgan).
         - Bo'sh template parametrlarni olib tashlash
         - Uzun manbalarni siqish
         - Wikilink'larni QID placeholder'lari bilan almashtirish
         - Kategoriyalarni special token'lari bilan almashtirish
         - Andozalarni placeholder'lari bilan almashtirish
-        
+
         Returns:
             (prepared_text, link_map, cat_map, tpl_map, ref_map)
         """
         logger.info("📝 Wikitext tayyorlanmoqda...")
-        
-        # 1. Bo'sh parametrlarni tozalash
-        wikitext = remove_empty_params(raw_wikitext)
-        
-        # 2. Manbalarni siqish
-        wikitext, ref_map = self._compress_references(wikitext)
-        
-        # 3. HTML izohlarni olib tashlash
-        wikitext = clean_html_comments(wikitext)
-        
-        # Parse wikitext
-        code = mwp.parse(wikitext)
-        
-        link_qid_map = {}
-        cat_qid_map = {}
-        tpl_qid_map = {}
-        
-        # 4. Kategoriyalarni qayta ishlash
-        for wl in list(code.filter_wikilinks()):
-            target = str(wl.title).strip()
-            if target.startswith("Category:"):
-                qid = self.fetcher.get_qid(target)
-                label = str(wl.text).strip() if wl.text else target.split("Category:", 1)[-1]
+
+        # Kesh yozishni kechiktirish (oxirida bir marta yoziladi)
+        self.cache.begin_batch()
+
+        try:
+            # 1. Bo'sh parametrlarni tozalash
+            wikitext = remove_empty_params(raw_wikitext)
+
+            # 2. Manbalarni siqish
+            wikitext, ref_map = self._compress_references(wikitext)
+
+            # 3. HTML izohlarni olib tashlash
+            wikitext = clean_html_comments(wikitext)
+
+            # Parse wikitext
+            code = mwp.parse(wikitext)
+
+            # ===== A-BOSQICH: Barcha sarlavhalarni yig'ish =====
+
+            category_items = []   # (target, wikilink_obj, label)
+            wikilink_items = []   # (target, wikilink_obj, label)
+            template_items = []   # (en_tpl_title, template_obj, original_name)
+
+            # 4. Kategoriyalarni yig'ish
+            for wl in list(code.filter_wikilinks()):
+                target = str(wl.title).strip()
+                if target.startswith("Category:"):
+                    label = str(wl.text).strip() if wl.text else target.split("Category:", 1)[-1]
+                    category_items.append((target, wl, label))
+
+            # 5. Wikilink'larni yig'ish
+            for wl in code.filter_wikilinks():
+                target = str(wl.title).strip()
+
+                # Namespace'larni skip qilish
+                if ":" in target and not target.startswith(":"):
+                    ns = target.split(":", 1)[0].lower()
+                    if ns in ("file", "image", "template", "help", "portal", "special", "module", "wikipedia", "category"):
+                        continue
+
+                # Agar QID bo'lsa, skip
+                if target.startswith("Q") and target[1:].isdigit():
+                    continue
+
+                label = str(wl.text).strip() if wl.text else target
+                wikilink_items.append((target, wl, label))
+
+            # 6. Andozalarni yig'ish
+            for tpl in code.filter_templates():
+                original_name = str(tpl.name).strip()
+                if original_name.startswith("TPL:"):
+                    continue
+                en_tpl_title = f"Template:{original_name}"
+                template_items.append((en_tpl_title, tpl, original_name))
+
+            # ===== B-BOSQICH: Batch hal qilish =====
+
+            # Barcha unique sarlavhalarni yig'ish
+            all_titles = set()
+            for target, _, _ in category_items:
+                all_titles.add(target)
+            for target, _, _ in wikilink_items:
+                all_titles.add(target)
+            for target, _, _ in template_items:
+                all_titles.add(target)
+
+            all_titles_list = list(all_titles)
+
+            # B1: Batch redirect hal qilish (1-2 HTTP so'rov)
+            redirect_map = self.fetcher.batch_resolve_redirects(all_titles_list)
+
+            # B2: Resolved sarlavhalar uchun QID'larni batch olish (1-2 HTTP so'rov)
+            resolved_titles = list(set(redirect_map.values()))
+            qid_map = self.fetcher.batch_get_qids_fast(resolved_titles)
+
+            # ===== C-BOSQICH: Natijalarni qo'llash =====
+
+            link_qid_map = {}
+            cat_qid_map = {}
+            tpl_qid_map = {}
+
+            # Kategoriyalar
+            for target, wl, label in category_items:
+                resolved = redirect_map.get(target, target)
+                qid = qid_map.get(resolved)
                 if qid:
                     cat_qid_map[qid] = target
                     token = f"⟦CAT:{qid}|{label}⟧"
                     code.replace(wl, token)
-        
-        # 5. Wikilink'larni qayta ishlash
-        for wl in code.filter_wikilinks():
-            target = str(wl.title).strip()
-            
-            # Namespace'larni skip qilish
-            if ":" in target and not target.startswith(":"):
-                ns = target.split(":", 1)[0].lower()
-                if ns in ("file", "image", "template", "help", "portal", "special", "module", "wikipedia", "category"):
-                    continue
-            
-            # Agar QID bo'lsa, skip
-            if target.startswith("Q") and target[1:].isdigit():
-                continue
-            
-            # QID'ni olish
-            actual_target = self.fetcher.resolve_redirect(target)
-            qid = self.fetcher.get_qid(actual_target)
-            label = str(wl.text).strip() if wl.text else target
-            
-            if qid:
-                link_qid_map[qid] = actual_target
-                wl.title = qid
-                wl.text = label
-        
-        # 6. Andozalarni qayta ishlash
-        for tpl in code.filter_templates():
-            original_name = str(tpl.name).strip()
-            
-            if original_name.startswith("TPL:"):
-                continue
-            
-            en_tpl_title = f"Template:{original_name}"
-            qid = self.fetcher.get_qid(en_tpl_title)
-            
-            if qid:
-                tpl_qid_map[qid] = original_name
-                tpl.name = f"TPL:{qid}"
-        
-        prepared_text = str(code)
-        
-        logger.success(f"Tayyorland: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
-        
-        return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
+
+            # Wikilink'lar
+            for target, wl, label in wikilink_items:
+                resolved = redirect_map.get(target, target)
+                qid = qid_map.get(resolved)
+                if qid:
+                    link_qid_map[qid] = resolved
+                    wl.title = qid
+                    wl.text = label
+
+            # Andozalar
+            for en_tpl_title, tpl, original_name in template_items:
+                resolved = redirect_map.get(en_tpl_title, en_tpl_title)
+                qid = qid_map.get(resolved)
+                if qid:
+                    tpl_qid_map[qid] = original_name
+                    tpl.name = f"TPL:{qid}"
+
+            prepared_text = str(code)
+
+            logger.success(f"Tayyorland: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
+
+            return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
+
+        finally:
+            # Kesh o'zgarishlarini diskka yozish (har doim)
+            self.cache.end_batch()
     
     def _compress_references(self, wikitext: str) -> Tuple[str, Dict[str, str]]:
         """Uzun manbalarni siqish."""

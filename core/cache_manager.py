@@ -26,6 +26,10 @@ class WikiCache:
         self.sitelink_cache = FileHandler.read_json(str(config.SITELINK_CACHE_FILE))
         self.redirect_cache = FileHandler.read_json(str(config.REDIRECT_CACHE_FILE))
         
+        # Kechiktirilgan yozish rejimi
+        self._deferred = False
+        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
+
         # Statistika
         self.stats = {
             "qid_hits": 0,
@@ -36,6 +40,24 @@ class WikiCache:
             "redirect_misses": 0,
         }
     
+    # ==================== BATCH REJIMI ====================
+
+    def begin_batch(self):
+        """Kesh yozishni kechiktirish rejimini boshlash."""
+        self._deferred = True
+        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
+
+    def end_batch(self):
+        """Kechiktirilgan kesh o'zgarishlarini diskka yozish."""
+        self._deferred = False
+        if self._dirty["qid"]:
+            self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
+        if self._dirty["sitelink"]:
+            self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
+        if self._dirty["redirect"]:
+            self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
+        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
+
     # ==================== QID CACHE ====================
     
     def get_qid(self, site_code: str, title: str) -> Optional[str]:
@@ -74,7 +96,10 @@ class WikiCache:
         """
         key = f"{site_code}:{title}"
         self.qid_cache[key] = qid if qid else "NONE"
-        self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
+        if self._deferred:
+            self._dirty["qid"] = True
+        else:
+            self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
     
     # ==================== SITELINK CACHE ====================
     
@@ -113,7 +138,10 @@ class WikiCache:
         """
         key = f"{qid}:{target_site}"
         self.sitelink_cache[key] = title if title else "NONE"
-        self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
+        if self._deferred:
+            self._dirty["sitelink"] = True
+        else:
+            self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
     
     # ==================== REDIRECT CACHE ====================
     
@@ -152,7 +180,10 @@ class WikiCache:
         """
         key = f"{site_code}:{title}"
         self.redirect_cache[key] = target if target else "NONE"
-        self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
+        if self._deferred:
+            self._dirty["redirect"] = True
+        else:
+            self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
     
     # ==================== UTILITY METODLARI ====================
     

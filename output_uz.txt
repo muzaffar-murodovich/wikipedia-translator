@@ -1,0 +1,31 @@
+{{Qisqa tavsif|Muhammadning safar hamrohi}}
+{{Yozuvchi bilgiqutisi| name        = Suroqa al-Boriqiy
+| image       = Islam symbol plane.svg
+| birth_date  = 621
+| birth_place = [[Boriq]], [[Arabiston yarim oroli|Arabiston]]
+| death_date  = 698
+| death_place = [[Kufa]], [[Iroq]]
+| occupation  = Shoir
+| language    = Arab tili
+| nationality = Arab
+| notableworks= Jasorat, hayot falsafasi va janglar haqidagi sheʼrlar
+
+}}
+
+'''Suroqa al-Boriqiy''' ({{Lang-ar|سراقة بن مرداس البارقي}}; 698-yilda vafot etgan) [[Sahoba|Muhammadning sahobasi]] bo‘lgan va [[Boriq]] qabilasiga mansub edi. U Arabiston yarimorolining [[Boriq]] hududidan bo‘lib, u paytda [[Damashq xalifaligi|Umaviylar xalifaligi]] tarkibida edi<ref>[https://books.google.com/books?id=gfrWAAAAMAAJ&q=Suraqah+al-Bariqi Makārim al-akhlāq]،</ref>.  U eng buyuk shoirlardan biri hisoblanadi. Uning sheʼrlarining katta qismi hayot falsafasi atrofida aylanadi. Baʼzilar uning sheʼrlarini hayotiy qissasining yorqin ifodasi deb biladi. U yoshligidan sheʼr yoza boshlagan. U o‘tkir zakovati va hazilkashligi bilan yaxshi tanilgan. U muhokama qilgan mavzular orasida jasorat, hayot falsafasi va janglar tasviri bor edi. Uning buyuk isteʼdodi uni o‘z davrining ko‘plab yetakchilariga juda yaqinlashtirdi. U o‘sha yetakchilar va podshohlarni madh etgan. Uning kuchli va samimiy sheʼriy uslubi o‘z davrida katta shuhrat keltirdi. U Umaviylar davri shoirlari ro‘yxatida nomlari shu qadar yorqin ajralib turadiki, zamondosh shoirlarning barchasini soyada qoldirgan buyuk uchlik — [[Al-Axtal at-Tagʻlibiy|Axtal]], [[Al-Farazdaq|Farazdaq]] va [[Jarir ibn Atiya|Jarir]] bilan zamondosh edi. Shu bois [[Kitob al-Agʻoniy|Kitob al-Aghoniy]]da bizning shoir haqida maqola yo‘q, va agar u [[Al-Farazdaq|Farazdaq]] hamda [[Jarir ibn Atiya|Jarir]] o‘rtasidagi adabiy bahsda ishtirok etmaganida, u butkul eʼtibordan chetda qolgan bo‘lardi<ref>[https://books.google.com/books?id=dWtEs2_pDp0C&dq=Suraqah++Jarir&pg=PA99 The Community Divided]،</ref>. U ham [[Al-Farazdaq|Farazdaq]]ga xayrixoh bo‘lib, bu bahsga qo‘shilgan<ref>[https://books.google.com/books?id=hS4m0l6OnyIC&dq=Suraqah++Farazdaq&pg=PA22 The History of Al-Ṭabarī: (Ta'rīkh Al-rusul Wa-al-mulūk) Vol. 15 ]،</ref>. U va [[Jarir ibn Atiya|Jarir]] bir-biriga qarshi yaratgan [[hajviy bahs]]ga oid latifalar<ref>[https://books.google.com/books?id=IiqxJYIQmMYC&dq=Suraqah++Jarir&pg=PA160 Tafsir Ibn Kathir Juz' 30 (Part 30): An-Nabaa 1 to An-NAS 6 2nd Edition]،</ref><ref>[https://books.google.com/books?id=sk4TfXB3TwkC&dq=Suraqah++Jarir&pg=PA509 Tafsir Ibn Kathir (Volume 10)]،</ref>.   [[Hajjoj ibn Yusuf|Al-Hajjoj ibn Yusuf]]dan rivoyat qilinganidek, qiziqarli bo‘ladi<ref>{{cite journal|last= S. M.|first=Husain Shareef|title=The Poems of Surâqah b. Mirdâs al-Bâriqi— An Umayyad Poet|journal=Journal of the Royal Asiatic Society|year=2006|volume=68|issue=4|doi=10.1017/S0035869X00084896|pages= 605–628}}</ref><ref>[https://books.google.com/books?id=hS4m0l6OnyIC&dq=Suraqah+Bariqi&pg=PA29 The History of Al-Ṭabar]،</ref>.
+
+==Manbalar==
+{{Manbalar}}
+
+
+{{Tashqi havolalar}}
+
+{{DEFAULTSORT:Suraqah al-Bariqi}}
+[[Turkum:Umaviylar xalifaligidan shoirlar]]
+[[Turkum:VII asr arab tili shoirlari]]
+[[Turkum:Banu Boriq]]
+[[Turkum:698-yilda vafot etganlar]]
+[[Turkum:Tugʻilgan yili nomaʼlum boʻlgan kishilar]]
+[[Turkum:621-yilda tugʻilganlar]]
+[[Turkum:VI asr arab xalqi]]
+[[Turkum:VII asr arab xalqi]]
