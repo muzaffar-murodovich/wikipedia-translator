@@ -6,8 +6,10 @@ Har bir tarjimadan keyin quyidagi qoidalar asosida output faylni tekshirish kera
 - Arab ismlari lotin harflari bilan oddiy shaklda yozilishi kerak
 - Diakritik belgilar olib tashlanadi: `ā` → `a`, `ī` → `i`, `ū` → `u`, `ʿ` → olib tashlanadi, `ʾ` → olib tashlanadi
 - Transliteratsiya belgilari: `Abū` → `Abu`, `Labīd` → `Labid`, `Rabīʿa` → `Rabiʼa`, `Mālik` → `Malik`, `al-ʿĀmirī` → `al-Amiriy` va shu kabi tuzatmalar
+- Keng tarqalgan qoʻshimcha misollar: `Muḥammad` → `Muhammad`, `'Abd` → `Abd` (apostrof ham olib tashlanadi), `Abī` → `Abi`, `Qāsim` → `Qosim`
 - Oxirgi `-ī` qoʻshimchasi oʻzbekchada `-iy` boʻladi: `al-ʿĀmirī` → `al-Amiriy`
-- Faqat asosiy matn va sarlavhalarda tuzatiladi. `<ref>`, URL, andoza parametrlari ichida OʻZGARTIRILMAYDI
+- Elide shaklidagi artikl: `Abū l-Nام` → `Abu al-Nom` (ya'ni `l-` → `al-` shaklida yoziladi)
+- Faqat asosiy matn va **sarlavhalarda** tuzatiladi. `<ref>`, URL, andoza parametrlari ichida OʻZGARTIRILMAYDI
 
 ## 2. Shamsiy harflar bilan "al-" artikli (manbalar ichida emas)
 - Arab ismlarida "al-" artikli shamsiy harflardan oldin oʻsha harfga oʻzgaradi
@@ -42,3 +44,11 @@ Har bir tarjimadan keyin quyidagi qoidalar asosida output faylni tekshirish kera
 - Notoʻgʻri: `[[Abulfaraj Isfahoniy|Abu al-Faraj al-Isfahoniy]]` (boshqacha transliteratsiya)
 - Toʻgʻri: `[[Abulfaraj Isfahoniy]]` yoki `[[Abulfaraj Isfahoniy|Abulfaraj Isfahoniy]]`
 - Agar koʻrinadigan matn sahifa nomidan farq qilsa, uni sahifa nomiga moslashtirish kerak yoki oddiy `[[Sahifa nomi]]` shaklida yozish kerak
+
+### 4a. Havola nomi diakritikli bo'lsa (inglizcha fallback)
+Finalize fazasida oʻzbek Vikipediyasida sahifa topilmasa, tizim inglizcha nomni (diakritiklar bilan) qoldiradi, masalan: `[[Hishām al-Kalbī]]`.
+Bunday holda havola nomini oʻzbek transliteratsiyasiga oʻzgartirish kerak:
+- Notoʻgʻri: `[[Hishām al-Kalbī]]`
+- Toʻgʻri: `[[Hishom al-Kalbiy]]`
+
+Pipe-li shaklda ham xuddi shunday: `[[Isʼhoq al-Mavsiliy|Isḥāq al-Mawṣilī]]` → `[[Isʼhoq al-Mavsiliy]]`

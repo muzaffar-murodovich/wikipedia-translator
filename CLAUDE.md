@@ -164,10 +164,35 @@ python article_finder.py
 
 # 2. Translate
 python main.py input_en.txt output_uz.txt
-
-# Or pass a Wikipedia article URL / title directly (wiki_fetcher downloads it)
-python main.py "https://en.wikipedia.org/wiki/Example" output_uz.txt
 ```
+
+### Batch translation (multiple articles)
+
+`main.py` faqat fayl yo'lini qabul qiladi — URL yoki maqola nomi bevosita uzatilmaydi.
+Ko'p maqola tarjima qilish uchun:
+
+```python
+from utils.wiki_fetcher import fetch_wikitext
+import subprocess
+
+articles = ["Article One", "Article Two", "Article Three"]
+for title in articles:
+    wikitext, _ = fetch_wikitext(title)
+    with open("input_en.txt", "w", encoding="utf-8") as f:
+        f.write(wikitext)
+    safe = title.replace(" ", "_")
+    subprocess.run(["python", "main.py", "input_en.txt", f"output_{safe}.txt"])
+```
+
+### Post-processing va temp_wiki
+
+Output faylni qoʻlda tahrir qilgandan keyin `temp_wiki/` dagi versiyani ham yangilash kerak:
+
+```bash
+cp output_falon.txt "temp_wiki/Maqola nomi.txt"
+```
+
+`temp_wiki/` `.gitignore`da — commit qilinmaydi.
 
 ### Required Environment Variables
 
