@@ -1,5 +1,7 @@
 # CLAUDE.md — Wikipedia Translator
 
+> **IMPORTANT: It is MANDATORY to read the `translation_rules.md` file BEFORE reviewing any translation results.**
+
 ## Project Overview
 
 An **English-to-Uzbek Wikipedia article translator** that uses AI (Claude or OpenAI) to translate wikitext while preserving MediaWiki markup, wikilinks, templates, and categories. It resolves article links via Wikidata so that internal links point to the correct Uzbek Wikipedia equivalents.
