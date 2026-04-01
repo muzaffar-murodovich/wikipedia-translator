@@ -156,15 +156,17 @@ output_uz.txt  +  quality report
 
 ```bash
 # Install dependencies
-pipenv install
+PIPENV_IGNORE_VIRTUALENVS=1 pipenv install
 
 # 1. Find an article to translate (auto mode)
-python article_finder.py
+PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python article_finder.py
 # → discovers articles, saves selected one to input_en.txt
 
 # 2. Translate
-python main.py input_en.txt output_uz.txt
+PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python main.py input_en.txt output_uz.txt
 ```
+
+> **Note:** `PIPENV_IGNORE_VIRTUALENVS=1` is required because pipenv detects any active virtualenv (e.g. from another project) and uses it instead of the project's own `.venv`. Without this flag, `pywikibot` and other project dependencies won't be found, causing `ModuleNotFoundError`.
 
 ### Batch translation (multiple articles)
 
