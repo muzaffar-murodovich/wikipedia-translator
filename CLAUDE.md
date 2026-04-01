@@ -215,7 +215,7 @@ All configuration is in a single file. Comments and string values are written in
 - **AI provider / model**: switch between `claude-sonnet-4-6`, `gpt-4o`, etc.
 - **Source / target languages**: English → Uzbek (`uz`)
 - **Cache paths**: `.wiki_cache/` directory
-- **Pywikibot tuning**: `maxlag=5`, `put_throttle=1`, `max_retries=3`
+- **Pywikibot tuning**: set directly in `main.py` before import — `maxlag=5`, `put_throttle=1`, `max_retries=3`, `retry_wait=10`
 - **Translation system prompt**: instructs the model to preserve QID placeholders and transliterate names (w→v rule for Uzbek)
 - **Fallback template mappings**: when Wikidata has no sitelink
 - **Article Finder**: `SEED_CATEGORIES_FILE`, `FINDER_PROGRESS_FILE`, `FINDER_MAX_DEPTH=3`, `FINDER_PAGE_SIZE=20`, `FINDER_TRIM_THRESHOLD=6000` (bytes)
@@ -237,10 +237,11 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Reference compression threshold: 20 characters (configurable in the class).
 
 ### `core/wikidata_fetcher.py`
-- Uses **pywikibot** for Wikidata queries.
-- `get_qid(title, site)` — resolves a Wikipedia title to its QID.
-- `get_sitelink(qid, target_site)` — returns the article title on the target Wikipedia.
-- Batch methods available for parallel lookups.
+- Uses **pywikibot** for Wikidata queries (legacy methods) and direct HTTP for batch operations.
+- `site_en`, `site_uz`, `site_wd` are **lazy properties** — pywikibot `Site()` objects are created only on first access, not at init time. This prevents `MaxlagTimeoutError` on startup.
+- `get_qid(title, site)` — resolves a Wikipedia title to its QID (pywikibot, legacy).
+- `get_sitelink(qid, target_site)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
+- `batch_resolve_redirects()` / `batch_get_qids_fast()` — direct HTTP API, used in Phase 1 (no pywikibot).
 - All results pass through `cache_manager` automatically.
 
 ### `core/cache_manager.py`

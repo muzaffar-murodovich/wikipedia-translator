@@ -32,14 +32,35 @@ class WikidataFetcher:
     def __init__(self, cache: WikiCache):
         """
         Initialize.
-        
+
         Args:
             cache: WikiCache instance
         """
         self.cache = cache
-        self.site_en = pywikibot.Site("en", "wikipedia")
-        self.site_uz = pywikibot.Site("uz", "wikipedia")
-        self.site_wd = pywikibot.Site("wikidata", "wikidata")
+        self._site_en = None
+        self._site_uz = None
+        self._site_wd = None
+
+    @property
+    def site_en(self):
+        """Lazy: en.wikipedia pywikibot Site."""
+        if self._site_en is None:
+            self._site_en = pywikibot.Site("en", "wikipedia")
+        return self._site_en
+
+    @property
+    def site_uz(self):
+        """Lazy: uz.wikipedia pywikibot Site."""
+        if self._site_uz is None:
+            self._site_uz = pywikibot.Site("uz", "wikipedia")
+        return self._site_uz
+
+    @property
+    def site_wd(self):
+        """Lazy: Wikidata pywikibot Site."""
+        if self._site_wd is None:
+            self._site_wd = pywikibot.Site("wikidata", "wikidata")
+        return self._site_wd
     
     # ==================== REDIRECT RESOLUTION ====================
     
@@ -127,34 +148,43 @@ class WikidataFetcher:
         """
         QID'dan sitelink'ni olish.
         Masalan: Q12345 → "Abdulloh Marufiy" (o'zbek'da)
-        
+
         Args:
             qid: Wikidata QID (Q12345)
             target_lang: Maqsad til (uz, en, ru)
-        
+
         Returns:
             Maqola sarlavhasi yoki None
         """
         target_site = f"{target_lang}wiki"
-        
-        # Cache'dan tekshirish
-        cached = self.cache.get_sitelink(qid, target_site)
-        if cached is not None:
-            return cached
-        
+
+        # Cache'dan tekshirish: raw dict orqali — "NONE" sentinel'ni ham topadi.
+        # cache.get_sitelink() "NONE" va "yo'q" uchun ikkalasi ham None qaytaradi,
+        # shuning uchun dict'ni to'g'ridan-to'g'ri tekshiramiz.
+        cache_key = f"{qid}:{target_site}"
+        if cache_key in self.cache.sitelink_cache:
+            return self.cache.get_sitelink(qid, target_site)
+
+        # Direct HTTP API (pywikibot ishlatilmaydi)
         try:
-            item = pywikibot.ItemPage(self.site_wd, qid)
-            item.get()
-            
-            sitelinks = item.sitelinks
+            data = self._wiki_api({
+                "action": "wbgetentities",
+                "ids": qid,
+                "props": "sitelinks",
+                "sitefilter": target_site,
+            }, domain="wikidata")
+
+            entity = data.get("entities", {}).get(qid, {})
+            sitelinks = entity.get("sitelinks", {})
+
             if target_site in sitelinks:
-                title = sitelinks[target_site].title
+                title = sitelinks[target_site]["title"]
                 self.cache.set_sitelink(qid, target_site, title)
                 return title
-            
+
             self.cache.set_sitelink(qid, target_site, None)
             return None
-        
+
         except Exception as e:
             logger.debug(f"Sitelink olishda xato: {qid} - {e}")
             self.cache.set_sitelink(qid, target_site, None)

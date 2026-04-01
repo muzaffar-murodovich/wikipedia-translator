@@ -52,3 +52,9 @@ Bunday holda havola nomini oʻzbek transliteratsiyasiga oʻzgartirish kerak:
 - Toʻgʻri: `[[Hishom al-Kalbiy]]`
 
 Pipe-li shaklda ham xuddi shunday: `[[Isʼhoq al-Mavsiliy|Isḥāq al-Mawṣilī]]` → `[[Isʼhoq al-Mavsiliy]]`
+
+## 5. Sanalar formati
+### 5a. Hijriy/milodiy yillar formati
+- Yil raqamlari "hijriy", "milodiy" soʻzlaridan keyin yoziladi va yil raqamidan keyin - (hyphen) belgisi yoziladi:
+- Notoʻgʻri: 132 hijriy/750 milodiy
+- Toʻgʻri: hijriy 132-yil/milodiy 750-yil

@@ -28,19 +28,19 @@ TARGET_LANG = "uz"  # O'zbek tiliga
 # Parallel Processing Sozlamalari
 # ============================================================
 
-MAX_WORKERS = 4                    # Parallel thread'lar soni
-REQUEST_DELAY = 0.1                # So'rovlar orasida 0.1 soniya
+MAX_WORKERS = 1                    # Parallel thread'lar soni
+REQUEST_DELAY = 1               # So'rovlar orasida 0.1 soniya
 
 # ============================================================
 # Pywikibot Konfiguratsiyasi
 # ============================================================
 
 PYWIKIBOT_CONFIG = {
-    "maxlag": 5,                   # Server lag 5s dan oshsa kutish
+    "maxlag": 10,                   # Server lag 5s dan oshsa kutish
     "put_throttle": 1,             # Edits orasida 1s kutish
     "noisysleep": False,           # "Sleeping..." xabarlarini yashirish
-    "max_retries": 3,              # 3 marta urinish
-    "retry_wait": 10,              # Xato bo'lsa 10s kutish
+    "max_retries": 8,              # 3 marta urinish
+    "retry_wait": 20,              # Xato bo'lsa 10s kutish
 }
 
 # ============================================================
