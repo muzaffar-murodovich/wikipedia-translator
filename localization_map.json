@@ -201,6 +201,8 @@
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
+    "<references group=\"\" responsive=\"0\"></references>": "",
+    
 
     "/ref>. (": "/ref> (",
 
