@@ -27,6 +27,7 @@
     "== Further reading ==": "== Qo‘shimcha o‘qish uchun ==",
     "== Qoʻshimcha oʻqish ==": "== Qoʻshimcha oʻqish uchun ==",
     "==Qo‘shimcha o‘qish==": "==Qo‘shimcha o‘qish uchun==",
+    "==Qoʻshimcha oʻqish==": "==Qoʻshimcha oʻqish uchun==",
 
     "[[muhaddis|hadis olimi]]": "[[muhaddis]]",
     "Ashariylar": "Ashʼariylar",
@@ -42,10 +43,6 @@
     "|Maturidiy]]": "|Moturidiy]]",
     "Baduspanidlar": "Baduspaniylar",
     "Ilxoniy": "Hulokuiy",
-
-    "Abd al-Aziz": "Abdulaziz",
-    "Abd ar-Rahmon": "Abdurahmon",
-    "Abd-Alloh": "Abdulloh",
 
     "Shayx al-Islom": "Shayx ul-islom",
     "Shams ad-Din": "Shamsiddin",
@@ -204,6 +201,8 @@
 
     "<references/>.": "<references/>",
     "<references />.":"<references />",
+    "<references group=\"\" responsive=\"0\"></references>": "",
+    
 
     "/ref>. (": "/ref> (",
 
