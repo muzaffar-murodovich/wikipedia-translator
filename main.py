@@ -26,7 +26,6 @@ from utils.file_handler import FileHandler
 from utils.localization import LocalizationManager
 from utils.logger import logger
 from core.cache_manager import WikiCache
-from core.quality_checker import QualityChecker
 from core.wikidata_fetcher import WikidataFetcher
 from core.translator import WikiTranslator
 from core.processor import WikiTextProcessor
@@ -62,7 +61,6 @@ def main(input_file: str, output_file: str):
     processor = WikiTextProcessor(fetcher, cache)
     translator = WikiTranslator()
     localization = LocalizationManager()
-    quality_checker = QualityChecker()
 
     logger.success(f"Tizimlar initialize qilindi")
     logger.info(f"  Cache: {cache.get_cache_size()['total']} yozuv")
@@ -115,14 +113,6 @@ def main(input_file: str, output_file: str):
         logger.critical(f"Localize phase'da xato: {e}")
         return False
 
-    logger.section("✅ QUALITY CHECK")
-
-    try:
-        issues = quality_checker.check(result)
-        quality_checker.print_report()
-    except Exception as e:
-        logger.warning(f"Quality check'da xato: {e}")
-
     logger.section("💾 SAVE")
     logger.info(f"Yozilmoqda: {output_file}")
 
@@ -156,8 +146,6 @@ def main(input_file: str, output_file: str):
         links=len(link_map),
         categories=len(cat_map),
         templates=len(tpl_map),
-        errors=quality_checker.get_error_count(),
-        warnings=quality_checker.get_warning_count(),
     )
 
     logger.stats(

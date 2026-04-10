@@ -22,8 +22,7 @@ wikipedia-translator/
 │   ├── translator.py         # AI translation engine (Claude & OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
-│   ├── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
-│   └── quality_checker.py    # Post-translation QA checks
+│   └── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
 └── utils/
     ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
     ├── localization.py       # Loads and applies localization_map.json
@@ -254,20 +253,13 @@ Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as
 
 There is no automated test suite. Validation is done by:
 
-1. **`core/quality_checker.py`** — runs automatically after Phase 4; checks for:
-   - Unresolved QID/template/category placeholders
-   - Empty wikilinks `[[]]`
-   - Bracket mismatches
-   - Unrestored reference hashes (`REF_xxxxxxxx`)
-2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules:
+1. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules:
    - Name transliteration (remove diacritics, -i -> -iy suffix)
    - Solar letter assimilation (al-Roziy -> ar-Roziy)
    - Lead sentence structure (em-dash after parenthetical)
    - Wikilink label/target consistency
    - Date formatting (hijriy/milodiy prefix, YYYY-yil)
-3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
-
-When adding new placeholder types or fixes, add corresponding checks to `quality_checker.py`.
+2. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
 
 ---
 
