@@ -28,7 +28,7 @@ output.log
 apicache/
 
 # Wiki cache (QID, sitelink, redirect, progress)
-# .wiki_cache/
+.wiki_cache/
 
 # Temp wiki files
 temp_wiki/
