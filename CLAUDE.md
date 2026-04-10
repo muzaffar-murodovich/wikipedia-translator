@@ -13,14 +13,11 @@ An **English-to-Uzbek Wikipedia article translator** that uses AI (Claude or Ope
 ```
 wikipedia-translator/
 ├── main.py                   # Entry point; orchestrates the 4-phase pipeline
-├── article_finder.py         # Auto-discovery: BFS category crawl + uz.wiki check
-├── seed_categories.json      # Root categories for auto-discovery (Islam topics)
 ├── config.py                 # All configuration (comments/values in Uzbek)
-├── localization_map.json     # 130+ term replacement rules (auto-loaded)
-├── config.env                # Environment variable overrides (empty template)
+├── localization_map.json     # 150+ term replacement rules (auto-loaded)
+├── translation_rules.md      # Manual post-translation review checklist
+├── .env                      # Environment variables (API keys — gitignored)
 ├── Pipfile / Pipfile.lock    # Python 3.12 dependencies (pipenv)
-├── input_en.txt              # English Wikipedia wikitext input (generated)
-├── output_uz.txt             # Translated Uzbek output
 ├── core/
 │   ├── translator.py         # AI translation engine (Claude & OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
@@ -36,85 +33,11 @@ wikipedia-translator/
 ```
 
 Cache lives in `.wiki_cache/` (gitignored) and grows automatically:
-- `qid_cache.json` — title → QID mappings
-- `sitelink_cache.json` — QID → Uzbek Wikipedia title mappings
+- `qid_cache.json` — title -> QID mappings
+- `sitelink_cache.json` — QID -> Uzbek Wikipedia title mappings
 - `redirect_cache.json` — redirect resolution results
-- `finder_progress.json` — article finder progress (discovered articles, scanned categories, subcategory tree)
 
----
-
-## Article Finder (`article_finder.py`)
-
-Automatically discovers English Wikipedia articles that are missing from Uzbek Wikipedia, using BFS crawling of seed categories.
-
-### Two modes
-
-```bash
-# Auto mode (no arguments) — crawls seed categories, shows pending articles
-python article_finder.py
-
-# Legacy mode — search a specific category
-python article_finder.py "11th-century Arabic-language poets"
-python article_finder.py "Islamic scholars" --max-size 50000
-```
-
-### How auto mode works
-
-```
-seed_categories.json (enabled, sorted by priority)
-    │
-    ├─ Load finder_progress.json
-    ├─ If pending articles exist → display them
-    └─ Otherwise → scan next categories:
-        ├─ crawl_category_tree() — BFS with depth limit
-        ├─ get_category_members() — articles per subcategory
-        ├─ check_uz_exists_batch_fast() — Wikidata batch API (50/request)
-        └─ Stop when 20+ pending articles found
-            │
-            ▼
-        Interactive menu:
-        [1-20] select article → download wikitext → save to input_en.txt
-        [n] next page | [p] prev page | [s] scan more | [i] stats | [0] quit
-```
-
-### Key functions
-
-| Function | Purpose |
-|---|---|
-| `_wiki_api()` | Centralized Wikipedia/Wikidata API helper |
-| `get_category_members()` | Fetch articles in a category (namespace=0) |
-| `get_subcategories()` | Fetch subcategories (`cmtype=subcat`) |
-| `crawl_category_tree()` | BFS crawl with depth limit and cycle prevention |
-| `check_uz_exists_batch_fast()` | Wikidata `wbgetentities` batch check (~50x faster than pywikibot) |
-| `estimate_trimmed()` | Trim article: keep intro + references, remove body sections |
-| `FinderProgress` class | Progress tracking via `.wiki_cache/finder_progress.json` |
-| `scan_categories()` | Orchestrates BFS crawl + article discovery |
-| `auto_discover()` | Main interactive loop |
-| `select_and_save()` | Download wikitext, offer trimming, save to `input_en.txt` |
-
-### `seed_categories.json`
-
-Defines root categories for auto-crawling. Each entry:
-```json
-{"name": "Islamic scholars", "depth": 2, "priority": 2, "enabled": true}
-```
-- `depth` — subcategory crawl limit (0 = only root)
-- `priority` — lower = scanned first
-- `enabled` — set `false` to skip without deleting
-
-### Article trimming
-
-For large articles (>`FINDER_TRIM_THRESHOLD` bytes), the finder offers to trim:
-1. Keep everything before the first `== ==` section header (intro)
-2. Remove body content
-3. Keep from `== References ==` (or Sources/Bibliography/Notes) onward
-4. Only if the trimmed result contains at least one `<ref`
-
-### Progress tracking (`FinderProgress`)
-
-Article statuses: `pending` → `translated` | `skipped` | `has_uz`
-
-Progress persists across runs in `.wiki_cache/finder_progress.json`. Previously scanned categories and known articles are not re-checked.
+Translated outputs are saved to `temp_wiki/` (gitignored) with the article name as filename.
 
 ---
 
@@ -122,31 +45,37 @@ Progress persists across runs in `.wiki_cache/finder_progress.json`. Previously 
 
 ```
 input_en.txt
-    │
-    ▼
+    |
+    v
 Phase 1 — PREPARE (core/processor.py)
-  • Replaces [[wikilinks]] with [[Q12345|label]] placeholders
-  • Replaces [[Category:…]] with ⟦CAT:Q12345|label⟧ placeholders
-  • Replaces {{templates}} with {{TPL:Q12345}} placeholders
-  • Compresses long <ref>…</ref> blocks to short hashes
-    │
-    ▼
+  - Removes empty template params, HTML comments
+  - Compresses long <ref>...</ref> blocks to short hashes
+  - Parses wikitext with mwparserfromhell
+  - Replaces [[wikilinks]] with [[Q12345|label]] placeholders
+  - Replaces [[Category:...]] with  CAT:Q12345|label  placeholders
+  - Replaces {{templates}} with {{TPL:Q12345}} placeholders
+  - Uses batch Wikidata API (50 titles/request) for redirects + QIDs
+    |
+    v
 Phase 2 — TRANSLATE (core/translator.py)
-  • Sends prepared wikitext to Claude or OpenAI
-  • Placeholders pass through untouched (model instructed to preserve them)
-    │
-    ▼
+  - Sends prepared wikitext to Claude or OpenAI
+  - Placeholders pass through untouched (model instructed to preserve them)
+    |
+    v
 Phase 3 — FINALIZE (core/processor.py)
-  • Resolves QID placeholders → Uzbek Wikipedia titles via Wikidata
-  • Falls back to English title when no Uzbek sitelink exists
-  • Restores compressed <ref> blocks
-    │
-    ▼
+  - Resolves [[Q12345|label]] -> Uzbek Wikipedia titles via Wikidata sitelinks
+  - Resolves CAT:Q12345 -> [[Turkum:...]] categories
+  - Resolves {{TPL:Q12345}} -> Uzbek template names (with fallback map)
+  - Falls back to English title when no Uzbek sitelink exists
+  - Restores compressed <ref> blocks
+  - Applies regex fixes (punctuation, year formatting, -lik suffix, etc.)
+    |
+    v
 Phase 4 — LOCALIZE (utils/localization.py)
-  • Applies 130+ regex replacements from localization_map.json
-  • Examples: [[Category: → [[Turkum:, == References == → == Manbalar ==
-    │
-    ▼
+  - Applies 150+ regex replacements from localization_map.json
+  - Examples: [[Category: -> [[Turkum:, == References == -> == Manbalar ==
+    |
+    v
 output_uz.txt  +  quality report
 ```
 
@@ -158,20 +87,23 @@ output_uz.txt  +  quality report
 # Install dependencies
 PIPENV_IGNORE_VIRTUALENVS=1 pipenv install
 
-# 1. Find an article to translate (auto mode)
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python article_finder.py
-# → discovers articles, saves selected one to input_en.txt
-
-# 2. Translate
+# Translate
 PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python main.py input_en.txt output_uz.txt
 ```
 
 > **Note:** `PIPENV_IGNORE_VIRTUALENVS=1` is required because pipenv detects any active virtualenv (e.g. from another project) and uses it instead of the project's own `.venv`. Without this flag, `pywikibot` and other project dependencies won't be found, causing `ModuleNotFoundError`.
 
+### Workflow
+
+1. Place English Wikipedia wikitext in `input_en.txt` (download via `utils/wiki_fetcher.py` or manually)
+2. Run `main.py input_en.txt output_uz.txt`
+3. Review `output_uz.txt` using the rules in `translation_rules.md`
+4. The output is also auto-saved to `temp_wiki/<Article Name>.txt`
+
 ### Batch translation (multiple articles)
 
-`main.py` faqat fayl yo'lini qabul qiladi — URL yoki maqola nomi bevosita uzatilmaydi.
-Ko'p maqola tarjima qilish uchun:
+`main.py` only accepts file paths — not URLs or article names directly.
+For multiple articles:
 
 ```python
 from utils.wiki_fetcher import fetch_wikitext
@@ -186,27 +118,18 @@ for title in articles:
     subprocess.run(["python", "main.py", "input_en.txt", f"output_{safe}.txt"])
 ```
 
-### Post-processing va temp_wiki
-
-Output faylni qoʻlda tahrir qilgandan keyin `temp_wiki/` dagi versiyani ham yangilash kerak:
-
-```bash
-cp output_falon.txt "temp_wiki/Maqola nomi.txt"
-```
-
-`temp_wiki/` `.gitignore`da — commit qilinmaydi.
-
 ### Required Environment Variables
 
-Set these in `config.env` or export before running:
+Set these in `.env` or export before running:
 
 | Variable | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` | Claude API key |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `PYWIKIBOT_NO_USER_CONFIG=2` | Prevent pywikibot from loading local config |
+| `OPENAI_API_KEY` | OpenAI API key (primary provider) |
+| `ANTHROPIC_API_KEY` | Claude API key (if using Claude provider) |
 
-`config.env` is gitignored — never commit API keys.
+The `.env` file is gitignored — never commit API keys.
+
+`PYWIKIBOT_NO_USER_CONFIG=2` is set automatically by `main.py` at startup.
 
 ---
 
@@ -214,13 +137,13 @@ Set these in `config.env` or export before running:
 
 All configuration is in a single file. Comments and string values are written in **Uzbek**. Key settings:
 
-- **AI provider / model**: switch between `claude-sonnet-4-6`, `gpt-4o`, etc.
-- **Source / target languages**: English → Uzbek (`uz`)
+- **AI provider / model**: `AI_PROVIDER` (`"openai"` or `"claude"`) — defaults to `"openai"` if not set. Models: `OPENAI_MODEL` (default `gpt-5.2`), `CLAUDE_MODEL` (default `claude-sonnet-4-6`).
+- **Source / target languages**: English (`en`) -> Uzbek (`uz`)
 - **Cache paths**: `.wiki_cache/` directory
-- **Pywikibot tuning**: set directly in `main.py` before import — `maxlag=5`, `put_throttle=1`, `max_retries=3`, `retry_wait=10`
-- **Translation system prompt**: instructs the model to preserve QID placeholders and transliterate names (w→v rule for Uzbek)
-- **Fallback template mappings**: when Wikidata has no sitelink
-- **Article Finder**: `SEED_CATEGORIES_FILE`, `FINDER_PROGRESS_FILE`, `FINDER_MAX_DEPTH=3`, `FINDER_PAGE_SIZE=20`, `FINDER_TRIM_THRESHOLD=6000` (bytes)
+- **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
+- **Translation prompts**: `TRANSLATION_SYSTEM_PROMPT` and `TRANSLATION_USER_PROMPT` — instruct the model to preserve QID/CAT/TPL/REF placeholders and transliterate names (w->v rule for Uzbek).
+- **Fallback template mappings**: `FALLBACK_TEMPLATE_MAP_EN2UZ` — when Wikidata has no sitelink for a template.
+- **Reference compression**: `REF_COMPRESS_THRESHOLD = 20` characters.
 
 Do **not** hardcode API keys into `config.py`. Use environment variables.
 
@@ -228,45 +151,63 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 
 ## Key Modules — Developer Notes
 
-### `core/translator.py`
-- `translate(text)` dispatches to `_translate_claude()` or `_translate_openai()` based on config.
-- Tracks `translation_count` and `total_tokens` statistics.
-- The system prompt explicitly tells the model to pass all `[[Q…]]`, `⟦CAT:…⟧`, and `{{TPL:…}}` placeholders through unchanged.
-
 ### `core/processor.py`
-- `prepare(wikitext)` returns `(processed_text, qid_map, ref_map)`.
-- `finalize(text, qid_map, ref_map)` resolves placeholders back to titles.
-- Reference compression threshold: 20 characters (configurable in the class).
+- Uses `mwparserfromhell` to parse and manipulate wikitext AST.
+- `prepare(raw_wikitext)` returns a **5-tuple**: `(prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map)`.
+- `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare.
+- Batch processing: `begin_batch()` / `end_batch()` on the cache defers disk writes until the entire prepare phase completes.
+
+### `core/translator.py`
+- `translate(text)` dispatches to `_translate_claude()` or `_translate_openai()` based on `config.AI_PROVIDER` (defaults to `"openai"`).
+- Tracks `translations` count and `tokens_used` statistics.
+- The system prompt explicitly tells the model to pass all `[[Q...]]`, `CAT:...`, and `{{TPL:...}}` placeholders through unchanged.
 
 ### `core/wikidata_fetcher.py`
-- Uses **pywikibot** for Wikidata queries (legacy methods) and direct HTTP for batch operations.
+- Uses **pywikibot** for legacy single-item queries and **direct HTTP** (`urllib`) for batch operations.
 - `site_en`, `site_uz`, `site_wd` are **lazy properties** — pywikibot `Site()` objects are created only on first access, not at init time. This prevents `MaxlagTimeoutError` on startup.
 - `get_qid(title, site)` — resolves a Wikipedia title to its QID (pywikibot, legacy).
-- `get_sitelink(qid, target_site)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
-- `batch_resolve_redirects()` / `batch_get_qids_fast()` — direct HTTP API, used in Phase 1 (no pywikibot).
+- `get_sitelink(qid, target_lang)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
+- `batch_resolve_redirects()` / `batch_get_qids_fast()` — direct HTTP API, used in Phase 1 (no pywikibot). Process 50 titles per request.
+- `batch_get_qids_fast()` also pre-caches uz and en sitelinks (bonus for Phase 3).
 - All results pass through `cache_manager` automatically.
 
 ### `core/cache_manager.py`
+- 3-tier cache: QID, sitelink, redirect.
 - Cache values of `"NONE"` mean "looked up and not found" — do not re-query.
-- Cache files are loaded at startup and saved at shutdown (and after major operations).
+- Cache keys: `"site_code:title"` for QID/redirect, `"QID:target_site"` for sitelink.
+- Supports deferred batch mode: `begin_batch()` / `end_batch()` to minimize disk writes.
 - `import_cache()` / `export_cache()` helpers for backup/restore.
 
 ### `utils/regex_patterns.py`
-- Central registry of all regex patterns used across the codebase.
-- `apply_all_fixes(text)` applies every fix in the correct order.
-- Contains Uzbek-specific fixes: `fix_lik_suffix_capitalization()`, `fix_year_with_dash()`.
+- Central registry of all regex patterns used across the codebase (`RegexPatterns` class).
+- `apply_all_fixes(text)` applies every fix in the correct order:
+  1. `fix_cite_book_script_title()` — `script-title` -> `title` in cite book templates
+  2. `fix_year_with_dash()` — `2025 yil` -> `2025-yil`
+  3. `fix_lik_suffix_capitalization()` — lowercase `-lik` suffix words mid-sentence
+  4. `fix_punctuation_with_refs()` — move punctuation after `<ref>` tags
+  5. `fix_punctuation_with_sfn()` — handle `{{sfn}}` template punctuation
 - Modify patterns here, not inline in other files.
 
 ### `utils/localization.py`
 - Reads `localization_map.json` at startup.
 - Patterns compiled once (longest-key-first for greedy matching).
 - `add_replacement()` / `remove_replacement()` for runtime edits.
-- To add a new term replacement, edit `localization_map.json` directly.
+- To add a new term replacement, edit `localization_map.json` directly — no code changes needed.
 
 ### `utils/logger.py`
-- Singleton — obtain via `Logger.get_instance()`.
+- Singleton — instantiated at module level as `logger = Logger()`.
+- Import with: `from utils.logger import logger`
 - Writes to both console and `translation.log`.
 - Use `logger.section()`, `logger.success()`, `logger.fail()`, `logger.stats()` for structured output.
+
+### `utils/wiki_fetcher.py`
+- `fetch_wikitext(article_name, lang)` — downloads wikitext via Wikipedia API. Returns `(wikitext, title)` tuple.
+- `extract_article_name(url)` — extracts article name from Wikipedia URL or returns input as-is.
+- `is_redirect(wikitext)` — checks if wikitext is a redirect page.
+
+### `utils/file_handler.py`
+- Static methods for all file I/O: `read_file()`, `write_file()`, `read_json()`, `write_json()`, `append_file()`, `create_backup()`.
+- All operations use UTF-8 encoding by default.
 
 ---
 
@@ -279,10 +220,11 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 | **Type hints** | Use `Optional`, `Dict`, `List`, `Tuple` from `typing` |
 | **Null sentinel** | Use the string `"NONE"` (not Python `None`) for cache "not found" entries |
 | **Error handling** | Catch exceptions, log with the logger, return a safe fallback — avoid bare `raise` in pipeline code |
-| **Logging** | Always use the singleton `Logger`; never use `print()` in library code |
+| **Logging** | Always use the singleton `logger` from `utils.logger`; never use `print()` in library code |
 | **Patterns** | New regex patterns go into `utils/regex_patterns.py`, not inline |
 | **Config** | New settings go into `config.py` only; no magic strings scattered in code |
 | **Design patterns** | Singleton (Logger), Manager (Cache, Localization), Pipeline (main.py phases) |
+| **Bold markup** | Use `'''` (curly/typographic apostrophe U+2019) for bold article names, not `'''` (straight U+0027) |
 
 ---
 
@@ -296,19 +238,12 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### New localization rule
 Add an entry to `localization_map.json`:
 ```json
-"English term": "Oʻzbekcha atama"
+"English term": "Ozbekcha atama"
 ```
 No code changes needed — it is loaded automatically.
 
 ### New regex fix
-Add a static method to `utils/regex_patterns.py` and call it from `apply_all_fixes()`.
-
-### New seed category
-Add an entry to `seed_categories.json`:
-```json
-{"name": "Category name", "depth": 2, "priority": 5, "enabled": true}
-```
-No code changes needed. Delete `.wiki_cache/finder_progress.json` to force a fresh scan, or let it scan incrementally.
+Add a function to `utils/regex_patterns.py` and call it from `apply_all_fixes()`.
 
 ### New cache tier
 Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as existing tiers.
@@ -319,13 +254,18 @@ Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as
 
 There is no automated test suite. Validation is done by:
 
-1. **`core/quality_checker.py`** — run automatically after Phase 4; reports:
+1. **`core/quality_checker.py`** — runs automatically after Phase 4; checks for:
    - Unresolved QID/template/category placeholders
-   - Empty wikilinks
+   - Empty wikilinks `[[]]`
    - Bracket mismatches
-   - Unrestore reference hashes
-2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules (name transliteration, solar letters, lead sentence structure, wikilink consistency).
-3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, translation counts).
+   - Unrestored reference hashes (`REF_xxxxxxxx`)
+2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules:
+   - Name transliteration (remove diacritics, -i -> -iy suffix)
+   - Solar letter assimilation (al-Roziy -> ar-Roziy)
+   - Lead sentence structure (em-dash after parenthetical)
+   - Wikilink label/target consistency
+   - Date formatting (hijriy/milodiy prefix, YYYY-yil)
+3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
 
 When adding new placeholder types or fixes, add corresponding checks to `quality_checker.py`.
 
@@ -335,8 +275,7 @@ When adding new placeholder types or fixes, add corresponding checks to `quality
 
 - Development branch naming: `claude/<description>-<sessionId>`
 - Commit messages are short and descriptive in English.
-- **Never commit** `config.env`, API keys, `output*.txt`, `*.log`, or `temp_wiki/` — all excluded by `.gitignore`.
-- `seed_categories.json` **is** committed — it defines which categories to crawl.
+- **Never commit** `.env`, API keys, `output*.txt`, `*.log`, or `temp_wiki/` — all excluded by `.gitignore`.
 - Push with: `git push -u origin <branch-name>`
 
 ---
@@ -345,13 +284,14 @@ When adding new placeholder types or fixes, add corresponding checks to `quality
 
 | Package | Purpose |
 |---|---|
+| `openai` | OpenAI API client (primary provider) |
 | `anthropic` | Claude API client |
-| `openai` | OpenAI API client |
 | `aiohttp` | Async HTTP for API calls |
 | `pywikibot` | Wikidata / Wikipedia API |
+| `mwparserfromhell` | Wikitext parser (used in processor.py) |
 | `python-telegram-bot` | Optional Telegram bot interface |
 | `claude-agent-sdk` | Claude Agent SDK integration |
 
 Python version: **3.12**
 
-Install: `pipenv install`
+Install: `PIPENV_IGNORE_VIRTUALENVS=1 pipenv install`

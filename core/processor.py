@@ -156,7 +156,7 @@ class WikiTextProcessor:
 
             prepared_text = str(code)
 
-            logger.success(f"Tayyorland: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
+            logger.success(f"Tayyorlandi: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
 
             return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
 
