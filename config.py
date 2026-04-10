@@ -65,7 +65,6 @@ FALLBACK_CATEGORY_PREFIX = "Turkum"
 # --- Logging Settings ---
 
 LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-LOG_FILE = Path("translation.log")
 
 # --- Translation Prompt Settings ---
 

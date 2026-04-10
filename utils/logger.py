@@ -3,19 +3,15 @@
 
 """
 utils/logger.py - Logging system
-Writes all messages to console and file.
+Writes all messages to console.
 """
 
 import logging
-from pathlib import Path
 import config
 
 
 class Logger:
-    """
-    Central logging system.
-    Writes to both console and file.
-    """
+    """Central logging system (console-only)."""
 
     _instance = None
 
@@ -34,28 +30,15 @@ class Logger:
         self.logger = logging.getLogger("WikiTranslator")
         self.logger.setLevel(self._get_log_level(config.LOG_LEVEL))
 
-        # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(self._get_log_level(config.LOG_LEVEL))
 
-        # File handler
-        file_handler = logging.FileHandler(
-            config.LOG_FILE,
-            encoding='utf-8'
-        )
-        file_handler.setLevel(logging.DEBUG)
-
-        # Formatter
         formatter = logging.Formatter(
             '%(asctime)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-
         console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-
         self.logger.addHandler(console_handler)
-        self.logger.addHandler(file_handler)
 
         self._initialized = True
         self.debug(f"Logger initialize qilindi. Level: {config.LOG_LEVEL}")
@@ -135,27 +118,6 @@ class Logger:
         self.info(f"\n📊 {title}:")
         for key, value in kwargs.items():
             self.info(f"  {key}: {value}")
-
-    def get_log_path(self) -> Path:
-        """Get log file path."""
-        return config.LOG_FILE
-
-    def clear_log(self) -> bool:
-        """Clear log file."""
-        try:
-            Path(config.LOG_FILE).unlink()
-            self.info("Log fayl tozalandi")
-            return True
-        except Exception as e:
-            self.error(f"Log faylni tozalashda xato: {e}")
-            return False
-
-    def get_log_size(self) -> int:
-        """Get log file size in bytes."""
-        try:
-            return Path(config.LOG_FILE).stat().st_size
-        except:
-            return 0
 
 
 # Global logger instance

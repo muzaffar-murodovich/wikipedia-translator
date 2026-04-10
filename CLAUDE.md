@@ -195,7 +195,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `utils/logger.py`
 - Singleton — instantiated at module level as `logger = Logger()`.
 - Import with: `from utils.logger import logger`
-- Writes to both console and `translation.log`.
+- Writes to console.
 - Use `logger.section()`, `logger.success()`, `logger.fail()`, `logger.stats()` for structured output.
 
 ### `utils/wiki_fetcher.py`
