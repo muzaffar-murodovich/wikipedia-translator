@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-utils/file_handler.py - Barcha file operatsiyalari
-Fayl o'qish, yozish, JSON bilan ishlash hammasini shu yerda.
+utils/file_handler.py - All file operations
+File reading, writing, and JSON handling in one place.
 """
 
 import json
@@ -12,19 +12,19 @@ from typing import Dict, Any, Optional
 
 
 class FileHandler:
-    """File I/O bilan ishlash uchun universal class."""
-    
+    """Universal class for file I/O operations."""
+
     @staticmethod
     def read_file(filepath: str, encoding: str = 'utf-8') -> str:
         """
-        Faylni o'qish.
-        
+        Read a file.
+
         Args:
-            filepath: Fayl yo'li
+            filepath: File path
             encoding: Encoding (default: utf-8)
-        
+
         Returns:
-            Fayl mazmuni yoki "" agar xato bo'lsa
+            File contents or "" on error
         """
         try:
             with open(filepath, 'r', encoding=encoding) as f:
@@ -35,19 +35,19 @@ class FileHandler:
         except Exception as e:
             print(f"❌ File o'qishda xato: {e}")
             return ""
-    
+
     @staticmethod
     def write_file(filepath: str, content: str, encoding: str = 'utf-8') -> bool:
         """
-        Faylga yozish.
-        
+        Write to a file.
+
         Args:
-            filepath: Fayl yo'li
-            content: Yozish kerak bo'lgan matn
+            filepath: File path
+            content: Text to write
             encoding: Encoding (default: utf-8)
-        
+
         Returns:
-            Muvaffaqiyat bo'lsa True, aks holda False
+            True on success, False otherwise
         """
         try:
             with open(filepath, 'w', encoding=encoding) as f:
@@ -56,17 +56,17 @@ class FileHandler:
         except Exception as e:
             print(f"❌ File yozishda xato: {e}")
             return False
-    
+
     @staticmethod
     def read_json(filepath: str) -> Dict[str, Any]:
         """
-        JSON faylni o'qish.
-        
+        Read a JSON file.
+
         Args:
-            filepath: JSON fayl yo'li
-        
+            filepath: JSON file path
+
         Returns:
-            Parsed JSON dict yoki {} agar xato bo'lsa
+            Parsed JSON dict or {} on error
         """
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -79,19 +79,19 @@ class FileHandler:
         except Exception as e:
             print(f"❌ JSON faylida xato: {e}")
             return {}
-    
+
     @staticmethod
     def write_json(filepath: str, data: Dict[str, Any], indent: int = 2) -> bool:
         """
-        JSON faylga yozish.
-        
+        Write to a JSON file.
+
         Args:
-            filepath: JSON fayl yo'li
-            data: Yozish kerak bo'lgan dict
+            filepath: JSON file path
+            data: Dict to write
             indent: JSON formatting (default: 2)
-        
+
         Returns:
-            Muvaffaqiyat bo'lsa True, aks holda False
+            True on success, False otherwise
         """
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -100,19 +100,19 @@ class FileHandler:
         except Exception as e:
             print(f"❌ JSON yozishda xato: {e}")
             return False
-    
+
     @staticmethod
     def append_file(filepath: str, content: str, encoding: str = 'utf-8') -> bool:
         """
-        Faylga qo'shimcha yozish (append).
-        
+        Append to a file.
+
         Args:
-            filepath: Fayl yo'li
-            content: Qo'shimcha yozish kerak bo'lgan matn
+            filepath: File path
+            content: Text to append
             encoding: Encoding (default: utf-8)
-        
+
         Returns:
-            Muvaffaqiyat bo'lsa True, aks holda False
+            True on success, False otherwise
         """
         try:
             with open(filepath, 'a', encoding=encoding) as f:
@@ -121,27 +121,27 @@ class FileHandler:
         except Exception as e:
             print(f"❌ File append'da xato: {e}")
             return False
-    
+
     @staticmethod
     def file_exists(filepath: str) -> bool:
-        """Fayl mavjud bo'lganini tekshirish."""
+        """Check if file exists."""
         return Path(filepath).exists()
-    
+
     @staticmethod
     def get_file_size(filepath: str) -> int:
-        """Fayl hajmini olish (byte'da)."""
+        """Get file size in bytes."""
         try:
             return Path(filepath).stat().st_size
         except:
             return 0
-    
+
     @staticmethod
     def read_lines(filepath: str, encoding: str = 'utf-8') -> list:
         """
-        Faylni qator-qator o'qish.
-        
+        Read file line by line.
+
         Returns:
-            Qatorlar ro'yxati
+            List of lines
         """
         try:
             with open(filepath, 'r', encoding=encoding) as f:
@@ -149,20 +149,20 @@ class FileHandler:
         except Exception as e:
             print(f"❌ File o'qishda xato: {e}")
             return []
-    
+
     @staticmethod
     def create_backup(filepath: str) -> Optional[str]:
         """
-        Faylning backup'ini yaratish.
-        
+        Create a backup of a file.
+
         Returns:
-            Backup fayl yo'li yoki None agar xato bo'lsa
+            Backup file path or None on error
         """
         try:
             path = Path(filepath)
             if not path.exists():
                 return None
-            
+
             backup_path = f"{filepath}.backup"
             content = path.read_text(encoding='utf-8')
             Path(backup_path).write_text(content, encoding='utf-8')
@@ -170,20 +170,20 @@ class FileHandler:
         except Exception as e:
             print(f"❌ Backup yaratishda xato: {e}")
             return None
-    
+
     @staticmethod
     def delete_file(filepath: str) -> bool:
-        """Faylni o'chirish."""
+        """Delete a file."""
         try:
             Path(filepath).unlink()
             return True
         except Exception as e:
             print(f"❌ File o'chirishda xato: {e}")
             return False
-    
+
     @staticmethod
     def ensure_dir_exists(dirpath: str) -> bool:
-        """Papka mavjud emasligini tekshirish va yaratish."""
+        """Ensure directory exists, create if needed."""
         try:
             Path(dirpath).mkdir(parents=True, exist_ok=True)
             return True

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-core/translator.py - Claude va OpenAI orqali tarjima
-AI_PROVIDER = "claude" yoki "openai" deb config'da sozlang.
+core/translator.py - Translation via Claude and OpenAI
+Set AI_PROVIDER = "claude" or "openai" in config.
 """
 
 from typing import Optional
@@ -13,8 +13,8 @@ from utils.logger import logger
 
 class WikiTranslator:
     """
-    Wikipedia maqolalarini o'zbek tiliga tarjima qilish.
-    Claude yoki OpenAI — config.AI_PROVIDER ga qarab tanlanadi.
+    Translate Wikipedia articles to Uzbek.
+    Uses Claude or OpenAI based on config.AI_PROVIDER.
     """
 
     def __init__(self):
@@ -34,13 +34,13 @@ class WikiTranslator:
 
     def translate(self, prepared_text: str) -> Optional[str]:
         """
-        Matnni o'zbek tiliga tarjima qilish.
+        Translate text to Uzbek.
 
         Args:
-            prepared_text: Tayyorlangan matn (placeholder'lar bilan)
+            prepared_text: Prepared text (with placeholders)
 
         Returns:
-            Tarjima qilingan matn yoki None
+            Translated text or None
         """
         user_prompt = config.TRANSLATION_USER_PROMPT.format(text=prepared_text)
 
@@ -54,7 +54,7 @@ class WikiTranslator:
             return None
 
     def _translate_claude(self, user_prompt: str) -> Optional[str]:
-        """Claude API orqali tarjima."""
+        """Translate via Claude API."""
         logger.info(f"Tarjima qilinmoqda (Claude: {self.model})...")
 
         response = self.client.messages.create(
@@ -73,7 +73,7 @@ class WikiTranslator:
         return translated
 
     def _translate_openai(self, user_prompt: str) -> Optional[str]:
-        """OpenAI API orqali tarjima."""
+        """Translate via OpenAI API."""
         logger.info(f"Tarjima qilinmoqda (OpenAI: {self.model})...")
 
         response = self.client.chat.completions.create(

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-utils/wiki_fetcher.py - Wikipedia'dan wikitext olish
-URL yoki maqola nomi orqali inglizcha wikitext yuklab olish.
+utils/wiki_fetcher.py - Fetch wikitext from Wikipedia
+Download English wikitext by URL or article name.
 """
 
 import re
@@ -15,39 +15,38 @@ from typing import Optional, Tuple
 
 def extract_article_name(url: str) -> Optional[str]:
     """
-    Wikipedia URL'dan maqola nomini ajratib olish.
+    Extract article name from a Wikipedia URL.
 
-    Qo'llab-quvvatlanadigan formatlar:
+    Supported formats:
       https://en.wikipedia.org/wiki/Albert_Einstein
       https://en.m.wikipedia.org/wiki/Albert_Einstein
-      Albert Einstein   (to'g'ridan-to'g'ri nom)
+      Albert Einstein   (plain article name)
 
     Returns:
-        Maqola nomi yoki None
+        Article name or None
     """
     url = url.strip()
 
-    # URL ekanligini tekshirish
     if "wikipedia.org" in url:
         match = re.search(r"wikipedia\.org/wiki/(.+?)(?:\?|#|$)", url)
         if match:
             return urllib.parse.unquote(match.group(1)).replace("_", " ")
         return None
 
-    # To'g'ridan-to'g'ri maqola nomi
+    # Plain article name
     return url
 
 
 def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], Optional[str]]:
     """
-    Wikipedia API orqali wikitext yuklab olish.
+    Download wikitext via Wikipedia API.
 
     Args:
-        article_name: Maqola nomi (masalan: "Albert Einstein")
-        lang: Til kodi (default: "en")
+        article_name: Article name (e.g. "Albert Einstein")
+        lang: Language code (default: "en")
 
     Returns:
-        (wikitext, normalized_title) yoki (None, None) agar xato bo'lsa
+        (wikitext, normalized_title) or (None, None) on error
     """
     encoded = urllib.parse.quote(article_name)
     api_url = (
@@ -70,7 +69,6 @@ def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], 
 
         page = pages[0]
 
-        # Maqola topilmadi
         if page.get("missing"):
             return None, None
 
@@ -86,10 +84,10 @@ def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], 
 
 def is_redirect(wikitext: str) -> Optional[str]:
     """
-    Wikitext redirect ekanligini tekshirish.
+    Check if wikitext is a redirect page.
 
     Returns:
-        Redirect target sarlavhasi yoki None
+        Redirect target title or None
     """
     match = re.match(r"#(?:REDIRECT|redirect)\s*\[\[(.+?)(?:\|.+?)?\]\]", wikitext.strip())
     if match:

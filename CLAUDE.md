@@ -215,7 +215,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 
 | Convention | Detail |
 |---|---|
-| **Language** | File/class/function names in English; comments, docstrings, error messages in Uzbek |
+| **Language** | File/class/function names in English; comments and docstrings in English; user-facing error messages and log output in Uzbek |
 | **Encoding** | UTF-8 everywhere; always open files with `encoding="utf-8"` |
 | **Type hints** | Use `Optional`, `Dict`, `List`, `Tuple` from `typing` |
 | **Null sentinel** | Use the string `"NONE"` (not Python `None`) for cache "not found" entries |

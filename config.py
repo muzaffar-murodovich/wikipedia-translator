@@ -2,50 +2,40 @@
 # -*- coding: utf-8 -*-
 
 """
-config.py - Butun loyiha uchun markaziy konfiguratsiya
-Barcha sozlamalar shu yerda. Bosh fayllarni tahrirlash shart emas!
+config.py - Central configuration for the entire project
+All settings are here. No need to edit main files!
 """
 
 import os
 from pathlib import Path
 
-# ============================================================
-# OpenAI Sozlamalari
-# ============================================================
+# --- OpenAI Settings ---
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
-# ============================================================
-# Wikipedia Sozlamalari
-# ============================================================
+# --- Wikipedia Settings ---
 
 WIKIPEDIA_FAMILY = "wikipedia"
-SOURCE_LANG = "en"  # Inglizcha'dan
-TARGET_LANG = "uz"  # O'zbek tiliga
+SOURCE_LANG = "en"  # Source language
+TARGET_LANG = "uz"  # Target language
 
-# ============================================================
-# Parallel Processing Sozlamalari
-# ============================================================
+# --- Parallel Processing Settings ---
 
-MAX_WORKERS = 1                    # Parallel thread'lar soni
-REQUEST_DELAY = 1               # So'rovlar orasida 0.1 soniya
+MAX_WORKERS = 1                    # Number of parallel threads
+REQUEST_DELAY = 1                  # Delay between requests (seconds)
 
-# ============================================================
-# Pywikibot Konfiguratsiyasi
-# ============================================================
+# --- Pywikibot Configuration ---
 
 PYWIKIBOT_CONFIG = {
-    "maxlag": 10,                   # Server lag 5s dan oshsa kutish
-    "put_throttle": 1,             # Edits orasida 1s kutish
-    "noisysleep": False,           # "Sleeping..." xabarlarini yashirish
-    "max_retries": 8,              # 3 marta urinish
-    "retry_wait": 20,              # Xato bo'lsa 10s kutish
+    "maxlag": 10,                   # Wait if server lag exceeds 5s
+    "put_throttle": 1,             # Wait 1s between edits
+    "noisysleep": False,           # Suppress "Sleeping..." messages
+    "max_retries": 8,              # Retry attempts
+    "retry_wait": 20,              # Wait time after error (seconds)
 }
 
-# ============================================================
-# Cache Sozlamalari
-# ============================================================
+# --- Cache Settings ---
 
 CACHE_DIR = Path(".wiki_cache")
 CACHE_DIR.mkdir(exist_ok=True)
@@ -54,21 +44,15 @@ QID_CACHE_FILE = CACHE_DIR / "qid_cache.json"
 SITELINK_CACHE_FILE = CACHE_DIR / "sitelink_cache.json"
 REDIRECT_CACHE_FILE = CACHE_DIR / "redirect_cache.json"
 
-# ============================================================
-# Localization Sozlamalari
-# ============================================================
+# --- Localization Settings ---
 
 LOCALIZATION_FILE = Path("localization_map.json")
 
-# ============================================================
-# Reference Compression
-# ============================================================
+# --- Reference Compression ---
 
-REF_COMPRESS_THRESHOLD = 20  # 20 belgidan uzun ref'larni siqish
+REF_COMPRESS_THRESHOLD = 20  # Compress refs longer than 20 characters
 
-# ============================================================
-# Fallback Mappinglar
-# ============================================================
+# --- Fallback Mappings ---
 
 FALLBACK_TEMPLATE_MAP_EN2UZ = {
     "infobox person": "Shaxs bilgiqutisi",
@@ -78,16 +62,12 @@ FALLBACK_TEMPLATE_MAP_EN2UZ = {
 
 FALLBACK_CATEGORY_PREFIX = "Turkum"
 
-# ============================================================
-# Logging Sozlamalari
-# ============================================================
+# --- Logging Settings ---
 
 LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_FILE = Path("translation.log")
 
-# ============================================================
-# Tarjima Prompt Sozlamalari
-# ============================================================
+# --- Translation Prompt Settings ---
 
 TRANSLATION_SYSTEM_PROMPT = "Siz oʻzbekcha Vikipediya muharririsiz."
 
@@ -110,9 +90,7 @@ Matn:
 ```{text}```
 """
 
-# ============================================================
-# Xatolik Xabarlari
-# ============================================================
+# --- Error Messages ---
 
 ERROR_MESSAGES = {
     "maxlag_timeout": "⚠️  Wikipedia serverlari band. Keyinroq urinib ko'ring.",
@@ -122,19 +100,7 @@ ERROR_MESSAGES = {
     "json_error": "❌ JSON formatida xato.",
 }
 
-# ============================================================
-# Qo'shimcha Sozlamalar
-# ============================================================
+# --- Additional Settings ---
 
-VERBOSE = True  # Batafsil xabarlar chiqarish
-DEBUG = False   # Debug rejimi
-
-# ============================================================
-# Article Finder Sozlamalari
-# ============================================================
-
-SEED_CATEGORIES_FILE = Path("seed_categories.json")
-FINDER_PROGRESS_FILE = CACHE_DIR / "finder_progress.json"
-FINDER_MAX_DEPTH = 3              # Default subcategory chuqurligi
-FINDER_PAGE_SIZE = 20             # Bir sahifada ko'rsatiladigan maqolalar soni
-FINDER_TRIM_THRESHOLD = 9000    # Qisqartirish chegarasi (bayt)
+VERBOSE = True  # Enable verbose output
+DEBUG = False   # Debug mode
