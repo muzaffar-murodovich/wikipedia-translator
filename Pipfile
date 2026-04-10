@@ -7,9 +7,7 @@ name = "pypi"
 openai = "*"
 aiohttp = "*"
 telegram = "*"
-anthropic = "*"
 python-telegram-bot = "*"
-claude-agent-sdk = "*"
 pywikibot = "*"
 
 [dev-packages]

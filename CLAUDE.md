@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-An **English-to-Uzbek Wikipedia article translator** that uses AI (Claude or OpenAI) to translate wikitext while preserving MediaWiki markup, wikilinks, templates, and categories. It resolves article links via Wikidata so that internal links point to the correct Uzbek Wikipedia equivalents.
+An **English-to-Uzbek Wikipedia article translator** that uses OpenAI to translate wikitext while preserving MediaWiki markup, wikilinks, templates, and categories. It resolves article links via Wikidata so that internal links point to the correct Uzbek Wikipedia equivalents.
 
 ---
 
@@ -19,7 +19,7 @@ wikipedia-translator/
 ├── .env                      # Environment variables (API keys — gitignored)
 ├── Pipfile / Pipfile.lock    # Python 3.12 dependencies (pipenv)
 ├── core/
-│   ├── translator.py         # AI translation engine (Claude & OpenAI)
+│   ├── translator.py         # AI translation engine (OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
 │   └── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
@@ -57,7 +57,7 @@ Phase 1 — PREPARE (core/processor.py)
     |
     v
 Phase 2 — TRANSLATE (core/translator.py)
-  - Sends prepared wikitext to Claude or OpenAI
+  - Sends prepared wikitext to OpenAI
   - Placeholders pass through untouched (model instructed to preserve them)
     |
     v
@@ -123,8 +123,7 @@ Set these in `.env` or export before running:
 
 | Variable | Purpose |
 |---|---|
-| `OPENAI_API_KEY` | OpenAI API key (primary provider) |
-| `ANTHROPIC_API_KEY` | Claude API key (if using Claude provider) |
+| `OPENAI_API_KEY` | OpenAI API key |
 
 The `.env` file is gitignored — never commit API keys.
 
@@ -136,7 +135,7 @@ The `.env` file is gitignored — never commit API keys.
 
 All configuration is in a single file. Comments and string values are written in **Uzbek**. Key settings:
 
-- **AI provider / model**: `AI_PROVIDER` (`"openai"` or `"claude"`) — defaults to `"openai"` if not set. Models: `OPENAI_MODEL` (default `gpt-5.2`), `CLAUDE_MODEL` (default `claude-sonnet-4-6`).
+- **AI model**: `OPENAI_MODEL` (default `gpt-5.2`).
 - **Source / target languages**: English (`en`) -> Uzbek (`uz`)
 - **Cache paths**: `.wiki_cache/` directory
 - **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
@@ -157,7 +156,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Batch processing: `begin_batch()` / `end_batch()` on the cache defers disk writes until the entire prepare phase completes.
 
 ### `core/translator.py`
-- `translate(text)` dispatches to `_translate_claude()` or `_translate_openai()` based on `config.AI_PROVIDER` (defaults to `"openai"`).
+- `translate(text)` sends prepared wikitext to OpenAI for translation.
 - Tracks `translations` count and `tokens_used` statistics.
 - The system prompt explicitly tells the model to pass all `[[Q...]]`, `CAT:...`, and `{{TPL:...}}` placeholders through unchanged.
 
@@ -229,11 +228,6 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 
 ## Adding Features
 
-### New AI provider
-1. Add credentials and model name to `config.py`.
-2. Add a `_translate_<provider>()` method in `core/translator.py`.
-3. Update the dispatch logic in `translate()`.
-
 ### New localization rule
 Add an entry to `localization_map.json`:
 ```json
@@ -277,12 +271,10 @@ There is no automated test suite. Validation is done by:
 | Package | Purpose |
 |---|---|
 | `openai` | OpenAI API client (primary provider) |
-| `anthropic` | Claude API client |
 | `aiohttp` | Async HTTP for API calls |
 | `pywikibot` | Wikidata / Wikipedia API |
 | `mwparserfromhell` | Wikitext parser (used in processor.py) |
 | `python-telegram-bot` | Optional Telegram bot interface |
-| `claude-agent-sdk` | Claude Agent SDK integration |
 
 Python version: **3.12**
 
