@@ -38,6 +38,9 @@ input_en.txt
 output_uz.txt
 *.txt
 
+# Category checker outputs
+additional-tools/category_check_*.json
+
 # Runtime control files
 stop.flag
 

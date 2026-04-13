@@ -23,12 +23,14 @@ wikipedia-translator/
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
 │   └── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
-└── utils/
-    ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
-    ├── localization.py       # Loads and applies localization_map.json
-    ├── logger.py             # Singleton logger (console + file)
-    ├── regex_patterns.py     # Centralised regex patterns and fix functions
-    └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
+├── utils/
+│   ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
+│   ├── localization.py       # Loads and applies localization_map.json
+│   ├── logger.py             # Singleton logger (console + file)
+│   ├── regex_patterns.py     # Centralised regex patterns and fix functions
+│   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
+└── additional-tools/
+    └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
 
 Cache lives in `.wiki_cache/` (gitignored) and grows automatically:
@@ -240,6 +242,30 @@ Add a function to `utils/regex_patterns.py` and call it from `apply_all_fixes()`
 
 ### New cache tier
 Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as existing tiers.
+
+---
+
+## Additional Tools
+
+### `additional-tools/category-checker.py`
+
+Standalone CLI tool that checks which articles in an English Wikipedia category are **missing** from Uzbek Wikipedia (via Wikidata sitelinks). Outputs only missing articles to console and JSON.
+
+```bash
+# Basic usage
+python additional-tools/category-checker.py "11th-century Arabic-language poets"
+
+# Open first 5 missing articles in browser
+python additional-tools/category-checker.py "Uzbek writers" --open 5
+
+# Open articles 10-20 in browser
+python additional-tools/category-checker.py "Uzbek writers" --open 10-20
+```
+
+- Accepts category name with or without `"Category:"` prefix.
+- Uses `WikidataFetcher` and `WikiCache` from the main project (batch API, 50 titles/request).
+- JSON output saved to `additional-tools/category_check_<name>.json` (gitignored).
+- **Note:** The tool checks article **existence** on uz.wiki (Wikidata sitelink), not category membership. An article may exist on uz.wiki but be in a different category.
 
 ---
 
