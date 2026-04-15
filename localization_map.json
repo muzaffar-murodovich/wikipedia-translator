@@ -8,6 +8,7 @@
     "== Biografiya ==": "== Hayoti ==",
     "==Biografiya==": "== Hayoti ==",
     "== Tarjimai hol ==": "== Hayoti ==",
+    "==Tarjimai hol==": "== Hayoti ==",
     "== Oila ==": "== Oilasi ==",
     "==Oila==": "== Oilasi ==",
     "= Shuningdek qarang =": "= Yana qarang =",
@@ -22,6 +23,7 @@
     "== Bibliography ==": "==Adabiyotlar==",
     "=== Bibliografiya ===": "==Adabiyotlar==",
     "==Bibliografiya==": "==Adabiyotlar==",
+    "== Bibliografiya ==": "== Adabiyotlar ==",
     "Tashqi havolalar =": "Havolalar =",
     "Tashqi havolalar=": "Havolalar=",
     "=Tashqi manbalar=": "= Havolalar =",
@@ -47,6 +49,8 @@
     "|Maturidiy]]": "|Moturidiy]]",
     "Baduspanidlar": "Baduspaniylar",
     "Ilxoniy": "Hulokuiy",
+
+    "Abd Alloh": "Abdulloh",
 
     "Shayx al-Islom": "Shayx ul-islom",
     "Shams ad-Din": "Shamsiddin",
@@ -221,6 +225,7 @@
     "|vaf.]": "|vafoti]",
     "ref>. – ": "ref> — ",
     ")ning": ") ning",
+    "(h. ": "(hukmronligi ",
     "|Sanʼa]": "]",
     "|Sanoʼa]]": "]]",
     "|Siston]": "]",
