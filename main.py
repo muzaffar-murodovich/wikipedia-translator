@@ -29,6 +29,7 @@ from core.cache_manager import WikiCache
 from core.wikidata_fetcher import WikidataFetcher
 from core.translator import WikiTranslator
 from core.processor import WikiTextProcessor
+from core.reviewer import WikiReviewer
 
 
 def main(input_file: str, output_file: str):
@@ -61,6 +62,7 @@ def main(input_file: str, output_file: str):
     processor = WikiTextProcessor(fetcher, cache)
     translator = WikiTranslator()
     localization = LocalizationManager()
+    reviewer = WikiReviewer()
 
     logger.success(f"Tizimlar initialize qilindi")
     logger.info(f"  Cache: {cache.get_cache_size()['total']} yozuv")
@@ -112,6 +114,25 @@ def main(input_file: str, output_file: str):
     except Exception as e:
         logger.critical(f"Localize phase'da xato: {e}")
         return False
+    
+    logger.section("🔍 PHASE 5: REVIEW")
+    review_start = time.time()
+ 
+    if reviewer.is_available():
+        try:
+            reviewed = reviewer.review(result)
+            if reviewed:
+                result = reviewed
+            else:
+                logger.warning("Tahrir muvaffaq bo'lmadi — Phase 4 natijasi saqlanadi")
+            review_time = time.time() - review_start
+            logger.info(f"  ⏱️  Vaqt: {review_time:.2f}s")
+        except Exception as e:
+            logger.critical(f"Review phase'da xato: {e}")
+            review_time = time.time() - review_start
+    else:
+        logger.warning("Phase 5 o'tkazib yuborildi (qoidalar fayli topilmadi)")
+        review_time = 0.0
 
     logger.section("💾 SAVE")
     logger.info(f"Yozilmoqda: {output_file}")
@@ -155,11 +176,15 @@ def main(input_file: str, output_file: str):
         finalize=f"{final_time:.2f}s",
         localize=f"{loc_time:.2f}s",
         total=f"{elapsed:.2f}s",
+        review=f"{review_time:.2f}s",
     )
 
     cache.print_stats()
     translator.print_stats()
     localization.print_stats()
+
+    # print_stats qatorlari oxiriga:
+    reviewer.print_stats()
 
     logger.success("Tarjima muvaffaqiyatli tugadi!")
     logger.info(f"Natija: {output_file}\n")

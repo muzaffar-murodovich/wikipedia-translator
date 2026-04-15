@@ -103,3 +103,27 @@ ERROR_MESSAGES = {
 
 VERBOSE = True  # Enable verbose output
 DEBUG = False   # Debug mode
+
+# --- Review Prompt Settings (Phase 5) ---
+# config.py ga "Translation Prompt Settings" blokidan KEYIN qo'shing
+
+REVIEW_SYSTEM_PROMPT = "Siz oʻzbekcha Vikipediya muharririsiz."
+
+REVIEW_USER_PROMPT = """
+Quyidagi oʻzbekcha wikitext'ni berilgan qoidalar asosida tekshiring va tuzating.
+
+QOIDALAR:
+{rules}
+
+---
+
+MUHIM CHEKLOVLAR:
+1) Faqat qoidalarda koʻrsatilgan xatolarni tuzating. Boshqa hech narsani oʻzgartirmang.
+2) Wikitext tuzilishini ({{...}}, [[...]], <ref>...</ref> va boshqalar) buzmang.
+3) Izoh yozmang. Faqat tuzatilgan wikitext chiqaring.
+
+MATN:
+```
+{text}
+```
+"""
