@@ -22,7 +22,8 @@ wikipedia-translator/
 │   ├── translator.py         # AI translation engine (OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
-│   └── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
+│   ├── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
+│   └── reviewer.py           # AI post-translation review (Phase 5)
 ├── utils/
 │   ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
 │   ├── localization.py       # Loads and applies localization_map.json
@@ -42,7 +43,7 @@ Translated outputs are saved to `temp_wiki/` (gitignored) with the article name 
 
 ---
 
-## Translation Pipeline (4 phases)
+## Translation Pipeline (5 phases)
 
 ```
 input_en.txt
@@ -75,6 +76,12 @@ Phase 3 — FINALIZE (core/processor.py)
 Phase 4 — LOCALIZE (utils/localization.py)
   - Applies 150+ regex replacements from localization_map.json
   - Examples: [[Category: -> [[Turkum:, == References == -> == Manbalar ==
+    |
+    v
+Phase 5 — REVIEW (core/reviewer.py)
+  - Sends localized wikitext to OpenAI with translation_rules.md as rules
+  - Model fixes only rule violations; wikitext structure preserved
+  - Skipped if translation_rules.md is missing
     |
     v
 output_uz.txt  +  quality report
@@ -142,6 +149,7 @@ All configuration is in a single file. Comments and string values are written in
 - **Cache paths**: `.wiki_cache/` directory
 - **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
 - **Translation prompts**: `TRANSLATION_SYSTEM_PROMPT` and `TRANSLATION_USER_PROMPT` — instruct the model to preserve QID/CAT/TPL/REF placeholders and transliterate names (w->v rule for Uzbek).
+- **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure.
 - **Fallback template mappings**: `FALLBACK_TEMPLATE_MAP_EN2UZ` — when Wikidata has no sitelink for a template.
 - **Reference compression**: `REF_COMPRESS_THRESHOLD = 20` characters.
 
@@ -170,6 +178,12 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `batch_resolve_redirects()` / `batch_get_qids_fast()` — direct HTTP API, used in Phase 1 (no pywikibot). Process 50 titles per request.
 - `batch_get_qids_fast()` also pre-caches uz and en sitelinks (bonus for Phase 3).
 - All results pass through `cache_manager` automatically.
+
+### `core/reviewer.py`
+- Phase 5 post-translation review via OpenAI.
+- Loads `translation_rules.md` at init; if missing, `is_available()` returns `False` and the phase is skipped in `main.py`.
+- `review(text)` sends the localized wikitext + rules to the model using `REVIEW_SYSTEM_PROMPT` / `REVIEW_USER_PROMPT`, strips markdown code fences from the response, and returns the corrected text (or `None` on failure).
+- Tracks `reviews` count and `tokens_used`; `print_stats()` emits a stats block at end of run.
 
 ### `core/cache_manager.py`
 - 3-tier cache: QID, sitelink, redirect.
