@@ -71,6 +71,13 @@ class WikiReviewer:
             )
 
             reviewed = response.choices[0].message.content
+
+            reviewed = response.choices[0].message.content.strip()
+            if reviewed.startswith("```"):
+                reviewed = reviewed.split("\n", 1)[-1]
+            if reviewed.endswith("```"):
+                reviewed = reviewed.rsplit("\n", 1)[0]
+            reviewed = reviewed.strip()
             self.stats["reviews"] += 1
             if hasattr(response, "usage"):
                 self.stats["tokens_used"] += response.usage.total_tokens
