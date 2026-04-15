@@ -35,10 +35,10 @@ Har bir tarjimadan keyin quyidagi qoidalar asosida output faylni tekshirish kera
 - AI koʻpincha inglizcha uslubda vergul bilan yozadi — buni tuzatish kerak
 
 **Notoʻgʻri (inglizcha uslub):**
-`'''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan), Ismaíl al-Zafir nomlari bilan ham tanilgan, Toledo taifasining birinchi hukmdori`
+`'''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan), '''Ismoil az-Zafir''' nomi bilan ham tanilgan, Toledo taifasining birinchi hukmdori`
 
 **Toʻgʻri (oʻzbekcha uslub):**
-`'''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan; Ismaíl al-Zafir nomlari bilan ham tanilgan) — Toledo taifasining birinchi hukmdori`
+`'''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan; '''Ismoil az-Zafir''' nomi bilan ham tanilgan) — Toledo taifasining birinchi hukmdori`
 
 ## 4. Ichki havola matni muvofiqligi
 - Agar `[[Sahifa nomi|koʻrinadigan matn]]` shaklida havola boʻlsa, koʻrinadigan matn sahifa nomi bilan mos boʻlishi kerak
