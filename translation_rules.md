@@ -10,6 +10,7 @@ Har bir tarjimadan keyin quyidagi qoidalar asosida output faylni tekshirish kera
 - Oxirgi `-ī` qoʻshimchasi oʻzbekchada `-iy` boʻladi: `al-ʿĀmirī` → `al-Amiriy`
 - Elide shaklidagi artikl: `Abū l-Nام` → `Abu al-Nom` (ya'ni `l-` → `al-` shaklida yoziladi)
 - Uzilgan ismlar: `Abd al-Rahmon` → `Abdurahmon`
+- Ayrim ismlarni oʻzbekchalashtirish kerak. Masalan: `Ghamr` → `Gʻomr`, `Abdallah` (yoki `Abd Allah`) → `Abdulloh`
 - Faqat asosiy matn va **sarlavhalarda** tuzatiladi. `<ref>`, URL, andoza parametrlari ichida OʻZGARTIRILMAYDI
 
 ## 2. Shamsiy harflar bilan "al-" artikli (manbalar ichida emas)
