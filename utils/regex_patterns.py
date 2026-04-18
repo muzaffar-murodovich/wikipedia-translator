@@ -244,15 +244,17 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
     )
 
     # 6. Add period after normal ref if missing (when followed by space/newline, not punctuation/markup)
+    # Skip if next word starts with a lowercase letter (sentence continues, e.g. "<ref /> va ...")
     wikitext = re.sub(
-        r'(</ref>)(\s+)(?![.,;!?<{\[])',
+        r'(</ref>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
         r'\1.\2',
         wikitext
     )
 
     # 7. Add period after self-closing ref if missing
+    # Skip if next word starts with a lowercase letter (sentence continues)
     wikitext = re.sub(
-        r'(/\s*>)(\s+)(?![.,;!?<{\[])',
+        r'(/\s*>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
         r'\1.\2',
         wikitext
     )
