@@ -1,7 +1,5 @@
 # Tarjima tekshirish qoidalari
 
-Har bir tarjimadan keyin quyidagi qoidalar asosida output faylni tekshirish kerak.
-
 ## 1. Ism transliteratsiyasi (manbalar ichida emas)
 - Arab ismlari lotin harflari bilan oddiy shaklda yozilishi kerak
 - Diakritik belgilar olib tashlanadi: `ā` → `a`, `ī` → `i`, `ū` → `u`, `ʿ` → olib tashlanadi, `ʾ` → olib tashlanadi

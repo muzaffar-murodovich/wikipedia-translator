@@ -14,6 +14,9 @@ from pathlib import Path
 import os
 os.environ.setdefault("PYWIKIBOT_NO_USER_CONFIG", "2")
 
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 import pywikibot
 pywikibot.config.maxlag = 5
 pywikibot.config.put_throttle = 1
