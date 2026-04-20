@@ -13,6 +13,7 @@ from pathlib import Path
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
 
 # --- Wikipedia Settings ---
 
@@ -107,10 +108,9 @@ DEBUG = False   # Debug mode
 # --- Review Prompt Settings (Phase 5) ---
 # config.py ga "Translation Prompt Settings" blokidan KEYIN qo'shing
 
-REVIEW_SYSTEM_PROMPT = "Siz oʻzbekcha Vikipediya muharririsiz."
+REVIEW_SYSTEM_PROMPT = """Siz oʻzbekcha Vikipediya muharririsiz.
 
-REVIEW_USER_PROMPT = """
-Quyidagi oʻzbekcha wikitext'ni berilgan qoidalar asosida tekshiring va tuzating.
+Sizning vazifangiz — berilgan oʻzbekcha wikitext'ni quyidagi qoidalar asosida tekshirish va tuzatish.
 
 QOIDALAR:
 {rules}
@@ -120,9 +120,9 @@ QOIDALAR:
 MUHIM CHEKLOVLAR:
 1) Faqat qoidalarda koʻrsatilgan xatolarni tuzating. Boshqa hech narsani oʻzgartirmang.
 2) Wikitext tuzilishini ({{...}}, [[...]], <ref>...</ref> va boshqalar) buzmang.
-3) Izoh yozmang. Faqat tuzatilgan wikitext chiqaring.
+3) Izoh yozmang. Faqat tuzatilgan wikitext chiqaring."""
 
-MATN:
+REVIEW_USER_PROMPT = """MATN:
 ```
 {text}
 ```

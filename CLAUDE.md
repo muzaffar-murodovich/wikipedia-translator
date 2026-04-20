@@ -133,6 +133,8 @@ Set these in `.env` or export before running:
 | Variable | Purpose |
 |---|---|
 | `OPENAI_API_KEY` | OpenAI API key |
+| `OPENAI_MODEL` | (optional) Translation model — defaults to `gpt-5.2` |
+| `REVIEW_MODEL` | (optional) Phase 5 review model — defaults to `gpt-5.4-mini` |
 
 The `.env` file is gitignored — never commit API keys.
 
@@ -144,12 +146,13 @@ The `.env` file is gitignored — never commit API keys.
 
 All configuration is in a single file. Comments and string values are written in **Uzbek**. Key settings:
 
-- **AI model**: `OPENAI_MODEL` (default `gpt-5.2`).
+- **AI model (translation)**: `OPENAI_MODEL` (default `gpt-5.2`).
+- **AI model (review)**: `REVIEW_MODEL` (default `gpt-5.4-mini`) — arzonroq model Phase 5 uchun, qoidalarga asoslangan tuzatish uchun yetarli.
 - **Source / target languages**: English (`en`) -> Uzbek (`uz`)
 - **Cache paths**: `.wiki_cache/` directory
 - **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
 - **Translation prompts**: `TRANSLATION_SYSTEM_PROMPT` and `TRANSLATION_USER_PROMPT` — instruct the model to preserve QID/CAT/TPL/REF placeholders and transliterate names (w->v rule for Uzbek).
-- **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure.
+- **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure. Rules are embedded in the **system prompt** (static prefix) to maximize OpenAI prompt-cache hits; only the wikitext varies per call.
 - **Fallback template mappings**: `FALLBACK_TEMPLATE_MAP_EN2UZ` — when Wikidata has no sitelink for a template.
 - **Reference compression**: `REF_COMPRESS_THRESHOLD = 20` characters.
 
@@ -181,8 +184,9 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 
 ### `core/reviewer.py`
 - Phase 5 post-translation review via OpenAI.
+- Uses `config.REVIEW_MODEL` (default `gpt-5.4-mini`) — separate from translation model to reduce cost.
 - Loads `translation_rules.md` at init; if missing, `is_available()` returns `False` and the phase is skipped in `main.py`.
-- `review(text)` sends the localized wikitext + rules to the model using `REVIEW_SYSTEM_PROMPT` / `REVIEW_USER_PROMPT`, strips markdown code fences from the response, and returns the corrected text (or `None` on failure).
+- `review(text)` formats the rules into `REVIEW_SYSTEM_PROMPT` (static — benefits from prompt caching) and the wikitext into `REVIEW_USER_PROMPT` (dynamic), strips markdown code fences from the response, and returns the corrected text (or `None` on failure).
 - Tracks `reviews` count and `tokens_used`; `print_stats()` emits a stats block at end of run.
 
 ### `core/cache_manager.py`

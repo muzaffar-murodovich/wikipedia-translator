@@ -20,7 +20,7 @@ class WikiReviewer:
 
     def __init__(self):
         self.client = OpenAI(api_key=config.OPENAI_API_KEY)
-        self.model = config.OPENAI_MODEL
+        self.model = config.REVIEW_MODEL
         self.rules = self._load_rules()
         self.stats = {"reviews": 0, "tokens_used": 0}
 
@@ -56,16 +56,14 @@ class WikiReviewer:
         if not self.is_available():
             return text
 
-        user_prompt = config.REVIEW_USER_PROMPT.format(
-            rules=self.rules,
-            text=text,
-        )
+        system_prompt = config.REVIEW_SYSTEM_PROMPT.format(rules=self.rules)
+        user_prompt = config.REVIEW_USER_PROMPT.format(text=text)
 
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": config.REVIEW_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
             )
