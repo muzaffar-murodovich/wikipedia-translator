@@ -13,7 +13,7 @@ from pathlib import Path
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
-REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
+REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5")
 
 # --- Wikipedia Settings ---
 
@@ -82,9 +82,7 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
 
 2) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
 
-3) Ismlar: Agar biror ism oʻzbekchaga yaqin boʻlsa, uni oʻzbekchaga moslab yozing. Masalan, "Abd Allah Maroofi" emas, "Abdulloh Marufiy" deb yozing. Oʻzbek tilida "w" harfi yoʻq. Shuning uchun kishi ismlarida, joy nomlarida "w" ning oʻrniga "v" harfini ishlating.
-
-4) Izoh yozmang. Faqat wikitext chiqaring.
+3) Izoh yozmang. Faqat wikitext chiqaring.
 
 Matn:
 ```{text}```

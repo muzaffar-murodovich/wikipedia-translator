@@ -6,7 +6,6 @@
 - Transliteratsiya belgilari: `Abū` → `Abu`, `Labīd` → `Labid`, `Rabīʿa` → `Rabiʼa`, `Mālik` → `Malik`, `al-ʿĀmirī` → `al-Amiriy` va shu kabi tuzatmalar
 - Keng tarqalgan qoʻshimcha misollar: `Muḥammad` → `Muhammad`, `'Abd` → `Abd` (apostrof ham olib tashlanadi), `Abī` → `Abi`, `Qāsim` → `Qosim`
 - Oxirgi `-ī` qoʻshimchasi oʻzbekchada `-iy` boʻladi: `al-ʿĀmirī` → `al-Amiriy`
-- Elide shaklidagi artikl: `Abū l-Nام` → `Abu al-Nom` (ya'ni `l-` → `al-` shaklida yoziladi)
 - Uzilgan ismlar: `Abd al-Rahmon` → `Abdurahmon`
 - Ayrim ismlarni oʻzbekchalashtirish kerak. Masalan: `Ghamr` → `Gʻomr`, `Abdallah` (yoki `Abd Allah`) → `Abdulloh`
 - Faqat asosiy matn va **sarlavhalarda** tuzatiladi. `<ref>`, URL, andoza parametrlari ichida OʻZGARTIRILMAYDI
