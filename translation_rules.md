@@ -38,14 +38,15 @@
 **Toʻgʻri (oʻzbekcha uslub):**
 `'''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan; '''Ismoil az-Zafir''' nomi bilan ham tanilgan) — Toledo taifasining birinchi hukmdori`
 
-## 4. Ichki havola matni muvofiqligi
+## 4. Kishi ismlari va joy nomlarida ichki havola matni muvofiqligi
 - Agar `[[Sahifa nomi|koʻrinadigan matn]]` shaklida havola boʻlsa, koʻrinadigan matn sahifa nomi bilan mos boʻlishi kerak
 - Notoʻgʻri: `[[Abulfaraj Isfahoniy|Abu al-Faraj al-Isfahoniy]]` (boshqacha transliteratsiya)
 - Toʻgʻri: `[[Abulfaraj Isfahoniy]]` yoki `[[Abulfaraj Isfahoniy|Abulfaraj Isfahoniy]]`
 - Agar koʻrinadigan matn sahifa nomidan farq qilsa, uni sahifa nomiga moslashtirish kerak yoki oddiy `[[Sahifa nomi]]` shaklida yozish kerak
+- Ayrim ichki havolalarda qavs mavjud. Bu holatda koʻrinadigan matnni oʻzgartirma: `[[Kordova (shahar)|Kordova]]` → `[[Kordova (shahar)|Kordova]]` (oʻzgartirilmagan)
 
 ### 4a. Havola nomi diakritikli bo'lsa (inglizcha fallback)
-Finalize fazasida oʻzbek Vikipediyasida sahifa topilmasa, tizim inglizcha nomni (diakritiklar bilan) qoldiradi, masalan: `[[Hishām al-Kalbī]]`.
+Finalize fazasida oʻzbek Vikipediyasida sahifa topilmasa, tizim inglizcha nomni (diakritiklar bilan) qoldirishi mumkin, masalan: `[[Hishām al-Kalbī]]`.
 Bunday holda havola nomini oʻzbek transliteratsiyasiga oʻzgartirish kerak:
 - Notoʻgʻri: `[[Hishām al-Kalbī]]`
 - Toʻgʻri: `[[Hishom al-Kalbiy]]`
