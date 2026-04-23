@@ -13,7 +13,7 @@ from pathlib import Path
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
-REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5")
+REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
 
 # --- Wikipedia Settings ---
 
