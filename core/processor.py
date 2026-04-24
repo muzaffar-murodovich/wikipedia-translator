@@ -44,121 +44,113 @@ class WikiTextProcessor:
         """
         logger.info("📝 Wikitext tayyorlanmoqda...")
 
-        # Defer cache writes (flush once at end)
-        self.cache.begin_batch()
+        # 1. Remove empty parameters
+        wikitext = remove_empty_params(raw_wikitext)
 
-        try:
-            # 1. Remove empty parameters
-            wikitext = remove_empty_params(raw_wikitext)
+        # 2. Compress references
+        wikitext, ref_map = self._compress_references(wikitext)
 
-            # 2. Compress references
-            wikitext, ref_map = self._compress_references(wikitext)
+        # 3. Remove HTML comments
+        wikitext = clean_html_comments(wikitext)
 
-            # 3. Remove HTML comments
-            wikitext = clean_html_comments(wikitext)
+        # Parse wikitext
+        code = mwp.parse(wikitext)
 
-            # Parse wikitext
-            code = mwp.parse(wikitext)
+        # ===== Phase A: Collect all titles =====
 
-            # ===== Phase A: Collect all titles =====
+        category_items = []   # (target, wikilink_obj, label)
+        wikilink_items = []   # (target, wikilink_obj, label)
+        template_items = []   # (en_tpl_title, template_obj, original_name)
 
-            category_items = []   # (target, wikilink_obj, label)
-            wikilink_items = []   # (target, wikilink_obj, label)
-            template_items = []   # (en_tpl_title, template_obj, original_name)
+        # 4. Collect categories
+        for wl in list(code.filter_wikilinks()):
+            target = str(wl.title).strip()
+            if target.startswith("Category:"):
+                label = str(wl.text).strip() if wl.text else target.split("Category:", 1)[-1]
+                category_items.append((target, wl, label))
 
-            # 4. Collect categories
-            for wl in list(code.filter_wikilinks()):
-                target = str(wl.title).strip()
-                if target.startswith("Category:"):
-                    label = str(wl.text).strip() if wl.text else target.split("Category:", 1)[-1]
-                    category_items.append((target, wl, label))
+        # 5. Collect wikilinks
+        for wl in code.filter_wikilinks():
+            target = str(wl.title).strip()
 
-            # 5. Collect wikilinks
-            for wl in code.filter_wikilinks():
-                target = str(wl.title).strip()
-
-                # Skip namespaces
-                if ":" in target and not target.startswith(":"):
-                    ns = target.split(":", 1)[0].lower()
-                    if ns in ("file", "image", "template", "help", "portal", "special", "module", "wikipedia", "category"):
-                        continue
-
-                # Skip if already a QID
-                if target.startswith("Q") and target[1:].isdigit():
+            # Skip namespaces
+            if ":" in target and not target.startswith(":"):
+                ns = target.split(":", 1)[0].lower()
+                if ns in ("file", "image", "template", "help", "portal", "special", "module", "wikipedia", "category"):
                     continue
 
-                label = str(wl.text).strip() if wl.text else target
-                wikilink_items.append((target, wl, label))
+            # Skip if already a QID
+            if target.startswith("Q") and target[1:].isdigit():
+                continue
 
-            # 6. Collect templates
-            for tpl in code.filter_templates():
-                original_name = str(tpl.name).strip()
-                if original_name.startswith("TPL:"):
-                    continue
-                en_tpl_title = f"Template:{original_name}"
-                template_items.append((en_tpl_title, tpl, original_name))
+            label = str(wl.text).strip() if wl.text else target
+            wikilink_items.append((target, wl, label))
 
-            # ===== Phase B: Batch resolution =====
+        # 6. Collect templates
+        for tpl in code.filter_templates():
+            original_name = str(tpl.name).strip()
+            if original_name.startswith("TPL:"):
+                continue
+            en_tpl_title = f"Template:{original_name}"
+            template_items.append((en_tpl_title, tpl, original_name))
 
-            # Collect all unique titles
-            all_titles = set()
-            for target, _, _ in category_items:
-                all_titles.add(target)
-            for target, _, _ in wikilink_items:
-                all_titles.add(target)
-            for target, _, _ in template_items:
-                all_titles.add(target)
+        # ===== Phase B: Batch resolution =====
 
-            all_titles_list = list(all_titles)
+        # Collect all unique titles
+        all_titles = set()
+        for target, _, _ in category_items:
+            all_titles.add(target)
+        for target, _, _ in wikilink_items:
+            all_titles.add(target)
+        for target, _, _ in template_items:
+            all_titles.add(target)
 
-            # B1: Batch resolve redirects (1-2 HTTP requests)
-            redirect_map = self.fetcher.batch_resolve_redirects(all_titles_list)
+        all_titles_list = list(all_titles)
 
-            # B2: Batch fetch QIDs for resolved titles (1-2 HTTP requests)
-            resolved_titles = list(set(redirect_map.values()))
-            qid_map = self.fetcher.batch_get_qids_fast(resolved_titles)
+        # B1: Batch resolve redirects (1-2 HTTP requests)
+        redirect_map = self.fetcher.batch_resolve_redirects(all_titles_list)
 
-            # ===== Phase C: Apply results =====
+        # B2: Batch fetch QIDs for resolved titles (1-2 HTTP requests)
+        resolved_titles = list(set(redirect_map.values()))
+        qid_map = self.fetcher.batch_get_qids_fast(resolved_titles)
 
-            link_qid_map = {}
-            cat_qid_map = {}
-            tpl_qid_map = {}
+        # ===== Phase C: Apply results =====
 
-            # Categories
-            for target, wl, label in category_items:
-                resolved = redirect_map.get(target, target)
-                qid = qid_map.get(resolved)
-                if qid:
-                    cat_qid_map[qid] = target
-                    token = f"⟦CAT:{qid}|{label}⟧"
-                    code.replace(wl, token)
+        link_qid_map = {}
+        cat_qid_map = {}
+        tpl_qid_map = {}
 
-            # Wikilinks
-            for target, wl, label in wikilink_items:
-                resolved = redirect_map.get(target, target)
-                qid = qid_map.get(resolved)
-                if qid:
-                    link_qid_map[qid] = resolved
-                    wl.title = qid
-                    wl.text = label
+        # Categories
+        for target, wl, label in category_items:
+            resolved = redirect_map.get(target, target)
+            qid = qid_map.get(resolved)
+            if qid:
+                cat_qid_map[qid] = target
+                token = f"⟦CAT:{qid}|{label}⟧"
+                code.replace(wl, token)
 
-            # Templates
-            for en_tpl_title, tpl, original_name in template_items:
-                resolved = redirect_map.get(en_tpl_title, en_tpl_title)
-                qid = qid_map.get(resolved)
-                if qid:
-                    tpl_qid_map[qid] = original_name
-                    tpl.name = f"TPL:{qid}"
+        # Wikilinks
+        for target, wl, label in wikilink_items:
+            resolved = redirect_map.get(target, target)
+            qid = qid_map.get(resolved)
+            if qid:
+                link_qid_map[qid] = resolved
+                wl.title = qid
+                wl.text = label
 
-            prepared_text = str(code)
+        # Templates
+        for en_tpl_title, tpl, original_name in template_items:
+            resolved = redirect_map.get(en_tpl_title, en_tpl_title)
+            qid = qid_map.get(resolved)
+            if qid:
+                tpl_qid_map[qid] = original_name
+                tpl.name = f"TPL:{qid}"
 
-            logger.success(f"Tayyorlandi: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
+        prepared_text = str(code)
 
-            return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
+        logger.success(f"Tayyorlandi: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
 
-        finally:
-            # Flush cache changes to disk
-            self.cache.end_batch()
+        return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
 
     def _compress_references(self, wikitext: str) -> Tuple[str, Dict[str, str]]:
         """Compress long references."""

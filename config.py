@@ -36,15 +36,6 @@ PYWIKIBOT_CONFIG = {
     "retry_wait": 20,              # Wait time after error (seconds)
 }
 
-# --- Cache Settings ---
-
-CACHE_DIR = Path(".wiki_cache")
-CACHE_DIR.mkdir(exist_ok=True)
-
-QID_CACHE_FILE = CACHE_DIR / "qid_cache.json"
-SITELINK_CACHE_FILE = CACHE_DIR / "sitelink_cache.json"
-REDIRECT_CACHE_FILE = CACHE_DIR / "redirect_cache.json"
-
 # --- Localization Settings ---
 
 LOCALIZATION_FILE = Path("localization_map.json")

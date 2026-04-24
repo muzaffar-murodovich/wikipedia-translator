@@ -68,7 +68,6 @@ def main(input_file: str, output_file: str):
     reviewer = WikiReviewer()
 
     logger.success(f"Tizimlar initialize qilindi")
-    logger.info(f"  Cache: {cache.get_cache_size()['total']} yozuv")
     logger.info(f"  Localization: {len(localization.map)} ta almashtirish")
 
     logger.section("📝 PHASE 1: PREPARE")

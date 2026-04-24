@@ -22,7 +22,7 @@ wikipedia-translator/
 │   ├── translator.py         # AI translation engine (OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
-│   ├── cache_manager.py      # 3-tier JSON cache (QID, sitelink, redirect)
+│   ├── cache_manager.py      # In-memory 3-tier memoization (QID, sitelink, redirect)
 │   └── reviewer.py           # AI post-translation review (Phase 5)
 ├── utils/
 │   ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
@@ -34,10 +34,10 @@ wikipedia-translator/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
 
-Cache lives in `.wiki_cache/` (gitignored) and grows automatically:
-- `qid_cache.json` — title -> QID mappings
-- `sitelink_cache.json` — QID -> Uzbek Wikipedia title mappings
-- `redirect_cache.json` — redirect resolution results
+`WikiCache` is an in-memory per-run memoization layer (not persisted to disk). It covers three lookup types:
+- title -> QID
+- QID -> Uzbek Wikipedia title (sitelink)
+- title -> redirect target
 
 Translated outputs are saved to `temp_wiki/` (gitignored) with the article name as filename.
 
@@ -149,7 +149,6 @@ All configuration is in a single file. Comments and string values are written in
 - **AI model (translation)**: `OPENAI_MODEL` (default `gpt-5.2`).
 - **AI model (review)**: `REVIEW_MODEL` (default `gpt-5.4-mini`) — arzonroq model Phase 5 uchun, qoidalarga asoslangan tuzatish uchun yetarli.
 - **Source / target languages**: English (`en`) -> Uzbek (`uz`)
-- **Cache paths**: `.wiki_cache/` directory
 - **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
 - **Translation prompts**: `TRANSLATION_SYSTEM_PROMPT` and `TRANSLATION_USER_PROMPT` — instruct the model to preserve QID/CAT/TPL/REF placeholders and transliterate names (w->v rule for Uzbek).
 - **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure. Rules are embedded in the **system prompt** (static prefix) to maximize OpenAI prompt-cache hits; only the wikitext varies per call.
@@ -165,8 +164,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `core/processor.py`
 - Uses `mwparserfromhell` to parse and manipulate wikitext AST.
 - `prepare(raw_wikitext)` returns a **5-tuple**: `(prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map)`.
-- `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare.
-- Batch processing: `begin_batch()` / `end_batch()` on the cache defers disk writes until the entire prepare phase completes.
+- `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare. The in-memory cache populated during `prepare()` (especially uz sitelinks pre-cached by `batch_get_qids_fast()`) makes this near-free.
 
 ### `core/translator.py`
 - `translate(text)` sends prepared wikitext to OpenAI for translation.
@@ -190,11 +188,10 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Tracks `reviews` count and `tokens_used`; `print_stats()` emits a stats block at end of run.
 
 ### `core/cache_manager.py`
-- 3-tier cache: QID, sitelink, redirect.
-- Cache values of `"NONE"` mean "looked up and not found" — do not re-query.
+- In-memory 3-tier memoization: QID, sitelink, redirect. No disk persistence — each run starts empty.
+- Cache values of `"NONE"` mean "looked up and not found" — do not re-query within the same run.
 - Cache keys: `"site_code:title"` for QID/redirect, `"QID:target_site"` for sitelink.
-- Supports deferred batch mode: `begin_batch()` / `end_batch()` to minimize disk writes.
-- `import_cache()` / `export_cache()` helpers for backup/restore.
+- Within a single run, Phase 1 populates most entries (via `batch_get_qids_fast()` which pre-caches uz/en sitelinks), so Phase 3 mostly hits the cache.
 
 ### `utils/regex_patterns.py`
 - Central registry of all regex patterns used across the codebase (`RegexPatterns` class).
@@ -259,7 +256,7 @@ No code changes needed — it is loaded automatically.
 Add a function to `utils/regex_patterns.py` and call it from `apply_all_fixes()`.
 
 ### New cache tier
-Extend `core/cache_manager.py` following the same `get/set/save/load` pattern as existing tiers.
+Extend `core/cache_manager.py` following the same `get/set` pattern as existing tiers (in-memory only, "NONE" sentinel for negative lookups).
 
 ---
 

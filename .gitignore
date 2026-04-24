@@ -27,9 +27,6 @@ config.env
 # API cache
 apicache/
 
-# Wiki cache (QID, sitelink, redirect, progress)
-.wiki_cache/
-
 # Temp wiki files
 temp_wiki/
 

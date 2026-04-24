@@ -2,34 +2,25 @@
 # -*- coding: utf-8 -*-
 
 """
-core/cache_manager.py - Cache system
-Caches QIDs, sitelinks, and redirects.
-Data fetched from the API once is stored as JSON.
+core/cache_manager.py - In-memory memoization
+Per-run memoization for QIDs, sitelinks, and redirects.
+Data fetched from the API is kept in memory only (no disk persistence).
 """
 
-import json
-from pathlib import Path
-from typing import Optional, Dict
-import config
-from utils.file_handler import FileHandler
+from typing import Optional
 
 
 class WikiCache:
     """
-    Wikidata query cache system.
+    Wikidata query in-memory memoization.
     3 cache types: QID, Sitelink, Redirect.
     """
 
     def __init__(self):
-        self.qid_cache = FileHandler.read_json(str(config.QID_CACHE_FILE))
-        self.sitelink_cache = FileHandler.read_json(str(config.SITELINK_CACHE_FILE))
-        self.redirect_cache = FileHandler.read_json(str(config.REDIRECT_CACHE_FILE))
+        self.qid_cache: dict = {}
+        self.sitelink_cache: dict = {}
+        self.redirect_cache: dict = {}
 
-        # Deferred write mode
-        self._deferred = False
-        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
-
-        # Statistics
         self.stats = {
             "qid_hits": 0,
             "qid_misses": 0,
@@ -38,22 +29,6 @@ class WikiCache:
             "redirect_hits": 0,
             "redirect_misses": 0,
         }
-
-    def begin_batch(self):
-        """Start deferred write mode."""
-        self._deferred = True
-        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
-
-    def end_batch(self):
-        """Flush deferred cache changes to disk."""
-        self._deferred = False
-        if self._dirty["qid"]:
-            self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
-        if self._dirty["sitelink"]:
-            self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
-        if self._dirty["redirect"]:
-            self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
-        self._dirty = {"qid": False, "sitelink": False, "redirect": False}
 
     def get_qid(self, site_code: str, title: str) -> Optional[str]:
         """
@@ -90,10 +65,6 @@ class WikiCache:
         """
         key = f"{site_code}:{title}"
         self.qid_cache[key] = qid if qid else "NONE"
-        if self._deferred:
-            self._dirty["qid"] = True
-        else:
-            self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
 
     def get_sitelink(self, qid: str, target_site: str = "uzwiki") -> Optional[str]:
         """
@@ -130,10 +101,6 @@ class WikiCache:
         """
         key = f"{qid}:{target_site}"
         self.sitelink_cache[key] = title if title else "NONE"
-        if self._deferred:
-            self._dirty["sitelink"] = True
-        else:
-            self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
 
     def get_redirect(self, site_code: str, title: str) -> Optional[str]:
         """
@@ -170,36 +137,6 @@ class WikiCache:
         """
         key = f"{site_code}:{title}"
         self.redirect_cache[key] = target if target else "NONE"
-        if self._deferred:
-            self._dirty["redirect"] = True
-        else:
-            self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
-
-    def _save_cache(self, data: dict, filepath: Path):
-        """Save cache to JSON."""
-        FileHandler.write_json(str(filepath), data)
-
-    def clear_cache(self, cache_type: str = "all"):
-        """
-        Clear cache.
-
-        Args:
-            cache_type: "qid", "sitelink", "redirect" or "all"
-        """
-        if cache_type in ("qid", "all"):
-            self.qid_cache = {}
-            self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
-            print("✓ QID cache tozalandi")
-
-        if cache_type in ("sitelink", "all"):
-            self.sitelink_cache = {}
-            self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
-            print("✓ Sitelink cache tozalandi")
-
-        if cache_type in ("redirect", "all"):
-            self.redirect_cache = {}
-            self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
-            print("✓ Redirect cache tozalandi")
 
     def get_cache_size(self) -> dict:
         """Get cache sizes."""
@@ -235,53 +172,3 @@ class WikiCache:
         print(f"  Sitelink: {cache_size['sitelink']}")
         print(f"  Redirect: {cache_size['redirect']}")
         print(f"  Jami: {cache_size['total']}")
-
-    def export_cache(self, filepath: str) -> bool:
-        """
-        Export cache (for backup).
-
-        Args:
-            filepath: Export file path
-
-        Returns:
-            True on success
-        """
-        try:
-            all_cache = {
-                "qid": self.qid_cache,
-                "sitelink": self.sitelink_cache,
-                "redirect": self.redirect_cache,
-            }
-            FileHandler.write_json(filepath, all_cache)
-            print(f"✓ Cache eksport qilindi: {filepath}")
-            return True
-        except Exception as e:
-            print(f"❌ Cache eksport qilishda xato: {e}")
-            return False
-
-    def import_cache(self, filepath: str) -> bool:
-        """
-        Import cache (from backup).
-
-        Args:
-            filepath: Import file path
-
-        Returns:
-            True on success
-        """
-        try:
-            data = FileHandler.read_json(filepath)
-            if "qid" in data:
-                self.qid_cache = data["qid"]
-                self._save_cache(self.qid_cache, config.QID_CACHE_FILE)
-            if "sitelink" in data:
-                self.sitelink_cache = data["sitelink"]
-                self._save_cache(self.sitelink_cache, config.SITELINK_CACHE_FILE)
-            if "redirect" in data:
-                self.redirect_cache = data["redirect"]
-                self._save_cache(self.redirect_cache, config.REDIRECT_CACHE_FILE)
-            print(f"✓ Cache import qilindi: {filepath}")
-            return True
-        except Exception as e:
-            print(f"❌ Cache import qilishda xato: {e}")
-            return False

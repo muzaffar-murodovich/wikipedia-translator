@@ -94,16 +94,12 @@ def check_uz_existence(
     Returns:
         (missing_titles, existing_titles) — original English titles
     """
-    cache.begin_batch()
-
     logger.info("Redirectlar tekshirilmoqda...")
     redirect_map = fetcher.batch_resolve_redirects(titles, "en")
 
     resolved_titles = list(set(redirect_map.values()))
     logger.info(f"QID va sitelinklar olinmoqda ({len(resolved_titles)} ta maqola)...")
     qid_map = fetcher.batch_get_qids_fast(resolved_titles, "en")
-
-    cache.end_batch()
 
     missing = []
     existing = []
