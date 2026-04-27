@@ -402,6 +402,9 @@ def apply_all_fixes(wikitext: str) -> str:
     # 5. SFN punctuation fix — skip infoboxes
     wikitext = _apply_fix_outside_infoboxes(wikitext, fix_punctuation_with_sfn)
 
+    # 6. fix template blank lines 
+    wikitext = fix_template_blank_lines(wikitext)
+
     return wikitext
 
 _DIACRITIC_TRANS = str.maketrans({
@@ -550,3 +553,29 @@ def _apply_date_fixes(text: str) -> str:
     )
     text = re.sub(r'\b(hijriy|milodiy)\s+(\d+)\b(?!\s*-)', r'\1 \2-yil', text)
     return text
+
+def fix_template_blank_lines(wikitext: str) -> str:
+    """Clean up multi-line template formatting."""
+    code = mwp.parse(wikitext, skip_style_tags=True)
+    
+    for tpl in code.filter_templates():
+        if not tpl.params:
+            continue
+        
+        is_multiline = any('\n' in str(p) for p in tpl.params)
+        if not is_multiline:
+            continue
+        
+        # Clean blank lines inside param values
+        for param in tpl.params:
+            value_str = str(param.value)
+            cleaned = re.sub(r'\n\s*\n+', '\n', value_str)
+            if cleaned != value_str:
+                param.value = cleaned
+        
+        # Ensure name ends with newline so first param starts on new line
+        name_str = str(tpl.name)
+        if not name_str.endswith('\n'):
+            tpl.name = name_str.rstrip() + '\n'
+    
+    return str(code)
