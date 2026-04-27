@@ -404,6 +404,9 @@ def apply_all_fixes(wikitext: str) -> str:
 
     # 6. fix template blank lines 
     wikitext = fix_template_blank_lines(wikitext)
+    
+    # Collapse 3+ consecutive newlines to 2 (single blank line max)
+    wikitext = re.sub(r'\n{3,}', '\n\n', wikitext)
 
     return wikitext
 

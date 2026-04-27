@@ -139,12 +139,27 @@ class WikiTextProcessor:
                 wl.text = label
 
         # Templates
+        unresolved_templates = []
         for en_tpl_title, tpl, original_name in template_items:
             resolved = redirect_map.get(en_tpl_title, en_tpl_title)
             qid = qid_map.get(resolved)
             if qid:
                 tpl_qid_map[qid] = original_name
                 tpl.name = f"TPL:{qid}"
+            else:
+                # No QID — try fallback map, else mark for removal
+                mapped = config.FALLBACK_TEMPLATE_MAP_EN2UZ.get(original_name.lower())
+                if mapped:
+                    tpl.name = mapped
+                else:
+                    unresolved_templates.append(tpl)
+
+        # Remove unresolved templates (no QID, no fallback mapping)
+        for tpl in unresolved_templates:
+            code.remove(tpl)
+
+        if unresolved_templates:
+            logger.info(f"✓ Hal qilinmagan andozalar oʻchirildi: {len(unresolved_templates)} ta")
 
         prepared_text = str(code)
 
@@ -257,7 +272,7 @@ class WikiTextProcessor:
                         if mapped:
                             tpl.name = mapped
                         else:
-                            tpl.name = base
+                            templates_to_remove.append(tpl)
                     else:
                         templates_to_remove.append(tpl)
 
