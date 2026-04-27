@@ -12,22 +12,25 @@ An **English-to-Uzbek Wikipedia article translator** that uses OpenAI to transla
 
 ```
 wikipedia-translator/
-├── main.py                   # Entry point; orchestrates the 4-phase pipeline
+├── main.py                   # Entry point; orchestrates the 5-phase pipeline
 ├── config.py                 # All configuration (comments/values in Uzbek)
-├── localization_map.json     # 150+ term replacement rules (auto-loaded)
-├── translation_rules.md      # Manual post-translation review checklist
+├── localization_map.json     # 215 term replacement rules (auto-loaded)
+├── translation_rules.md      # Post-translation review checklist (used by Phase 5)
+├── pytest.ini                # Test configuration
 ├── .env                      # Environment variables (API keys — gitignored)
 ├── Pipfile / Pipfile.lock    # Python 3.12 dependencies (pipenv)
 ├── core/
+│   ├── __init__.py
 │   ├── translator.py         # AI translation engine (OpenAI)
 │   ├── processor.py          # Wikitext prepare/finalize (QID placeholders)
 │   ├── wikidata_fetcher.py   # Wikidata/Wikipedia API calls
 │   ├── cache_manager.py      # In-memory 3-tier memoization (QID, sitelink, redirect)
 │   └── reviewer.py           # AI post-translation review (Phase 5)
 ├── utils/
+│   ├── __init__.py
 │   ├── file_handler.py       # File I/O (UTF-8, JSON, backup)
 │   ├── localization.py       # Loads and applies localization_map.json
-│   ├── logger.py             # Singleton logger (console + file)
+│   ├── logger.py             # Singleton logger (console-only)
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
 └── additional-tools/
@@ -70,11 +73,11 @@ Phase 3 — FINALIZE (core/processor.py)
   - Resolves {{TPL:Q12345}} -> Uzbek template names (with fallback map)
   - Falls back to English title when no Uzbek sitelink exists
   - Restores compressed <ref> blocks
-  - Applies regex fixes (punctuation, year formatting, -lik suffix, etc.)
+  - Applies regex fixes (punctuation, year formatting, -lik suffix, Arabic transliteration, etc.)
     |
     v
 Phase 4 — LOCALIZE (utils/localization.py)
-  - Applies 150+ regex replacements from localization_map.json
+  - Applies 215 regex replacements from localization_map.json
   - Examples: [[Category: -> [[Turkum:, == References == -> == Manbalar ==
     |
     v
@@ -168,7 +171,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 
 ### `core/translator.py`
 - `translate(text)` sends prepared wikitext to OpenAI for translation.
-- Tracks `translations` count and `tokens_used` statistics.
+- Tracks `translations` count, `tokens_used`, `cached_tokens`, and `prompt_tokens` statistics.
 - The system prompt explicitly tells the model to pass all `[[Q...]]`, `CAT:...`, and `{{TPL:...}}` placeholders through unchanged.
 
 ### `core/wikidata_fetcher.py`
@@ -185,7 +188,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Uses `config.REVIEW_MODEL` (default `gpt-5.4-mini`) — separate from translation model to reduce cost.
 - Loads `translation_rules.md` at init; if missing, `is_available()` returns `False` and the phase is skipped in `main.py`.
 - `review(text)` formats the rules into `REVIEW_SYSTEM_PROMPT` (static — benefits from prompt caching) and the wikitext into `REVIEW_USER_PROMPT` (dynamic), strips markdown code fences from the response, and returns the corrected text (or `None` on failure).
-- Tracks `reviews` count and `tokens_used`; `print_stats()` emits a stats block at end of run.
+- Tracks `reviews` count, `tokens_used`, `cached_tokens`; `print_stats()` emits a stats block at end of run.
 
 ### `core/cache_manager.py`
 - In-memory 3-tier memoization: QID, sitelink, redirect. No disk persistence — each run starts empty.
@@ -196,15 +199,19 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `utils/regex_patterns.py`
 - Central registry of all regex patterns used across the codebase (`RegexPatterns` class).
 - `apply_all_fixes(text)` applies every fix in the correct order:
-  1. `fix_cite_book_script_title()` — `script-title` -> `title` in cite book templates
-  2. `fix_year_with_dash()` — `2025 yil` -> `2025-yil`
-  3. `fix_lik_suffix_capitalization()` — lowercase `-lik` suffix words mid-sentence
-  4. `fix_punctuation_with_refs()` — move punctuation after `<ref>` tags
-  5. `fix_punctuation_with_sfn()` — handle `{{sfn}}` template punctuation
+  1. `fix_arabic_transliteration()` — diacritic removal (ā→a, ī→i, ū→u, etc.), final `-ī` → `-iy` suffix, and solar letter assimilation (`al-Roziy` → `ar-Roziy`). Implements Rules 1 & 2 from `translation_rules.md`. Skips `<ref>`, URLs, template params, and link targets.
+  2. `fix_cite_book_script_title()` — `script-title` -> `title` in cite book templates
+  3. `fix_year_with_dash()` — `2025 yil` -> `2025-yil`
+  4. `fix_lik_suffix_capitalization()` — lowercase `-lik` suffix words mid-sentence
+  5. `fix_punctuation_with_refs()` — move punctuation after `<ref>` tags (applied outside infoboxes via `_apply_fix_outside_infoboxes()`)
+  6. `fix_punctuation_with_sfn()` — handle `{{sfn}}` template punctuation (applied outside infoboxes)
+  7. `fix_template_blank_lines()` — remove blank lines inside multiline templates
+  8. Collapse 3+ consecutive newlines to 2
+- `_apply_fix_outside_infoboxes(wikitext, fix_func)` — wraps a fix function to skip infobox templates.
 - Modify patterns here, not inline in other files.
 
 ### `utils/localization.py`
-- Reads `localization_map.json` at startup.
+- Reads `localization_map.json` at startup (215 entries).
 - Patterns compiled once (longest-key-first for greedy matching).
 - `add_replacement()` / `remove_replacement()` for runtime edits.
 - To add a new term replacement, edit `localization_map.json` directly — no code changes needed.
@@ -212,17 +219,18 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `utils/logger.py`
 - Singleton — instantiated at module level as `logger = Logger()`.
 - Import with: `from utils.logger import logger`
-- Writes to console.
-- Use `logger.section()`, `logger.success()`, `logger.fail()`, `logger.stats()` for structured output.
+- Console-only output (no file logging).
+- Use `logger.section()`, `logger.success()`, `logger.fail()`, `logger.stats()`, `logger.progress()`, `logger.table()` for structured output.
 
 ### `utils/wiki_fetcher.py`
 - `fetch_wikitext(article_name, lang)` — downloads wikitext via Wikipedia API. Returns `(wikitext, title)` tuple.
 - `extract_article_name(url)` — extracts article name from Wikipedia URL or returns input as-is.
-- `is_redirect(wikitext)` — checks if wikitext is a redirect page.
+- `is_redirect(wikitext)` — checks if wikitext is a redirect page; returns target title or `None`.
 
 ### `utils/file_handler.py`
-- Static methods for all file I/O: `read_file()`, `write_file()`, `read_json()`, `write_json()`, `append_file()`, `create_backup()`.
+- Static methods for all file I/O: `read_file()`, `write_file()`, `read_json()`, `write_json()`, `append_file()`, `read_lines()`, `create_backup()`, `delete_file()`, `file_exists()`, `get_file_size()`, `ensure_dir_exists()`.
 - All operations use UTF-8 encoding by default.
+- JSON operations use `ensure_ascii=False` to preserve Uzbek script.
 
 ---
 
@@ -286,15 +294,16 @@ python additional-tools/category-checker.py "Uzbek writers" --open 10-20
 
 ## Testing & Quality
 
-There is no automated test suite. Validation is done by:
+`pytest.ini` is present but there is no automated test suite yet. Validation is done by:
 
-1. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and apply all rules:
+1. **Automatic Phase 5 review** — `core/reviewer.py` applies `translation_rules.md` rules via OpenAI before the final output is written. This catches the most common rule violations automatically.
+2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and verify:
    - Name transliteration (remove diacritics, -i -> -iy suffix)
    - Solar letter assimilation (al-Roziy -> ar-Roziy)
    - Lead sentence structure (em-dash after parenthetical)
    - Wikilink label/target consistency
    - Date formatting (hijriy/milodiy prefix, YYYY-yil)
-2. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
+3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
 
 ---
 
@@ -315,7 +324,9 @@ There is no automated test suite. Validation is done by:
 | `aiohttp` | Async HTTP for API calls |
 | `pywikibot` | Wikidata / Wikipedia API |
 | `mwparserfromhell` | Wikitext parser (used in processor.py) |
+| `python-dotenv` | Loads `.env` file into environment |
 | `python-telegram-bot` | Optional Telegram bot interface |
+| `pytest` | Test runner (dev dependency) |
 
 Python version: **3.12**
 
