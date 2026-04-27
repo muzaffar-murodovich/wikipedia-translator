@@ -509,5 +509,5 @@ def _apply_date_fixes(text: str) -> str:
         lambda m: f"{m.group(2)} {m.group(1)}-{m.group(3) or 'yil'}",
         text
     )
-    text = re.sub(r'\b(hijriy|milodiy)\s+(\d+)(?!\s*-)', r'\1 \2-yil', text)
+    text = re.sub(r'\b(hijriy|milodiy)\s+(\d+)\b(?!\s*-)', r'\1 \2-yil', text)
     return text
