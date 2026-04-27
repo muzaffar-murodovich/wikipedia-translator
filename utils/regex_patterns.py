@@ -8,6 +8,7 @@ This file contains 20+ regex patterns used across the project.
 
 import re
 from typing import Optional
+import mwparserfromhell as mwp
 
 class RegexPatterns:
     """
@@ -386,6 +387,9 @@ def apply_all_fixes(wikitext: str) -> str:
     Order matters!
     """
 
+    # 0. Arabic transliteration (Rules 1 & 2 from translation_rules.md)
+    wikitext = fix_arabic_transliteration(wikitext)
+
     # 1. Cite book script-title fix
     wikitext = fix_cite_book_script_title(wikitext)
 
@@ -402,3 +406,108 @@ def apply_all_fixes(wikitext: str) -> str:
     wikitext = fix_punctuation_with_sfn(wikitext)
 
     return wikitext
+
+_DIACRITIC_TRANS = str.maketrans({
+    'ā': 'a', 'Ā': 'A',
+    'ī': 'i', 'Ī': 'I',
+    'ū': 'u', 'Ū': 'U',
+    'ḥ': 'h', 'Ḥ': 'H',
+    'ṣ': 's', 'Ṣ': 'S',
+    'ḍ': 'd', 'Ḍ': 'D',
+    'ṭ': 't', 'Ṭ': 'T',
+    'ẓ': 'z', 'Ẓ': 'Z',
+    'ġ': 'gʻ', 'Ġ': 'Gʻ',
+    'ʿ': '',
+    'ʾ': '',
+})
+
+# Tags whose contents must NEVER be modified
+_PROTECTED_TAGS = frozenset({
+    'ref', 'nowiki', 'pre', 'source', 'syntaxhighlight', 'code', 'math'
+})
+
+
+def _apply_arabic_text_fixes(text: str) -> str:
+    """Apply Rule 1 (diacritics) and Rule 2 (solar letters) to plain text."""
+
+    # Rule 1a: Final -ī → -iy (must run BEFORE general diacritic removal,
+    # otherwise the information is lost)
+    text = re.sub(r'ī\b', 'iy', text)
+    text = re.sub(r'Ī\b', 'Iy', text)
+
+    # Rule 1b: Remove all other diacritics
+    text = text.translate(_DIACRITIC_TRANS)
+
+    # Rule 2: Solar letter assimilation (al-X → aX-X)
+    # 'Sh' must come first in the alternation to avoid 'S' matching first
+    def _solar_replace(m: re.Match) -> str:
+        prefix = m.group(1)  # 'a' or 'A'
+        letter = m.group(2)  # 'Sh', 'R', 'D', 'N', 'S', 'T', or 'Z'
+        if letter == 'Sh':
+            return f'{prefix}sh-{letter}'
+        return f'{prefix}{letter.lower()}-{letter}'
+
+    text = re.sub(r'\b([Aa])l-(Sh|R|D|N|S|T|Z)', _solar_replace, text)
+    return text
+
+
+def _process_wikicode_safe(code) -> None:
+    """
+    Recursively walk the parse tree, applying text fixes ONLY to safe contexts.
+    Skips <ref>, URLs, and infobox templates.
+    """
+    for node in code.nodes:
+        node_type = type(node).__name__
+
+        if node_type == 'Text':
+            node.value = _apply_arabic_text_fixes(node.value)
+            node.value = _apply_date_fixes(node.value)
+
+        elif node_type == 'Template':
+        # Process param values ONLY for infobox templates (containing 'bilgiquti').
+        # Skip all other templates (cite book, sfn, lang-*, etc.) — their content
+        # must be preserved as-is per translation_rules.md.
+            template_name = str(node.name).strip().lower()
+            
+            if 'bilgiquti' not in template_name:
+                continue
+            # Infobox: process parameter VALUES (keys stay untouched)
+            for param in node.params:
+                _process_wikicode_safe(param.value)
+
+        # Comment, HTMLEntity, Argument → skip
+
+        # Template, Comment, HTMLEntity, Argument → skip entirely
+        # (Template params explicitly excluded by Rules 1 and 2)
+
+
+def fix_arabic_transliteration(wikitext: str) -> str:
+    """
+    Apply translation_rules.md Rules 1 and 2 deterministically.
+
+    Rule 1: diacritic removal (ā→a, ī→i, ū→u, ḥ→h, ʿ→∅, ʾ→∅, etc.)
+            with final -ī → -iy preservation.
+    Rule 2: solar letter assimilation (al-Roziy → ar-Roziy, al-Shofiʼiy → ash-Shofiʼiy).
+
+    Skips: <ref>...</ref>, URLs, template parameter values, link targets.
+
+    Examples:
+        Labīd            → Labid
+        al-ʿĀmirī        → al-Amiriy
+        al-Shofiʼiy      → ash-Shofiʼiy
+        al-Tabariy       → at-Tabariy
+        Muḥammad         → Muhammad
+    """
+    code = mwp.parse(wikitext, skip_style_tags=True)
+    _process_wikicode_safe(code)
+    return str(code)
+
+def _apply_date_fixes(text: str) -> str:
+    """Apply Rule 5a: hijri/milodi date formatting."""
+    text = re.sub(
+        r'\b(\d+)\s+(hijriy|milodiy)(?:\s+(yil(?:da|gacha|dan|ga|i|lar(?:i|da|dan|ga)?)?))?\b',
+        lambda m: f"{m.group(2)} {m.group(1)}-{m.group(3) or 'yil'}",
+        text
+    )
+    text = re.sub(r'\b(hijriy|milodiy)\s+(\d+)(?!\s*-)', r'\1 \2-yil', text)
+    return text
