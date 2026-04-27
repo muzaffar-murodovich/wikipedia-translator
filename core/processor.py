@@ -205,12 +205,16 @@ class WikiTextProcessor:
                     if not label or label == uz_title:
                         wl.text = None
                 else:
-                    if label:
-                        wl.title = label
-                        wl.text = None
+                    # Oʻzbekcha sitelink yoʻq — inglizcha nomni qizil havola sifatida saqlaymiz
+                    en_title = self.fetcher.get_en_sitelink(target)
+                    if en_title:
+                        wl.title = en_title
+                        wl.text = label if label and label != en_title else None
+                    elif label:
+                        # Hech qanday sitelink yoʻq — havolani matn qilib qoldiramiz
+                        code.replace(wl, label)
                     else:
-                        wl.title = ""
-                        wl.text = ""
+                        code.remove(wl)
 
         # 2. Resolve categories
         text_after_links = str(code)
