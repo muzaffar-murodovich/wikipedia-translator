@@ -382,12 +382,9 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
 # ========== Combine All Fixes ==========
 
 def apply_all_fixes(wikitext: str) -> str:
-    """
-    Apply all text fixes in sequence.
-    Order matters!
-    """
+    """Apply all text fixes in sequence. Order matters!"""
 
-    # 0. Arabic transliteration (Rules 1 & 2 from translation_rules.md)
+    # 0. Arabic transliteration + date fixes (already infobox-aware via mwparserfromhell)
     wikitext = fix_arabic_transliteration(wikitext)
 
     # 1. Cite book script-title fix
@@ -399,11 +396,11 @@ def apply_all_fixes(wikitext: str) -> str:
     # 3. -lik suffix capitalization fix
     wikitext = fix_lik_suffix_capitalization(wikitext)
 
-    # 4. Punctuation with refs fix (before SFN)
-    wikitext = fix_punctuation_with_refs(wikitext)
+    # 4. Punctuation with refs fix — skip infoboxes
+    wikitext = _apply_fix_outside_infoboxes(wikitext, fix_punctuation_with_refs)
 
-    # 5. SFN punctuation fix (must be after ref fix)
-    wikitext = fix_punctuation_with_sfn(wikitext)
+    # 5. SFN punctuation fix — skip infoboxes
+    wikitext = _apply_fix_outside_infoboxes(wikitext, fix_punctuation_with_sfn)
 
     return wikitext
 
@@ -515,6 +512,35 @@ def fix_arabic_transliteration(wikitext: str) -> str:
     _process_wikicode_safe(code)
     return str(code)
 
+def _apply_fix_outside_infoboxes(wikitext: str, fix_func) -> str:
+    """
+    Apply a regex-based fix function to wikitext, but skip infobox templates
+    (templates containing 'bilgiquti' in their name).
+    """
+    code = mwp.parse(wikitext, skip_style_tags=True)
+
+    # Collect infobox templates as strings (no AST manipulation)
+    infoboxes = []
+    for tpl in code.filter_templates():
+        if 'bilgiquti' in str(tpl.name).strip().lower():
+            infoboxes.append(str(tpl))
+
+    # Replace each infobox with a placeholder via plain string replace
+    text = wikitext
+    placeholders = {}
+    for i, infobox in enumerate(infoboxes):
+        placeholder = f"@@INFOBOX_{i}@@"
+        placeholders[placeholder] = infobox
+        text = text.replace(infobox, placeholder, 1)
+
+    # Apply fix to text without infoboxes
+    text = fix_func(text)
+
+    # Restore infoboxes
+    for placeholder, original in placeholders.items():
+        text = text.replace(placeholder, original)
+
+    return text
 def _apply_date_fixes(text: str) -> str:
     """Apply Rule 5a: hijri/milodi date formatting."""
     text = re.sub(

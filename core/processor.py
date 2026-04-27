@@ -14,7 +14,7 @@ import mwparserfromhell as mwp
 import config
 from core.wikidata_fetcher import WikidataFetcher
 from core.cache_manager import WikiCache
-from utils.regex_patterns import RegexPatterns, remove_empty_params, clean_html_comments, fix_punctuation_with_refs, apply_all_fixes
+from utils.regex_patterns import RegexPatterns, remove_empty_params, clean_html_comments, apply_all_fixes
 from utils.logger import logger
 
 
@@ -270,10 +270,7 @@ class WikiTextProcessor:
         # 4. Restore references
         final_text = self._restore_references(final_text, ref_map)
 
-        # 5. Uzbek punctuation fixes
-        final_text = fix_punctuation_with_refs(final_text)
-
-        # 6. Apply Uzbek language rules
+        # 5. Apply Uzbek language rules (includes punctuation fixes)
         final_text = apply_all_fixes(final_text)
 
         logger.success("Finalizatsiya tugadi")
