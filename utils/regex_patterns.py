@@ -454,7 +454,7 @@ def _apply_arabic_text_fixes(text: str) -> str:
 def _process_wikicode_safe(code) -> None:
     """
     Recursively walk the parse tree, applying text fixes ONLY to safe contexts.
-    Skips <ref>, URLs, and infobox templates.
+    Skips <ref>, URLs, and non-infobox templates.
     """
     for node in code.nodes:
         node_type = type(node).__name__
@@ -463,23 +463,36 @@ def _process_wikicode_safe(code) -> None:
             node.value = _apply_arabic_text_fixes(node.value)
             node.value = _apply_date_fixes(node.value)
 
+        elif node_type == 'Heading':
+            _process_wikicode_safe(node.title)
+
+        elif node_type == 'Wikilink':
+            # Process visible label only — link target is intentionally untouched
+            if node.text is not None:
+                _process_wikicode_safe(node.text)
+
+        elif node_type == 'Tag':
+            tag_name = str(node.tag).lower() if node.tag else ''
+            if tag_name in _PROTECTED_TAGS:
+                continue
+            if node.contents is not None:
+                _process_wikicode_safe(node.contents)
+
+        elif node_type == 'ExternalLink':
+            # Skip URL; process display title only
+            if node.title is not None:
+                _process_wikicode_safe(node.title)
+
         elif node_type == 'Template':
-        # Process param values ONLY for infobox templates (containing 'bilgiquti').
-        # Skip all other templates (cite book, sfn, lang-*, etc.) — their content
-        # must be preserved as-is per translation_rules.md.
+            # Process param values ONLY for infobox templates (containing 'bilgiquti').
+            # Skip all other templates (cite book, sfn, lang-*, etc.).
             template_name = str(node.name).strip().lower()
-            
             if 'bilgiquti' not in template_name:
                 continue
-            # Infobox: process parameter VALUES (keys stay untouched)
             for param in node.params:
                 _process_wikicode_safe(param.value)
 
         # Comment, HTMLEntity, Argument → skip
-
-        # Template, Comment, HTMLEntity, Argument → skip entirely
-        # (Template params explicitly excluded by Rules 1 and 2)
-
 
 def fix_arabic_transliteration(wikitext: str) -> str:
     """
