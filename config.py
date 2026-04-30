@@ -12,7 +12,7 @@ from pathlib import Path
 # --- OpenAI Settings ---
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.1")
 REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
 
 # --- Wikipedia Settings ---
@@ -71,9 +71,17 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
    - Template nomlari 'TPL:Q12345' koʻrinishida boʻladi — ularni aynan shunday qoldiring. Template parametrlarining qiymatlari tarjima qiling, lekin parametr kalitlari (key) oʻzgartirmang.
    - REF_ bilan boshlanadigan qisqa manbalarni oʻzgartirmang.
 
-2) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
+2) Oddiy ingliz wikilinklarini (QID emas) toʻliq tarjima qiling — HAM target, HAM label. Masalan:
+   - [[Treaty of Safar]] → [[Safar shartnomasi]]
+   - [[Tarsus, Mersin|Tarsus]] → [[Tarsus, Mersin|Tars]]
+   - [[Sa'd al-Dawla al-Qawwasi|Sa'd al-Dawla]] → [[Saʼd ad-Davla al-Qavvasiy|Saʼd ad-Davla]]
+   - Agar oʻzbek tilidagi nomi nomaʼlum boʻlsa — fonetik transliteratsiya qiling.
+   - [[Rashiq al-Nasimi]] → [[Roshiq an-Nasimiy]] (arab ismlarini oʻzbek imlosiga moslashtiring)
+   - [[Traditionalist theology (Islam)|Athari]] → [[Anʼanaviy ilohiyot (Islom)|asariy]] (qavs ichidagi disambiguation'ni ham tarjima qiling)
 
-3) Izoh yozmang. Faqat wikitext chiqaring.
+3) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
+
+4) Izoh yozmang. Faqat wikitext chiqaring.
 
 Matn:
 ```{text}```

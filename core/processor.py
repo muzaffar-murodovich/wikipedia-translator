@@ -130,13 +130,28 @@ class WikiTextProcessor:
                 code.replace(wl, token)
 
         # Wikilinks
+        unresolved_links = []
         for target, wl, label in wikilink_items:
             resolved = redirect_map.get(target, target)
             qid = qid_map.get(resolved)
+            
+            # Check uz sitelink BEFORE replacing with QID
             if qid:
-                link_qid_map[qid] = resolved
-                wl.title = qid
-                wl.text = label
+                uz_title = self.fetcher.get_sitelink(qid, "uz")
+                if uz_title:
+                    # uz.wiki'da maqola bor — QID bilan almashtiramiz
+                    link_qid_map[qid] = resolved
+                    wl.title = qid
+                    wl.text = label
+                else:
+                    # uz.wiki'da yoʻq — wikilinkga tegmaymiz, AI tarjima qilsin
+                    unresolved_links.append((qid, target))
+            else:
+                # QID umuman topilmadi
+                unresolved_links.append((None, target))
+
+        if unresolved_links:
+            logger.info(f"  ℹ️  {len(unresolved_links)} havola uz.wiki'da yoʻq — AI tarjima qiladi")
 
         # Templates
         unresolved_templates = []
@@ -219,17 +234,7 @@ class WikiTextProcessor:
                     wl.title = uz_title
                     if not label or label == uz_title:
                         wl.text = None
-                else:
-                    # Oʻzbekcha sitelink yoʻq — inglizcha nomni qizil havola sifatida saqlaymiz
-                    en_title = self.fetcher.get_en_sitelink(target)
-                    if en_title:
-                        wl.title = en_title
-                        wl.text = label if label and label != en_title else None
-                    elif label:
-                        # Hech qanday sitelink yoʻq — havolani matn qilib qoldiramiz
-                        code.replace(wl, label)
-                    else:
-                        code.remove(wl)
+                # No `else` needed — Phase 1 garantees uz_title exists for QID-prefixed links
 
         # 2. Resolve categories
         text_after_links = str(code)
