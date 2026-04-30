@@ -41,3 +41,6 @@ additional-tools/category_check_*.json
 
 # Runtime control files
 stop.flag
+
+# Pipfile lock (optional — uncomment if needed)
+# Pipfile.lock
