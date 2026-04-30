@@ -331,48 +331,49 @@ def fix_year_with_dash(wikitext: str) -> str:
 # ========== Fix Punctuation With SFN Templates ==========
 
 def fix_punctuation_with_sfn(wikitext: str) -> str:
-    """Move punctuation to correct position around SFN templates."""
+    """Move punctuation to correct position around SFN/EFN templates."""
+    _sfn_efn = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
 
-    # Step 1: Move punctuation from before SFN to after SFN
+    # Step 1: Move punctuation from before SFN/EFN to after SFN/EFN
     wikitext = re.sub(
-        r'([.,;!?])\s*(\{\{sfn\s*\|[^}]*\}\})',
+        r'([.,;!?])\s*(' + _sfn_efn + r')',
         r'\2\1',
         wikitext, flags=re.IGNORECASE
     )
 
-    # Step 2: </ref>.{{sfn}} -> </ref>{{sfn}}.
+    # Step 2: </ref>.{{sfn/efn}} -> </ref>{{sfn/efn}}.
     wikitext = re.sub(
-        r'(</ref>)([.,;!?])(\s*)(\{\{sfn\s*\|[^}]*\}\})',
+        r'(</ref>)([.,;!?])(\s*)(' + _sfn_efn + r')',
         r'\1\3\4\2',
         wikitext, flags=re.IGNORECASE
     )
 
-    # Step 3: {{sfn}}.{{sfn}} -> {{sfn}}{{sfn}}
+    # Step 3: {{sfn/efn}}.{{sfn/efn}} -> {{sfn/efn}}{{sfn/efn}}
     wikitext = re.sub(
-        r'(\}\})([.,;!?])(\s*)(\{\{sfn)',
+        r'(\}\})([.,;!?])(\s*)(\{\{(?:sfn|efn))',
         r'\1\3\4',
         wikitext, flags=re.IGNORECASE
     )
 
-    # Step 4: Clean excess punctuation in sfn/ref chains
+    # Step 4: Clean excess punctuation in sfn/efn/ref chains
     for _ in range(5):
         wikitext = re.sub(
-            r'(\}\}|</ref>)([.,;!?])(\s*)(\{\{sfn|<ref)',
+            r'(\}\}|</ref>)([.,;!?])(\s*)(\{\{(?:sfn|efn)|<ref)',
             r'\1\3\4',
             wikitext, flags=re.IGNORECASE
         )
 
-    # Step 5: Add period after last sfn if missing
+    # Step 5: Add period after last sfn/efn if missing
     wikitext = re.sub(
-    r'(\{\{sfn\s*\|[^}]*\}\})(\s+)(?![.,;!?<{\[])',
-    r'\1.\2',
-    wikitext,
-    flags=re.IGNORECASE
+        r'(' + _sfn_efn + r')(\s+)(?![.,;!?<{\[])',
+        r'\1.\2',
+        wikitext,
+        flags=re.IGNORECASE
     )
 
-    # Step 6: Remove punctuation before sfn
+    # Step 6: Remove punctuation before sfn/efn
     wikitext = re.sub(
-        r'([.,;!?])\s*(\{\{sfn\s*\|[^}]*\}\})',
+        r'([.,;!?])\s*(' + _sfn_efn + r')',
         r'\2',
         wikitext, flags=re.IGNORECASE
     )
