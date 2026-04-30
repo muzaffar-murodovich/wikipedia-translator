@@ -377,6 +377,20 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
         wikitext, flags=re.IGNORECASE
     )
 
+    # 7a. Add period after </ref> when followed by [[Capitalized link]] (new sentence)
+    wikitext = re.sub(
+        r'(</ref>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
+        r'\1.\2\3',
+        wikitext
+    )
+
+    # 7b. Same for self-closing refs
+    wikitext = re.sub(
+        r'(/\s*>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
+        r'\1.\2\3',
+        wikitext
+    )
+
     return wikitext
 
 # ========== Combine All Fixes ==========
