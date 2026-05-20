@@ -66,8 +66,8 @@ class WikiTextProcessor:
         for wl in list(code.filter_wikilinks()):
             target = str(wl.title).strip()
             if target.startswith("Category:"):
-                label = str(wl.text).strip() if wl.text else target.split("Category:", 1)[-1]
-                category_items.append((target, wl, label))
+                sort_key = str(wl.text).strip() if wl.text else ""
+                category_items.append((target, wl, sort_key))
 
         # 5. Collect wikilinks
         for wl in code.filter_wikilinks():
@@ -121,12 +121,13 @@ class WikiTextProcessor:
         tpl_qid_map = {}
 
         # Categories
-        for target, wl, label in category_items:
+        for target, wl, sort_key in category_items:
             resolved = redirect_map.get(target, target)
             qid = qid_map.get(resolved)
+            cat_name = target.split("Category:", 1)[-1]
             if qid:
                 cat_qid_map[qid] = target
-                token = f"⟦CAT:{qid}|{label}⟧"
+                token = f"⟦CAT:{qid}|{cat_name}|{sort_key}⟧"
                 code.replace(wl, token)
 
         # Wikilinks
@@ -241,14 +242,16 @@ class WikiTextProcessor:
 
         def cat_repl(m):
             qid = m.group(1)
-            label = m.group(2).strip()
+            cat_name = m.group(2).strip()
+            sort_key = m.group(3).strip()
+            suffix = f"|{sort_key}" if sort_key else ""
             uz_title = self.fetcher.get_sitelink(qid, "uz")
             if uz_title:
                 if not uz_title.startswith(("Turkum:", "Kategoriya:")):
-                    return f"[[{config.FALLBACK_CATEGORY_PREFIX}:{uz_title}]]"
-                return f"[[{uz_title}]]"
+                    return f"[[{config.FALLBACK_CATEGORY_PREFIX}:{uz_title}{suffix}]]"
+                return f"[[{uz_title}{suffix}]]"
             else:
-                return f"[[{config.FALLBACK_CATEGORY_PREFIX}:{label}]]"
+                return f"[[{config.FALLBACK_CATEGORY_PREFIX}:{cat_name}{suffix}]]"
 
         text_after_cats = re.sub(RegexPatterns.CAT_TOKEN, cat_repl, text_after_links)
 
