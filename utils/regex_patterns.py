@@ -80,8 +80,8 @@ class RegexPatterns:
 
     # ========== Categories ==========
 
-    # Category token: ⟦CAT:Q12345|label⟧
-    CAT_TOKEN = r'⟦CAT:(Q\d+)\|([^\]]+?)⟧'
+    # Category token: ⟦CAT:Q12345|cat_name|sort_key⟧ (sort_key may be empty)
+    CAT_TOKEN = r'⟦CAT:(Q\d+)\|([^|⟧]+)\|([^⟧]*)⟧'
 
     # ========== Bracket Check ==========
 
