@@ -307,6 +307,6 @@ class WikiTextProcessor:
             wikitext = wikitext.replace(placeholder, original_ref)
 
         if ref_map:
-            logger.info(f"✓ Manbalar tikaldi: {len(ref_map)} ta")
+            logger.info(f"✓ Manbalar tiklandi: {len(ref_map)} ta")
 
         return wikitext

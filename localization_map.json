@@ -214,6 +214,7 @@
     "abdulmalik": "Abdulmalik",
     "-yil avval": " yil avval",
     " molik": " Molik",
+    " malik": " Malik",
     "-malik": "malik",
     "eronlik": "eroniy",
     "Marrakeshlik": "Marokashlik",
@@ -224,6 +225,8 @@
     
 
     "/ref>. (": "/ref> (",
+
+    " —": " —",
 
     "taxm. ": "taxminan ",
     "vaf. ": "vafoti ",
