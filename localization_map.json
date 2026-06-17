@@ -128,7 +128,6 @@
     "|Sunni Islom]": "|Sunniy]",
     "|Sunniy Islom]]": "|Sunniy]]",
 
-
     "[[Moturidiylik|Maturidi]]": "[[Moturidiylik|Moturidiy]]",
     "|Maturidi]]": "|Moturidiy]]",
     "[[Dorul Ulum Deoband|Darul Uloom Deoband]]": "[[Dorul Ulum Deoband]]",
@@ -220,10 +219,9 @@
     "Marrakeshlik": "Marokashlik",
 
     "<references/>.": "<references/>",
-    "<references />.":"<references />",
+    "<references />.":"<references/>",
+    "<References/>.": "<references/>",
     "<references group=\"\" responsive=\"0\"></references>": "",
-    
-
     "/ref>. (": "/ref> (",
 
     " —": " —",
