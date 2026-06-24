@@ -14,6 +14,8 @@ from pathlib import Path
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
+# Phase 5 (REVIEW) yoqilgan/oʻchirilganligi. Muzlatish uchun: ENABLE_REVIEW=false
+ENABLE_REVIEW = os.getenv("ENABLE_REVIEW", "true").lower() not in ("false", "0", "no")
 
 # --- Wikipedia Settings ---
 

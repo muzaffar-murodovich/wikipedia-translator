@@ -122,7 +122,10 @@ def main(input_file: str, output_file: str):
     logger.section("🔍 PHASE 5: REVIEW")
     review_start = time.time()
  
-    if reviewer.is_available():
+    if not config.ENABLE_REVIEW:
+        logger.warning("Phase 5 o'tkazib yuborildi (ENABLE_REVIEW=false)")
+        review_time = 0.0
+    elif reviewer.is_available():
         try:
             reviewed = reviewer.review(result)
             if reviewed:
