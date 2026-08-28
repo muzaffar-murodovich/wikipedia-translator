@@ -319,10 +319,18 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Git Workflow
 
-- Development branch naming: `claude/<description>-<sessionId>`
+Single-maintainer project — there is no team and no PR review step.
+
+- **Commit straight to `main`.** Do not open a branch unless there is a real
+  reason: work that may be abandoned half-finished, or several independent
+  changes in flight at once. A branch that is fast-forward merged into `main`
+  right away produces exactly the same history as committing to `main`, and
+  only leaves a stale local branch behind.
+- Keep unrelated changes in separate commits, even on `main`.
 - Commit messages are short and descriptive in English.
 - **Never commit** `.env`, API keys, `output*.txt`, `*.log`, or `temp_wiki/` — all excluded by `.gitignore`.
-- Push with: `git push -u origin <branch-name>`
+- The `origin` remote is HTTPS but no credentials are stored; pushes go over SSH:
+  `git push git@github.com:muzaffar-murodovich/wikipedia-translator.git main`
 
 ---
 
