@@ -7,7 +7,7 @@ core/processor.py - Wikitext preparation, finalization, and Uzbek-style conversi
 
 import re
 import hashlib
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import mwparserfromhell as mwp
 
@@ -29,6 +29,29 @@ class WikiTextProcessor:
         """
         self.fetcher = fetcher
         self.cache = cache
+
+    @staticmethod
+    def _remove_templates(code, templates: List) -> int:
+        """
+        Remove templates from a parsed wikitext node list.
+
+        A template nested inside another template that was already removed
+        is no longer part of the tree, and mwparserfromhell raises
+        ValueError for it. That is the desired end state — it is already
+        gone — so it is skipped rather than crashing the pipeline.
+
+        Returns:
+            Number of templates actually removed
+        """
+        removed = 0
+        for tpl in templates:
+            try:
+                code.remove(tpl)
+                removed += 1
+            except ValueError:
+                # Already removed together with its parent template.
+                continue
+        return removed
 
     def prepare(self, raw_wikitext: str) -> Tuple[str, Dict, Dict, Dict, Dict]:
         """
@@ -169,11 +192,10 @@ class WikiTextProcessor:
                     unresolved_templates.append(tpl)
 
         # Remove unresolved templates (no QID, no fallback mapping)
-        for tpl in unresolved_templates:
-            code.remove(tpl)
+        removed = self._remove_templates(code, unresolved_templates)
 
-        if unresolved_templates:
-            logger.info(f"✓ Hal qilinmagan andozalar oʻchirildi: {len(unresolved_templates)} ta")
+        if removed:
+            logger.info(f"✓ Hal qilinmagan andozalar oʻchirildi: {removed} ta")
 
         prepared_text = str(code)
 
@@ -283,8 +305,7 @@ class WikiTextProcessor:
                         templates_to_remove.append(tpl)
 
         # Remove unresolved templates
-        for tpl in templates_to_remove:
-            code2.remove(tpl)
+        self._remove_templates(code2, templates_to_remove)
 
         final_text = str(code2)
 
