@@ -123,7 +123,7 @@ def main(input_file: str, output_file: str):
     review_start = time.time()
  
     if not config.ENABLE_REVIEW:
-        logger.warning("Phase 5 o'tkazib yuborildi (ENABLE_REVIEW=false)")
+        logger.warning("Phase 5 o'tkazib yuborildi (ENABLE_REVIEW=False)")
         review_time = 0.0
     elif reviewer.is_available():
         try:
