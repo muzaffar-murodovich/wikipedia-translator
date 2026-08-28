@@ -8,9 +8,10 @@ Download English wikitext by URL or article name.
 
 import re
 import urllib.parse
-import urllib.request
-import json
 from typing import Optional, Tuple
+
+from utils.api_client import wiki_api
+from utils.logger import logger
 
 
 def extract_article_name(url: str) -> Optional[str]:
@@ -48,20 +49,14 @@ def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], 
     Returns:
         (wikitext, normalized_title) or (None, None) on error
     """
-    encoded = urllib.parse.quote(article_name)
-    api_url = (
-        f"https://{lang}.wikipedia.org/w/api.php"
-        f"?action=query&titles={encoded}&prop=revisions"
-        f"&rvprop=content&rvslots=main&format=json&formatversion=2"
-    )
-
     try:
-        req = urllib.request.Request(
-            api_url,
-            headers={"User-Agent": "WikiTranslatorBot/1.0 (Uzbek Wikipedia translation)"},
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        data = wiki_api({
+            "action": "query",
+            "titles": article_name,
+            "prop": "revisions",
+            "rvprop": "content",
+            "rvslots": "main",
+        }, lang=lang)
 
         pages = data.get("query", {}).get("pages", [])
         if not pages:
@@ -79,6 +74,8 @@ def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], 
         return wikitext, title
 
     except Exception as e:
+        # Yuklab bo'lmadi — bu "maqola yo'q" degani EMAS.
+        logger.error(f"Maqolani yuklab bo'lmadi: {article_name} - {e}")
         return None, str(e)
 
 

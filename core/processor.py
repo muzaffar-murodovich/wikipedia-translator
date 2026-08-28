@@ -107,12 +107,10 @@ class WikiTextProcessor:
 
         all_titles_list = list(all_titles)
 
-        # B1: Batch resolve redirects (1-2 HTTP requests)
-        redirect_map = self.fetcher.batch_resolve_redirects(all_titles_list)
-
-        # B2: Batch fetch QIDs for resolved titles (1-2 HTTP requests)
-        resolved_titles = list(set(redirect_map.values()))
-        qid_map = self.fetcher.batch_get_qids_fast(resolved_titles)
+        # B1: Redirects + QIDs + uz sitelinks in one pass (1 request per 50 titles)
+        page_info = self.fetcher.batch_page_info(all_titles_list)
+        redirect_map = {t: d["resolved"] for t, d in page_info.items()}
+        qid_map = {d["resolved"]: d["qid"] for d in page_info.values()}
 
         # ===== Phase C: Apply results =====
 

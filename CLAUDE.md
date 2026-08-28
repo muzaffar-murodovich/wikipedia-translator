@@ -59,7 +59,8 @@ Phase 1 — PREPARE (core/processor.py)
   - Replaces [[wikilinks]] with [[Q12345|label]] placeholders
   - Replaces [[Category:...]] with  CAT:Q12345|label  placeholders
   - Replaces {{templates}} with {{TPL:Q12345}} placeholders
-  - Uses batch Wikidata API (50 titles/request) for redirects + QIDs
+  - Uses `batch_page_info()` — one en.wikipedia request per 50 titles resolves
+    redirects + QIDs + uz sitelinks together
     |
     v
 Phase 2 — TRANSLATE (core/translator.py)
@@ -138,6 +139,7 @@ Set these in `.env` or export before running:
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OPENAI_MODEL` | (optional) Translation model — defaults to `gpt-5.2` |
 | `REVIEW_MODEL` | (optional) Phase 5 review model — defaults to `gpt-5.4-mini` |
+| `WIKI_CONTACT` | (optional) Contact info for the Wikimedia API User-Agent (email or wiki user page) |
 
 The `.env` file is gitignored — never commit API keys.
 
@@ -157,6 +159,7 @@ All configuration is in a single file. Comments and string values are written in
 - **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure. Rules are embedded in the **system prompt** (static prefix) to maximize OpenAI prompt-cache hits; only the wikitext varies per call.
 - **Fallback template mappings**: `FALLBACK_TEMPLATE_MAP_EN2UZ` — when Wikidata has no sitelink for a template.
 - **Reference compression**: `REF_COMPRESS_THRESHOLD = 20` characters.
+- **Wikimedia API**: `API_BATCH_SIZE` (50), `API_MAX_RETRIES`, `API_RETRY_BASE_DELAY`, `API_MAX_RETRY_DELAY`, `API_BATCH_DELAY` — 429 rate-limit handling. `API_USER_AGENT` is built from `API_CONTACT` (env `WIKI_CONTACT`); Wikimedia's User-Agent policy requires real contact info, so set it to your email or wiki user page.
 
 Do **not** hardcode API keys into `config.py`. Use environment variables.
 
@@ -167,7 +170,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `core/processor.py`
 - Uses `mwparserfromhell` to parse and manipulate wikitext AST.
 - `prepare(raw_wikitext)` returns a **5-tuple**: `(prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map)`.
-- `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare. The in-memory cache populated during `prepare()` (especially uz sitelinks pre-cached by `batch_get_qids_fast()`) makes this near-free.
+- `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare. The in-memory cache populated during `prepare()` (especially uz sitelinks pre-cached by `batch_page_info()`) makes this near-free.
 
 ### `core/translator.py`
 - `translate(text)` sends prepared wikitext to OpenAI for translation.
@@ -179,8 +182,9 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `site_en`, `site_uz`, `site_wd` are **lazy properties** — pywikibot `Site()` objects are created only on first access, not at init time. This prevents `MaxlagTimeoutError` on startup.
 - `get_qid(title, site)` — resolves a Wikipedia title to its QID (pywikibot, legacy).
 - `get_sitelink(qid, target_lang)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
-- `batch_resolve_redirects()` / `batch_get_qids_fast()` — direct HTTP API, used in Phase 1 (no pywikibot). Process 50 titles per request.
-- `batch_get_qids_fast()` also pre-caches uz and en sitelinks (bonus for Phase 3).
+- `batch_page_info(titles, site_code)` — **the batch workhorse** used in Phase 1 (direct HTTP, no pywikibot). One `action=query&redirects=1&prop=pageprops|langlinks` request per 50 titles returns the redirect target, the QID and the uz title in a single round trip, and pre-caches uz/en sitelinks (bonus for Phase 3). Returns `{title: {"resolved", "qid", "uz_title"}}`.
+- `batch_resolve_redirects()` / `batch_get_qids_fast()` — thin wrappers over `batch_page_info()`, kept for compatibility. Calling both in sequence costs one request: the second is served from cache.
+- **Rate limiting:** `_wiki_api()` retries on HTTP 429/5xx, honouring the `Retry-After` header (`config.API_MAX_RETRIES`, `API_RETRY_BASE_DELAY`, `API_MAX_RETRY_DELAY`), and sleeps `API_BATCH_DELAY` between batches. On a failed lookup nothing is written to the cache — an API error must never be recorded as "not found", and the affected titles land in `fetcher.failed_titles`.
 - All results pass through `cache_manager` automatically.
 
 ### `core/reviewer.py`
@@ -194,7 +198,8 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - In-memory 3-tier memoization: QID, sitelink, redirect. No disk persistence — each run starts empty.
 - Cache values of `"NONE"` mean "looked up and not found" — do not re-query within the same run.
 - Cache keys: `"site_code:title"` for QID/redirect, `"QID:target_site"` for sitelink.
-- Within a single run, Phase 1 populates most entries (via `batch_get_qids_fast()` which pre-caches uz/en sitelinks), so Phase 3 mostly hits the cache.
+- Within a single run, Phase 1 populates most entries (via `batch_page_info()` which pre-caches uz/en sitelinks), so Phase 3 mostly hits the cache.
+- **Never cache a lookup that failed with an API error** — only genuine "not found" answers get the `"NONE"` sentinel.
 
 ### `utils/regex_patterns.py`
 - Central registry of all regex patterns used across the codebase (`RegexPatterns` class).
@@ -286,7 +291,7 @@ python additional-tools/category-checker.py "Uzbek writers" --open 10-20
 ```
 
 - Accepts category name with or without `"Category:"` prefix.
-- Uses `WikidataFetcher` and `WikiCache` from the main project (batch API, 50 titles/request).
+- Uses one `generator=categorymembers` + `prop=langlinks&lllang=uz` request per 500 members: category membership and Uzbek existence arrive together, so a 494-article category costs a single request (~1 s).
 - JSON output saved to `additional-tools/category_check_<name>.json` (gitignored).
 - **Note:** The tool checks article **existence** on uz.wiki (Wikidata sitelink), not category membership. An article may exist on uz.wiki but be in a different category.
 

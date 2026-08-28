@@ -14,8 +14,8 @@ from pathlib import Path
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 REVIEW_MODEL = os.getenv("REVIEW_MODEL", "gpt-5.4-mini")
-# Phase 5 (REVIEW) yoqilgan/oʻchirilganligi. Muzlatish uchun: ENABLE_REVIEW=false
-ENABLE_REVIEW = os.getenv("ENABLE_REVIEW", "true").lower() not in ("false", "0", "no")
+# Phase 5 (REVIEW)
+ENABLE_REVIEW = False
 
 # --- Wikipedia Settings ---
 
@@ -27,6 +27,20 @@ TARGET_LANG = "uz"  # Target language
 
 MAX_WORKERS = 1                    # Number of parallel threads
 REQUEST_DELAY = 1                  # Delay between requests (seconds)
+
+# --- Wikimedia API Settings ---
+
+API_BATCH_SIZE = 50          # Bitta so'rovdagi sarlavhalar soni (API limiti)
+API_MAX_RETRIES = 5          # 429/503 xatolarida qayta urinishlar soni
+API_RETRY_BASE_DELAY = 1.0   # Qayta urinishlar orasidagi boshlang'ich kutish (soniya)
+API_MAX_RETRY_DELAY = 30.0   # Qayta urinishda maksimal kutish (soniya)
+API_BATCH_DELAY = 1.0        # Ketma-ket batch so'rovlar orasidagi pauza (soniya)
+
+# Wikimedia User-Agent siyosati kontakt ma'lumotini talab qiladi:
+# https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy
+# .env da WIKI_CONTACT ni o'z email yoki foydalanuvchi sahifangizga o'zgartiring.
+API_CONTACT = os.getenv("WIKI_CONTACT", "https://uz.wikipedia.org/wiki/Vikipediya:Bot")
+API_USER_AGENT = f"WikiTranslatorBot/1.0 ({API_CONTACT}) python-urllib/3.12"
 
 # --- Pywikibot Configuration ---
 

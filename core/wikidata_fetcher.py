@@ -8,18 +8,15 @@ Optimized with batch processing.
 """
 
 import re
-import json
-import urllib.parse
-import urllib.request
+import time
 from typing import Optional, Dict, List
 
 import pywikibot
 
 import config
 from core.cache_manager import WikiCache
+from utils.api_client import wiki_api
 from utils.logger import logger
-
-_USER_AGENT = "WikiTranslatorBot/1.0 (Uzbek Wikipedia; uz.wikipedia.org)"
 
 
 class WikidataFetcher:
@@ -37,6 +34,10 @@ class WikidataFetcher:
         self._site_en = None
         self._site_uz = None
         self._site_wd = None
+
+        # Titles whose last batch lookup failed because of an API error.
+        # These are NOT "not found" — callers must not report them as missing.
+        self.failed_titles: set = set()
 
     @property
     def site_en(self):
@@ -169,27 +170,123 @@ class WikidataFetcher:
             return None
 
         except Exception as e:
-            logger.debug(f"Sitelink olishda xato: {qid} - {e}")
-            self.cache.set_sitelink(qid, target_site, None)
+            # API xatosi — cache'ga NONE yozmaymiz (bu "mavjud emas" degani emas).
+            logger.error(f"Sitelink olishda xato: {qid} - {e}")
             return None
 
     def _wiki_api(self, params: dict, lang: str = "en", domain: str = "wikipedia") -> dict:
-        """Direct HTTP request to Wikipedia/Wikidata API."""
-        params.setdefault("format", "json")
-        params.setdefault("formatversion", "2")
-        encoded = urllib.parse.urlencode(params)
-        if domain == "wikidata":
-            url = f"https://www.wikidata.org/w/api.php?{encoded}"
-        else:
-            url = f"https://{lang}.wikipedia.org/w/api.php?{encoded}"
-        req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        """
+        Send a request to the Wikipedia/Wikidata API.
+
+        Delegates to utils.api_client, which handles HTTP 429 rate limiting
+        and transient errors. Raises on failure — callers must not record a
+        failed request as "not found".
+        """
+        return wiki_api(params, lang=lang, domain=domain)
+
+    def batch_page_info(
+        self, titles: List[str], site_code: str = "en"
+    ) -> Dict[str, Dict[str, Optional[str]]]:
+        """
+        Resolve redirects, QIDs and target-language titles in ONE request per batch.
+
+        Uses the source Wikipedia API (not wikidata.org):
+            action=query&redirects=1&prop=pageprops|langlinks
+
+        This replaces the old two-step flow (batch_resolve_redirects +
+        batch_get_qids_fast), halving the number of HTTP requests and
+        keeping all traffic on one host — which is what caused the
+        HTTP 429 rate limiting.
+
+        Args:
+            titles: Article titles (redirects allowed)
+            site_code: Source site code (en, uz)
+
+        Returns:
+            {original_title: {"resolved": str, "qid": Optional[str],
+                              "uz_title": Optional[str]}}
+        """
+        target_site = f"{config.TARGET_LANG}wiki"
+        results: Dict[str, Dict[str, Optional[str]]] = {}
+        uncached: List[str] = []
+
+        # Fully cached only if we know the redirect AND the QID of its target.
+        for title in titles:
+            resolved = self.cache.get_redirect(site_code, title)
+            if resolved is None:
+                uncached.append(title)
+                continue
+            qid_key = f"{site_code}:{resolved}"
+            if qid_key not in self.cache.qid_cache:
+                uncached.append(title)
+                continue
+            qid = self.cache.get_qid(site_code, resolved)
+            results[title] = {
+                "resolved": resolved,
+                "qid": qid,
+                "uz_title": self.cache.get_sitelink(qid, target_site) if qid else None,
+            }
+
+        for i in range(0, len(uncached), config.API_BATCH_SIZE):
+            batch = uncached[i:i + config.API_BATCH_SIZE]
+            if i:
+                time.sleep(config.API_BATCH_DELAY)
+            try:
+                data = self._wiki_api({
+                    "action": "query",
+                    "titles": "|".join(batch),
+                    "redirects": "1",
+                    "prop": "pageprops|langlinks",
+                    "ppprop": "wikibase_item",
+                    "lllang": config.TARGET_LANG,
+                    "lllimit": "max",
+                }, lang=site_code)
+
+                query = data.get("query", {})
+                normalized_map = {n["from"]: n["to"] for n in query.get("normalized", [])}
+                redirect_map = {r["from"]: r["to"] for r in query.get("redirects", [])}
+
+                page_info = {}
+                for pg in query.get("pages", []):
+                    qid = pg.get("pageprops", {}).get("wikibase_item")
+                    langlinks = pg.get("langlinks", [])
+                    page_info[pg["title"]] = (
+                        qid,
+                        langlinks[0]["title"] if langlinks else None,
+                    )
+
+                for title in batch:
+                    lookup = normalized_map.get(title, title)
+                    resolved = redirect_map.get(lookup, lookup)
+                    qid, uz_title = page_info.get(resolved, (None, None))
+
+                    results[title] = {
+                        "resolved": resolved,
+                        "qid": qid,
+                        "uz_title": uz_title,
+                    }
+
+                    self.cache.set_redirect(site_code, title, resolved)
+                    self.cache.set_qid(site_code, resolved, qid)
+                    if qid:
+                        # Bonus for Phase 3: target and source sitelinks.
+                        self.cache.set_sitelink(qid, target_site, uz_title)
+                        self.cache.set_sitelink(qid, f"{site_code}wiki", resolved)
+                    self.failed_titles.discard(title)
+
+            except Exception as e:
+                # API xatosi — "topilmadi" degani emas. Cache'ga yozmaymiz,
+                # aks holda xato javob butun run davomida saqlanib qoladi.
+                logger.error(f"Batch sahifa ma'lumoti xatosi ({len(batch)} ta sarlavha): {e}")
+                for title in batch:
+                    results[title] = {"resolved": title, "qid": None, "uz_title": None}
+                    self.failed_titles.add(title)
+
+        return results
 
     def batch_resolve_redirects(self, titles: List[str], site_code: str = "en") -> Dict[str, str]:
         """
-        Batch resolve redirects using Wikipedia API.
-        Uses action=query&redirects with 50 titles/request.
+        Batch resolve redirects. Thin wrapper over batch_page_info().
 
         Args:
             titles: List of article titles
@@ -198,125 +295,25 @@ class WikidataFetcher:
         Returns:
             {original_title: resolved_title} dict
         """
-        results = {}
-        uncached = []
-
-        for title in titles:
-            cached = self.cache.get_redirect(site_code, title)
-            if cached is not None:
-                results[title] = cached
-            else:
-                uncached.append(title)
-
-        for i in range(0, len(uncached), 50):
-            batch = uncached[i:i + 50]
-            joined = "|".join(batch)
-            try:
-                data = self._wiki_api({
-                    "action": "query",
-                    "titles": joined,
-                    "redirects": "1",
-                }, lang=site_code)
-
-                redirect_map = {}
-                for r in data.get("query", {}).get("redirects", []):
-                    redirect_map[r["from"]] = r["to"]
-
-                # Normalized mapping (e.g. "abu_bakr" -> "Abu Bakr")
-                normalized_map = {}
-                for n in data.get("query", {}).get("normalized", []):
-                    normalized_map[n["from"]] = n["to"]
-
-                for title in batch:
-                    lookup = normalized_map.get(title, title)
-                    resolved = redirect_map.get(lookup, lookup)
-                    results[title] = resolved
-                    self.cache.set_redirect(site_code, title, resolved)
-
-            except Exception as e:
-                logger.debug(f"Batch redirect xatosi: {e}")
-                for title in batch:
-                    results[title] = title
-                    self.cache.set_redirect(site_code, title, title)
-
-        return results
+        info = self.batch_page_info(titles, site_code)
+        return {title: data["resolved"] for title, data in info.items()}
 
     def batch_get_qids_fast(self, titles: List[str], site_code: str = "en") -> Dict[str, Optional[str]]:
         """
-        Batch fetch QIDs and sitelinks using Wikidata API.
-        Uses wbgetentities with 50 titles/request.
-        Bonus: uz/en sitelinks are also cached (for Phase 3).
+        Batch fetch QIDs. Thin wrapper over batch_page_info().
+
+        Target-language sitelinks are cached as a side effect (for Phase 3),
+        so a following batch_resolve_redirects()/get_sitelink() call is free.
 
         Args:
-            titles: Article titles (redirects already resolved)
+            titles: Article titles
             site_code: Site code
 
         Returns:
             {title: QID} dict (QID or None)
         """
-        results = {}
-        uncached = []
-
-        for title in titles:
-            cached = self.cache.get_qid(site_code, title)
-            if cached is not None:
-                results[title] = cached
-            else:
-                uncached.append(title)
-
-        if not uncached:
-            return results
-
-        site_db = f"{site_code}wiki"
-        for i in range(0, len(uncached), 50):
-            batch = uncached[i:i + 50]
-            joined = "|".join(batch)
-            try:
-                data = self._wiki_api({
-                    "action": "wbgetentities",
-                    "sites": site_db,
-                    "titles": joined,
-                    "props": "sitelinks",
-                }, domain="wikidata")
-
-                title_to_qid = {}
-                for entity_id, entity in data.get("entities", {}).items():
-                    if entity_id.startswith("-"):
-                        continue
-                    sitelinks = entity.get("sitelinks", {})
-
-                    # Map from source wiki title
-                    src_link = sitelinks.get(site_db, {})
-                    src_title = src_link.get("title", "")
-                    title_to_qid[src_title] = entity_id
-
-                    # Cache uz sitelink (for Phase 3)
-                    uz_link = sitelinks.get("uzwiki", {})
-                    uz_title = uz_link.get("title") if uz_link else None
-                    self.cache.set_sitelink(entity_id, "uzwiki", uz_title)
-
-                    # Cache en sitelink (for fallback)
-                    if src_title:
-                        self.cache.set_sitelink(entity_id, f"{site_code}wiki", src_title)
-
-                for title in batch:
-                    qid = title_to_qid.get(title)
-                    if not qid:
-                        # Try normalization match
-                        for src_t, q in title_to_qid.items():
-                            if src_t.replace(" ", "_") == title.replace(" ", "_"):
-                                qid = q
-                                break
-                    results[title] = qid
-                    self.cache.set_qid(site_code, title, qid)
-
-            except Exception as e:
-                logger.debug(f"Batch QID xatosi: {e}")
-                for title in batch:
-                    results[title] = None
-                    self.cache.set_qid(site_code, title, None)
-
-        return results
+        info = self.batch_page_info(titles, site_code)
+        return {title: data["qid"] for title, data in info.items()}
 
     def get_en_sitelink(self, qid: str) -> Optional[str]:
         """Get English sitelink from QID."""

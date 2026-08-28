@@ -38,89 +38,59 @@ def normalize_category_name(name: str) -> str:
     return "Category:" + name
 
 
-def fetch_category_members(fetcher: WikidataFetcher, category: str) -> List[str]:
+def fetch_category_uz_status(
+    fetcher: WikidataFetcher, category: str
+) -> Dict[str, Optional[str]]:
     """
-    Fetch all article members of a category from English Wikipedia.
-    Uses paginated API (500 per request).
+    Fetch all article members of a category together with their Uzbek
+    interwiki link — in a single API request per 500 members.
+
+    Uses generator=categorymembers + prop=langlinks&lllang=uz, so category
+    membership and Uzbek existence come back in one round trip. Interwiki
+    links on Wikipedia are served from Wikidata sitelinks, so the result
+    matches a per-article Wikidata lookup without the extra requests.
 
     Args:
-        fetcher: WikidataFetcher instance (for _wiki_api)
+        fetcher: WikidataFetcher instance (for its retrying _wiki_api)
         category: Full category name with "Category:" prefix
 
     Returns:
-        List of article titles
+        {article_title: uz_title or None}
     """
-    members = []
-    cmcontinue = None
+    params = {
+        "action": "query",
+        "generator": "categorymembers",
+        "gcmtitle": category,
+        "gcmlimit": "500",
+        "gcmnamespace": "0",
+        "gcmtype": "page",
+        "prop": "langlinks",
+        "lllang": config.TARGET_LANG,
+        "lllimit": "max",
+        "redirects": "1",
+    }
+
+    pages: Dict[str, Optional[str]] = {}
+    cont: Dict[str, str] = {}
+    requests_made = 0
 
     while True:
-        params = {
-            "action": "query",
-            "list": "categorymembers",
-            "cmtitle": category,
-            "cmlimit": "500",
-            "cmnamespace": "0",
-            "cmtype": "page",
-        }
-        if cmcontinue:
-            params["cmcontinue"] = cmcontinue
+        data = fetcher._wiki_api({**params, **cont}, lang=config.SOURCE_LANG)
+        requests_made += 1
 
-        data = fetcher._wiki_api(params, lang="en")
+        for page in data.get("query", {}).get("pages", []):
+            langlinks = page.get("langlinks", [])
+            uz_title = langlinks[0]["title"] if langlinks else None
+            # Continuation can split a page's props across responses —
+            # never overwrite a known title with None.
+            pages[page["title"]] = pages.get(page["title"]) or uz_title
 
-        for item in data.get("query", {}).get("categorymembers", []):
-            members.append(item["title"])
-
-        cmcontinue = data.get("continue", {}).get("cmcontinue")
-        if not cmcontinue:
+        if "continue" not in data:
             break
+        cont = data["continue"]
 
-    return members
-
-
-def check_uz_existence(
-    fetcher: WikidataFetcher, cache: WikiCache, titles: List[str]
-) -> Tuple[List[str], List[str]]:
-    """
-    Check which articles exist on Uzbek Wikipedia.
-
-    Uses batch redirect resolution + batch QID lookup.
-    batch_get_qids_fast() caches uz sitelinks automatically.
-
-    Args:
-        fetcher: WikidataFetcher instance
-        cache: WikiCache instance
-        titles: List of English article titles
-
-    Returns:
-        (missing_titles, existing_titles) — original English titles
-    """
-    logger.info("Redirectlar tekshirilmoqda...")
-    redirect_map = fetcher.batch_resolve_redirects(titles, "en")
-
-    resolved_titles = list(set(redirect_map.values()))
-    logger.info(f"QID va sitelinklar olinmoqda ({len(resolved_titles)} ta maqola)...")
-    qid_map = fetcher.batch_get_qids_fast(resolved_titles, "en")
-
-    missing = []
-    existing = []
-
-    for title in titles:
-        resolved = redirect_map.get(title, title)
-        qid = qid_map.get(resolved)
-
-        if not qid:
-            missing.append(title)
-            continue
-
-        cache_key = f"{qid}:uzwiki"
-        cached_value = cache.sitelink_cache.get(cache_key)
-
-        if cached_value is None or cached_value == "NONE":
-            missing.append(title)
-        else:
-            existing.append(title)
-
-    return missing, existing
+    logger.debug(f"{requests_made} ta API so'rovi bajarildi.")
+    return pages
 
 
 def parse_open_arg(value: str) -> Tuple[int, int]:
@@ -244,30 +214,29 @@ def main():
     logger.section(f"Kategoriya tekshirilmoqda: {category}")
 
     try:
-        cache = WikiCache()
-        fetcher = WikidataFetcher(cache)
+        # Cache is required by WikidataFetcher; the category query itself
+        # needs no per-title lookups.
+        fetcher = WikidataFetcher(WikiCache())
 
-        logger.info("Kategoriya a'zolari olinmoqda...")
-        members = fetch_category_members(fetcher, category)
+        logger.info("Kategoriya a'zolari va o'zbekcha havolalar olinmoqda...")
+        pages = fetch_category_uz_status(fetcher, category)
 
-        if not members:
+        if not pages:
             print(f"\n⚠️  Kategoriyada maqola topilmadi: {category}")
             sys.exit(0)
 
-        logger.info(f"{len(members)} ta maqola topildi.")
+        logger.info(f"{len(pages)} ta maqola topildi.")
 
-        missing, existing = check_uz_existence(fetcher, cache, members)
+        missing = sorted(title for title, uz in pages.items() if not uz)
 
-        print_results(missing, len(members), category)
+        print_results(missing, len(pages), category)
 
         if missing:
-            output_path = save_results_json(missing, category, len(members))
+            output_path = save_results_json(missing, category, len(pages))
             print(f"\n💾 Natijalar saqlandi: {output_path}")
 
         if open_range and missing:
             open_in_browser(missing, open_range[0], open_range[1])
-
-        cache.print_stats()
 
     except Exception as e:
         logger.fail(f"Xatolik yuz berdi: {e}")
