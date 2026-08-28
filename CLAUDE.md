@@ -288,11 +288,16 @@ python additional-tools/category-checker.py "Uzbek writers" --open 5
 
 # Open articles 10-20 in browser
 python additional-tools/category-checker.py "Uzbek writers" --open 10-20
+
+# Ignore the saved file and query Wikipedia again
+python additional-tools/category-checker.py "Uzbek writers" --refresh
 ```
 
 - Accepts category name with or without `"Category:"` prefix.
 - Uses one `generator=categorymembers` + `prop=langlinks&lllang=uz` request per 500 members: category membership and Uzbek existence arrive together, so a 494-article category costs a single request (~1 s).
-- JSON output saved to `additional-tools/category_check_<name>.json` (gitignored).
+- JSON output saved to `additional-tools/category_check_<name>.json` (gitignored), and **read back on the next check of the same category** — a repeat check makes no HTTP request at all and prints the saved result's age. `--refresh` forces a new query and overwrites the file. A file that is absent, corrupt or missing its expected fields falls back to a fresh query with a warning.
+- The results file is always written, including when nothing is missing, so the next check can reuse it.
+- **A refresh overwrites the file without asking** — copy it first if you have annotated the list.
 - **Note:** The tool checks article **existence** on uz.wiki (Wikidata sitelink), not category membership. An article may exist on uz.wiki but be in a different category.
 
 ---

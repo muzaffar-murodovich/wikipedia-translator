@@ -9,6 +9,7 @@ are missing from Uzbek Wikipedia.
 
 import os
 import sys
+import time
 import argparse
 import webbrowser
 import urllib.parse
@@ -139,8 +140,54 @@ def open_in_browser(titles: List[str], start: int, end: int):
 
     for title in subset:
         webbrowser.open(make_url(title))
+        time.sleep(0.5)  # Avoid overwhelming the browser
 
     print(f"\n🌐 {len(subset)} ta maqola brauzerda ochildi ({start}-{end}).")
+
+
+def results_path(category: str) -> str:
+    """Path of the saved results file for a category."""
+    sanitized = category.replace("Category:", "").replace(" ", "_").replace("/", "_")
+    return str(_SCRIPT_DIR / f"category_check_{sanitized}.json")
+
+
+def load_saved_results(category: str) -> Optional[Tuple[List[str], int, str]]:
+    """
+    Load a previous check of this category from its results file.
+
+    Returns:
+        (missing_titles, total_in_category, checked_at) or None when the
+        file is absent, unreadable or does not hold the expected fields.
+    """
+    path = results_path(category)
+    if not FileHandler.file_exists(path):
+        return None
+
+    data = FileHandler.read_json(path)
+    try:
+        missing = [article["title"] for article in data["missing_articles"]]
+        total = int(data["total_in_category"])
+        checked_at = str(data["checked_at"])
+    except (KeyError, TypeError, ValueError):
+        logger.warning(f"Saqlangan fayl o'qib bo'lmadi, qaytadan tekshiriladi: {path}")
+        return None
+
+    return missing, total, checked_at
+
+
+def describe_age(checked_at: str) -> str:
+    """Human-readable age of a saved result, in Uzbek."""
+    try:
+        delta = datetime.now() - datetime.fromisoformat(checked_at)
+    except ValueError:
+        return checked_at
+
+    days, hours = delta.days, delta.seconds // 3600
+    if days > 0:
+        return f"{days} kun oldin"
+    if hours > 0:
+        return f"{hours} soat oldin"
+    return f"{max(delta.seconds // 60, 1)} daqiqa oldin"
 
 
 def save_results_json(
@@ -152,8 +199,7 @@ def save_results_json(
     Returns:
         Output file path
     """
-    sanitized = category.replace("Category:", "").replace(" ", "_").replace("/", "_")
-    output_path = str(_SCRIPT_DIR / f"category_check_{sanitized}.json")
+    output_path = results_path(category)
 
     data = {
         "category": category,
@@ -202,6 +248,11 @@ def main():
         dest="open_range",
         help="Brauzerda ochish: N (birinchi N ta) yoki N-M (oraliq)",
     )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Saqlangan natijani e'tiborsiz qoldirib, Vikipediyadan qaytadan tekshirish",
+    )
 
     args = parser.parse_args()
 
@@ -218,21 +269,32 @@ def main():
         # needs no per-title lookups.
         fetcher = WikidataFetcher(WikiCache())
 
-        logger.info("Kategoriya a'zolari va o'zbekcha havolalar olinmoqda...")
-        pages = fetch_category_uz_status(fetcher, category)
+        saved = None if args.refresh else load_saved_results(category)
 
-        if not pages:
-            print(f"\n⚠️  Kategoriyada maqola topilmadi: {category}")
-            sys.exit(0)
+        if saved:
+            # Oldingi tekshiruv natijasi — Vikipediyaga so'rov yuborilmaydi.
+            missing, total, checked_at = saved
+            print_results(missing, total, category)
+            print(f"\n📄 Saqlangan natija ({describe_age(checked_at)}): "
+                  f"{results_path(category)}")
+            print("   Yangilash uchun: --refresh")
+        else:
+            logger.info("Kategoriya a'zolari va o'zbekcha havolalar olinmoqda...")
+            pages = fetch_category_uz_status(fetcher, category)
 
-        logger.info(f"{len(pages)} ta maqola topildi.")
+            if not pages:
+                print(f"\n⚠️  Kategoriyada maqola topilmadi: {category}")
+                sys.exit(0)
 
-        missing = sorted(title for title, uz in pages.items() if not uz)
+            logger.info(f"{len(pages)} ta maqola topildi.")
 
-        print_results(missing, len(pages), category)
+            missing = sorted(title for title, uz in pages.items() if not uz)
+            total = len(pages)
 
-        if missing:
-            output_path = save_results_json(missing, category, len(pages))
+            print_results(missing, total, category)
+
+            # Har doim saqlanadi — keyingi tekshiruv shu fayldan o'qiydi.
+            output_path = save_results_json(missing, category, total)
             print(f"\n💾 Natijalar saqlandi: {output_path}")
 
         if open_range and missing:
