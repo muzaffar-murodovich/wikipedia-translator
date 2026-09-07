@@ -17,7 +17,10 @@
 - Notoʻgʻri: `[[Abulfaraj Isfahoniy|Abu al-Faraj al-Isfahoniy]]` (boshqacha transliteratsiya)
 - Toʻgʻri: `[[Abulfaraj Isfahoniy]]` yoki `[[Abulfaraj Isfahoniy|Abulfaraj Isfahoniy]]`
 - Agar koʻrinadigan matn sahifa nomidan farq qilsa, uni sahifa nomiga moslashtirish kerak yoki oddiy `[[Sahifa nomi]]` shaklida yozish kerak
-- Ayrim ichki havolalarda qavs mavjud. Bu holatda koʻrinadigan matnni oʻzgartirma: `[[Kordova (shahar)|Kordova]]` → `[[Kordova (shahar)|Kordova]]` (oʻzgartirilmagan)
+- Ayrim ichki havolalarda qavs mavjud. Agar sahifa nomi allaqachon oʻzbekcha boʻlsa, koʻrinadigan matnni oʻzgartirma: `[[Kordova (shahar)|Kordova]]` → `[[Kordova (shahar)|Kordova]]` (oʻzgartirilmagan)
+- Bu istisno FAQAT sahifa nomi oʻzbekcha boʻlgan holatga tegishli. Sahifa nomi inglizcha boʻlsa, qavs ichidagi izoh bilan birga tarjima qilinadi va pipe olib tashlanadi:
+- Notoʻgʻri: `[[Dilawar Khan (politician)|Dilovar Xon (siyosatchi)]]`
+- Toʻgʻri: `[[Dilovar Xon (siyosatchi)]]`
 
 ### 2a. Havola nomi diakritikli bo'lsa (inglizcha fallback)
 Finalize fazasida oʻzbek Vikipediyasida sahifa topilmasa, tizim inglizcha nomni (diakritiklar bilan) qoldirishi mumkin, masalan: `[[Hishām al-Kalbī]]`.
