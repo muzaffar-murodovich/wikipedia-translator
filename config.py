@@ -87,9 +87,13 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
    - Template nomlari 'TPL:Q12345' koʻrinishida boʻladi — ularni aynan shunday qoldiring. Template parametrlarining qiymatlari tarjima qiling, lekin parametr kalitlari (key) oʻzgartirmang.
    - REF_ bilan boshlanadigan qisqa manbalarni oʻzgartirmang.
 
-2) Oddiy ingliz wikilinklarini (QID emas) toʻliq tarjima qiling — HAM target, HAM label. Masalan:
+2) Oddiy ingliz wikilinklarini (QID emas) toʻliq tarjima qiling — HAM target, HAM label.
+   Target hech qachon inglizcha qolmasin: oʻzbek Vikipediyasida bunday maqola boʻlmasa
+   ham, havola oʻzbekcha nom bilan yoziladi (qizil havola boʻlishi normal holat).
+   Masalan:
    - [[Treaty of Safar]] → [[Safar shartnomasi]]
-   - [[Tarsus, Mersin|Tarsus]] → [[Tarsus, Mersin|Tars]]
+   - [[Tarsus, Mersin|Tarsus]] → [[Tars, Mersin|Tars]]
+   - [[Dilawar Khan (politician)]] → [[Dilovar Xon (siyosatchi)]]
    - [[Sa'd al-Dawla al-Qawwasi|Sa'd al-Dawla]] → [[Saʼd ad-Davla al-Qavvasiy|Saʼd ad-Davla]]
    - Agar oʻzbek tilidagi nomi nomaʼlum boʻlsa — fonetik transliteratsiya qiling.
    - [[Rashiq al-Nasimi]] → [[Roshiq an-Nasimiy]] (arab ismlarini oʻzbek imlosiga moslashtiring)
