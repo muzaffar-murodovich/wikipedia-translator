@@ -271,25 +271,43 @@ def fix_cite_book_script_title(wikitext: str) -> str:
 
 # ========== Lowercase -lik Suffix Fix ==========
 
+_LIK_WORD = re.compile(r'\b([A-Z][a-z]*lik)\b(?![}\]])')
+
+# Positions where the capital is correct and the word must be left alone:
+# the start of a line (a paragraph starts a sentence, and the article name
+# opens with '''), the start of a new sentence, a template parameter value
+# and the inside of a [[wikilink]].
+_LIK_KEEP_CAPITAL = re.compile(
+    r"(?:\A|\n)[ \t*#:;]*(?:'{2,})?[ \t]*$"   # line start / '''article name'''
+    r"|[.!?][ \t]*$"                           # new sentence
+    r"|[=:][ \t]*$"                             # template parameter value
+    r"|\[[ \t]*$"                               # [[wikilink]] target
+)
+
+
 def fix_lik_suffix_capitalization(wikitext: str) -> str:
     """
     Lowercase words ending with -lik suffix mid-sentence.
-    Skips words inside templates, after =/:/.  or inside [[...]].
+
+    The suffix builds a common adjective, so it is lowercase inside a sentence
+    but keeps its capital wherever any other word would keep it.
 
     Example:
     '''Ubaydul Haq''' — Bangladeshlik teacher
     -> '''Ubaydul Haq''' — bangladeshlik teacher
 
     But keeps:
-    | nationality = [[Bangladeshlik]]  (unchanged)
+    '''Mogadishulik Saʼid''' — ...   (article name)
+    | nationality = Bangladeshlik      (parameter value)
+    [[Bangladeshlik]]                  (link target)
     """
-    pattern = r'(?<![=:.\[])\b([A-Z][a-z]*lik)\b(?![}\]])'
-
     def replacer(match):
         word = match.group(1)
+        if _LIK_KEEP_CAPITAL.search(wikitext, 0, match.start()):
+            return word
         return word[0].lower() + word[1:]
 
-    return re.sub(pattern, replacer, wikitext)
+    return _LIK_WORD.sub(replacer, wikitext)
 
 
 # ========== Year With Dash Fix ==========

@@ -149,8 +149,24 @@ class TestFixCiteBookScriptTitle:
 
 class TestFixLikSuffixCapitalization:
     def test_lowercases_mid_sentence(self):
-        result = fix_lik_suffix_capitalization("Bangladeshlik olim")
-        assert result == "bangladeshlik olim"
+        result = fix_lik_suffix_capitalization("Uni Bangladeshlik olim deb atashgan")
+        assert result == "Uni bangladeshlik olim deb atashgan"
+
+    def test_keeps_capital_in_article_name(self):
+        wikitext = "'''Mogadishulik Saʼid''' — somalilik olim."
+        assert fix_lik_suffix_capitalization(wikitext) == wikitext
+
+    def test_keeps_capital_at_line_start(self):
+        wikitext = "Bangladeshlik olim keldi."
+        assert fix_lik_suffix_capitalization(wikitext) == wikitext
+
+    def test_keeps_capital_after_sentence_end(self):
+        wikitext = "U ketdi. Toshkentlik olim keldi."
+        assert fix_lik_suffix_capitalization(wikitext) == wikitext
+
+    def test_keeps_capital_in_spaced_parameter_value(self):
+        wikitext = "| name          = Mogadishulik Saʼid"
+        assert fix_lik_suffix_capitalization(wikitext) == wikitext
 
     def test_skips_when_equals_immediately_adjacent(self):
         # lookbehind only skips if = is the char directly before the word (no space)
@@ -311,7 +327,7 @@ class TestApplyAllFixes:
         assert "2025-yil" in result
 
     def test_applies_lik_fix(self):
-        result = apply_all_fixes("Bangladeshlik olim haqida")
+        result = apply_all_fixes("Kitob Bangladeshlik olim haqida")
         assert "bangladeshlik" in result
 
     def test_smoke_complex_wikitext(self):
