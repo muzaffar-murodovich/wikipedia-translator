@@ -90,29 +90,6 @@ class Logger:
         """Log a failure message."""
         self.error(f"❌ {message}")
 
-    def progress(self, current: int, total: int, title: str = ""):
-        """Log progress."""
-        percent = 100 * current / total
-        bar_length = 30
-        filled = int(bar_length * current / total)
-        bar = "█" * filled + "░" * (bar_length - filled)
-
-        message = f"[{bar}] {percent:.1f}% ({current}/{total})"
-        if title:
-            message = f"{title}: {message}"
-
-        self.info(message)
-
-    def table(self, data: dict, title: str = ""):
-        """Log data in table format."""
-        if title:
-            self.info(f"\n{title}")
-
-        max_key_len = max(len(str(k)) for k in data.keys()) if data else 0
-
-        for key, value in data.items():
-            self.info(f"  {str(key):<{max_key_len}} : {value}")
-
     def stats(self, title: str, **kwargs):
         """Log statistics."""
         self.info(f"\n📊 {title}:")

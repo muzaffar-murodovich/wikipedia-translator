@@ -8,7 +8,7 @@ File reading, writing, and JSON handling in one place.
 
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 class FileHandler:
@@ -102,91 +102,7 @@ class FileHandler:
             return False
 
     @staticmethod
-    def append_file(filepath: str, content: str, encoding: str = 'utf-8') -> bool:
-        """
-        Append to a file.
-
-        Args:
-            filepath: File path
-            content: Text to append
-            encoding: Encoding (default: utf-8)
-
-        Returns:
-            True on success, False otherwise
-        """
-        try:
-            with open(filepath, 'a', encoding=encoding) as f:
-                f.write(content)
-            return True
-        except Exception as e:
-            print(f"❌ File append'da xato: {e}")
-            return False
-
-    @staticmethod
     def file_exists(filepath: str) -> bool:
         """Check if file exists."""
         return Path(filepath).exists()
 
-    @staticmethod
-    def get_file_size(filepath: str) -> int:
-        """Get file size in bytes."""
-        try:
-            return Path(filepath).stat().st_size
-        except OSError:
-            return 0
-
-    @staticmethod
-    def read_lines(filepath: str, encoding: str = 'utf-8') -> list:
-        """
-        Read file line by line.
-
-        Returns:
-            List of lines
-        """
-        try:
-            with open(filepath, 'r', encoding=encoding) as f:
-                return f.readlines()
-        except Exception as e:
-            print(f"❌ File o'qishda xato: {e}")
-            return []
-
-    @staticmethod
-    def create_backup(filepath: str) -> Optional[str]:
-        """
-        Create a backup of a file.
-
-        Returns:
-            Backup file path or None on error
-        """
-        try:
-            path = Path(filepath)
-            if not path.exists():
-                return None
-
-            backup_path = f"{filepath}.backup"
-            content = path.read_text(encoding='utf-8')
-            Path(backup_path).write_text(content, encoding='utf-8')
-            return backup_path
-        except Exception as e:
-            print(f"❌ Backup yaratishda xato: {e}")
-            return None
-
-    @staticmethod
-    def delete_file(filepath: str) -> bool:
-        """Delete a file."""
-        try:
-            Path(filepath).unlink()
-            return True
-        except Exception as e:
-            print(f"❌ File o'chirishda xato: {e}")
-            return False
-
-    @staticmethod
-    def ensure_dir_exists(dirpath: str) -> bool:
-        """Ensure directory exists, create if needed."""
-        try:
-            Path(dirpath).mkdir(parents=True, exist_ok=True)
-            return True
-        except Exception as e:
-            print(f"❌ Papka yaratishda xato: {e}")
-            return False
