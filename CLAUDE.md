@@ -95,7 +95,7 @@ Phase 4 — LOCALIZE (utils/localization.py)
 Phase 5 — REVIEW (core/reviewer.py)
   - Sends localized wikitext to OpenAI with translation_rules.md as rules
   - Model fixes only rule violations; wikitext structure preserved
-  - Skipped if translation_rules.md is missing
+  - Enabled by `ENABLE_REVIEW` in `config.py`; also skipped if `translation_rules.md` is missing
     |
     v
 output_uz.txt  +  quality report
@@ -117,7 +117,7 @@ pip install -r requirements.txt    # or requirements-dev.txt to get pytest too
 python main.py input_en.txt output_uz.txt
 ```
 
-> **Note:** always work inside the project's own virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and `pywikibot` and the other dependencies are missing, causing `ModuleNotFoundError`.
+> **Note:** always work inside the project's own virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and `mwparserfromhell` and the other dependencies are missing, causing `ModuleNotFoundError`.
 
 ### Workflow
 
@@ -157,8 +157,6 @@ Set these in `.env` or export before running:
 
 The `.env` file is gitignored — never commit API keys.
 
-`PYWIKIBOT_NO_USER_CONFIG=2` is set automatically by `main.py` at startup.
-
 ---
 
 ## Configuration (`config.py`)
@@ -168,7 +166,7 @@ All configuration is in a single file. Comments and string values are written in
 - **AI model (translation)**: `OPENAI_MODEL` (default `gpt-5.2`).
 - **AI model (review)**: `REVIEW_MODEL` (default `gpt-5.4-mini`) — arzonroq model Phase 5 uchun, qoidalarga asoslangan tuzatish uchun yetarli.
 - **Source / target languages**: English (`en`) -> Uzbek (`uz`)
-- **Pywikibot tuning**: `PYWIKIBOT_CONFIG` dict — `maxlag=10`, `put_throttle=1`, `max_retries=8`, `retry_wait=20`. Also configured directly in `main.py` before pywikibot import.
+- **Phase 5 switch**: `ENABLE_REVIEW` (default `True`) — set to `False` to skip the review phase and its OpenAI call entirely.
 - **Translation prompts**: `TRANSLATION_SYSTEM_PROMPT` and `TRANSLATION_USER_PROMPT` — instruct the model to preserve QID/CAT/TPL/REF placeholders and transliterate names (w->v rule for Uzbek).
 - **Review prompts**: `REVIEW_SYSTEM_PROMPT` and `REVIEW_USER_PROMPT` — used by Phase 5 to apply `translation_rules.md` corrections without altering wikitext structure. Rules are embedded in the **system prompt** (static prefix) to maximize OpenAI prompt-cache hits; only the wikitext varies per call.
 - **Fallback template mappings**: `FALLBACK_TEMPLATE_MAP_EN2UZ` — when Wikidata has no sitelink for a template.
@@ -194,9 +192,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - The system prompt explicitly tells the model to pass all `[[Q...]]`, `CAT:...`, and `{{TPL:...}}` placeholders through unchanged.
 
 ### `core/wikidata_fetcher.py`
-- Uses **pywikibot** for legacy single-item queries and **direct HTTP** (`urllib`) for batch operations.
-- `site_en`, `site_uz`, `site_wd` are **lazy properties** — pywikibot `Site()` objects are created only on first access, not at init time. This prevents `MaxlagTimeoutError` on startup.
-- `get_qid(title, site)` — resolves a Wikipedia title to its QID (pywikibot, legacy).
+- Uses **direct HTTP** (`urllib`, via `utils/api_client.py`) for every lookup. There is no pywikibot dependency: the batch endpoint below answers redirects, QIDs and sitelinks in one request, so the per-item client bought nothing.
 - `get_sitelink(qid, target_lang)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
 - `batch_page_info(titles, site_code)` — **the batch workhorse** used in Phase 1 (direct HTTP, no pywikibot). One `action=query&redirects=1&prop=pageprops|langlinks` request per 50 titles returns the redirect target, the QID and the uz title in a single round trip, and pre-caches uz/en sitelinks (bonus for Phase 3). Returns `{title: {"resolved", "qid", "uz_title"}}`.
 - `batch_resolve_redirects()` / `batch_get_qids_fast()` — thin wrappers over `batch_page_info()`, kept for compatibility. Calling both in sequence costs one request: the second is served from cache.
@@ -384,7 +380,6 @@ Single-maintainer project — there is no team and no PR review step.
 | Package | Purpose |
 |---|---|
 | `openai` | OpenAI API client (primary provider) |
-| `pywikibot` | Wikidata / Wikipedia API |
 | `mwparserfromhell` | Wikitext parser (used in processor.py) |
 | `python-dotenv` | Loads `.env` file into environment |
 | `certifi` | CA bundle for TLS verification (see `utils/api_client.py`) |

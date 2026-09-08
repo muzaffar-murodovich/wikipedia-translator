@@ -25,7 +25,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-> Always work inside the project's virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and dependencies like `pywikibot` are missing, causing `ModuleNotFoundError`.
+> Always work inside the project's virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and dependencies like `mwparserfromhell` are missing, causing `ModuleNotFoundError`.
 
 Create a `.env` file (gitignored) with:
 
