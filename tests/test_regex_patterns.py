@@ -1,7 +1,6 @@
 """Tests for utils/regex_patterns.py — all pure string/regex transformations."""
 
 from utils.regex_patterns import (
-    RegexPatterns,
     remove_empty_params,
     clean_html_comments,
     fix_punctuation_with_refs,
@@ -12,35 +11,6 @@ from utils.regex_patterns import (
     fix_arabic_transliteration,
     apply_all_fixes,
 )
-
-
-# ── RegexPatterns class methods ───────────────────────────────────────────────
-
-class TestRegexPatternsClass:
-    def test_compile_returns_pattern_for_known_name(self):
-        import re
-        pat = RegexPatterns.compile("HTML_COMMENT")
-        assert pat is not None
-        assert isinstance(pat, type(re.compile("")))
-
-    def test_compile_returns_none_for_unknown_name(self):
-        assert RegexPatterns.compile("DOES_NOT_EXIST") is None
-
-    def test_find_all_returns_matches(self):
-        matches = RegexPatterns.find_all("QID_PATTERN", "See Q1234 and Q5678")
-        assert "Q1234" in matches
-        assert "Q5678" in matches
-
-    def test_find_all_returns_empty_for_no_match(self):
-        assert RegexPatterns.find_all("QID_PATTERN", "no qids here") == []
-
-    def test_replace_applies_substitution(self):
-        result = RegexPatterns.replace("EXTRA_SPACES", "hello  world", " ")
-        assert result == "hello world"
-
-    def test_count_returns_correct_integer(self):
-        text = "<!-- a --><!-- b -->"
-        assert RegexPatterns.count("HTML_COMMENT", text) == 2
 
 
 # ── remove_empty_params ───────────────────────────────────────────────────────

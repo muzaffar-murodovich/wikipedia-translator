@@ -7,7 +7,6 @@ This file contains 20+ regex patterns used across the project.
 """
 
 import re
-from typing import Optional
 import mwparserfromhell as mwp
 
 class RegexPatterns:
@@ -115,67 +114,6 @@ class RegexPatterns:
 
     # Trailing whitespace
     TRAILING_WHITESPACE = r'\s+$'
-
-    # ========== Class Methods ==========
-
-    @staticmethod
-    def compile(pattern_name: str) -> Optional[re.Pattern]:
-        """
-        Compile a regex pattern by name.
-        E.g. RegexPatterns.compile('EMPTY_PARAM')
-
-        Args:
-            pattern_name: Pattern name (UPPERCASE)
-
-        Returns:
-            Compiled regex pattern or None
-        """
-        pattern = getattr(RegexPatterns, pattern_name, None)
-        if pattern:
-            return re.compile(pattern, re.DOTALL | re.MULTILINE)
-        return None
-
-    @staticmethod
-    def find_all(pattern_name: str, text: str) -> list:
-        """
-        Find all matches of a pattern in text.
-
-        Args:
-            pattern_name: Pattern name
-            text: Text to search
-
-        Returns:
-            List of matches
-        """
-        regex = RegexPatterns.compile(pattern_name)
-        if regex:
-            return regex.findall(text)
-        return []
-
-    @staticmethod
-    def replace(pattern_name: str, text: str, replacement: str) -> str:
-        """
-        Find and replace a pattern.
-
-        Args:
-            pattern_name: Pattern name
-            text: Text to search
-            replacement: Replacement text
-
-        Returns:
-            Replaced text
-        """
-        regex = RegexPatterns.compile(pattern_name)
-        if regex:
-            return regex.sub(replacement, text)
-        return text
-
-    @staticmethod
-    def count(pattern_name: str, text: str) -> int:
-        """Count how many times a pattern appears in text."""
-        matches = RegexPatterns.find_all(pattern_name, text)
-        return len(matches)
-
 
 # ========== Special Regex Functions ==========
 
