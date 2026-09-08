@@ -6,10 +6,12 @@ main.py - Wiki Translator MAIN
 Orchestrator for the modular translation pipeline.
 """
 
+import argparse
 import re
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
@@ -26,7 +28,7 @@ from core.processor import WikiTextProcessor
 from core.reviewer import WikiReviewer
 
 
-def main(input_file: str, output_file: str):
+def main(input_file: str, output_file: str, article_title: Optional[str] = None):
     """
     Main translation pipeline.
 
@@ -38,6 +40,8 @@ def main(input_file: str, output_file: str):
     Args:
         input_file: English Wikipedia article file
         output_file: Uzbek Wikipedia article output file
+        article_title: English Wikipedia page title, used to name the
+            temp_wiki copy. Falls back to the bolded lead name.
     """
     start_time = time.time()
 
@@ -149,10 +153,16 @@ def main(input_file: str, output_file: str):
         logger.fail("Fayl yozishda xato!")
         return False
 
-    # Save to temp_wiki directory using article name
-    article_match = re.search(r"'''(.+?)'''", raw_text)
-    if article_match:
-        article_name = article_match.group(1).strip()
+    # Save to temp_wiki. The page title is the article's real identity; the
+    # bolded lead name is only a fallback and regularly disagrees with it —
+    # "Mian Wada" is bolded as "Mian Muhammad Ismail Suharwardy".
+    article_name = article_title
+    if not article_name:
+        article_match = re.search(r"'''(.+?)'''", raw_text)
+        if article_match:
+            article_name = article_match.group(1).strip()
+
+    if article_name:
         safe_name = re.sub(r'[\\/*?:"<>|]', '_', article_name)
         temp_dir = Path("temp_wiki")
         temp_dir.mkdir(exist_ok=True)
@@ -225,18 +235,25 @@ def validate_inputs(input_file: str) -> bool:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Foydalanish: python main.py input_en.txt output_uz.txt")
-        sys.exit(1)
-
-    input_file, output_file = sys.argv[1], sys.argv[2]
+    parser = argparse.ArgumentParser(
+        description="Inglizcha Vikipediya maqolasini oʻzbekchaga tarjima qilish."
+    )
+    parser.add_argument("input_file", help="Inglizcha wikitext fayli")
+    parser.add_argument("output_file", help="Natija yoziladigan fayl")
+    parser.add_argument(
+        "--title",
+        dest="article_title",
+        help="Inglizcha sahifa nomi — temp_wiki nusxasi shu nom bilan saqlanadi",
+    )
+    args = parser.parse_args()
+    input_file, output_file = args.input_file, args.output_file
 
     if not validate_inputs(input_file):
         sys.exit(1)
 
     # Start the process
     try:
-        success = main(input_file, output_file)
+        success = main(input_file, output_file, args.article_title)
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         logger.warning("\n⚠️  Foydalanuvchi tomonidan to'xtatildi")
