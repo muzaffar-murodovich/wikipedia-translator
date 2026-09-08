@@ -386,3 +386,45 @@ class TestApplyAllFixes:
         result = apply_all_fixes(wikitext)
         assert isinstance(result, str)
         assert len(result) > 0
+
+
+# ── -lik lookback bounds ──────────────────────────────────────────────────────
+
+class TestLikSuffixScanBounds:
+    """The lookback deciding whether to keep the capital used to rescan the
+    whole article from position 0 for every -lik word."""
+
+    def test_scan_start_never_precedes_the_line(self):
+        from utils.regex_patterns import _keep_capital_scan_start
+        text = "birinchi qator\nBu Bangladeshlik olim"
+        start = _keep_capital_scan_start(text, text.index("Bangladeshlik"))
+        assert start >= text.index("\n")
+
+    def test_stays_linear_on_one_long_line(self):
+        import time
+        text = "Bu Bangladeshlik olim va Toshkentlik shoir haqida matn. " * 3000
+        began = time.perf_counter()
+        fix_lik_suffix_capitalization(text)
+        assert time.perf_counter() - began < 2.0
+
+    def test_result_matches_a_full_scan(self):
+        from utils.regex_patterns import _LIK_WORD, _LIK_KEEP_CAPITAL
+
+        def full_scan(wikitext):
+            def replacer(m):
+                w = m.group(1)
+                if _LIK_KEEP_CAPITAL.search(wikitext, 0, m.start()):
+                    return w
+                return w[0].lower() + w[1:]
+            return _LIK_WORD.sub(replacer, wikitext)
+
+        samples = [
+            "'''Mogadishulik Sad''' — Bangladeshlik olim",
+            "| nationality = Bangladeshlik\n| bio = U Toshkentlik edi",
+            "* Bangladeshlik\n# Toshkentlik\n: Suriyalik",
+            "[[Bangladeshlik]] va Toshkentlik. Suriyalik keldi",
+            "Matn tugadi. Bangladeshlik olim\n\nToshkentlik shoir",
+            "\t'''Toshkentlik''' va Bangladeshlik",
+        ]
+        for sample in samples:
+            assert fix_lik_suffix_capitalization(sample) == full_scan(sample)

@@ -294,6 +294,29 @@ _LIK_KEEP_CAPITAL = re.compile(
 )
 
 
+# Everything a _LIK_KEEP_CAPITAL match may consist of after its first
+# character. Walking back over this run bounds how far the scan has to look.
+_LIK_LOOKBACK_CHARS = " \t*#:;'"
+
+
+def _keep_capital_scan_start(wikitext: str, word_start: int) -> int:
+    """
+    Earliest position a _LIK_KEEP_CAPITAL match ending at `word_start` can begin.
+
+    Every alternative is a single leading character (\n, '.', '=', '[' ...)
+    followed by a run drawn from _LIK_LOOKBACK_CHARS, and none of them can span
+    a newline. Bounding the scan this way keeps the whole fix linear; searching
+    from position 0 for every -lik word made it quadratic — a 180 KB article
+    spent about twelve seconds here.
+    """
+    i = word_start
+    while i > 0 and wikitext[i - 1] in _LIK_LOOKBACK_CHARS:
+        i -= 1
+    # One more character for the alternative's own leading token, and never
+    # past the newline that opens this line.
+    return max(i - 1, wikitext.rfind('\n', 0, word_start), 0)
+
+
 def fix_lik_suffix_capitalization(wikitext: str) -> str:
     """
     Lowercase words ending with -lik suffix mid-sentence.
@@ -312,7 +335,9 @@ def fix_lik_suffix_capitalization(wikitext: str) -> str:
     """
     def replacer(match):
         word = match.group(1)
-        if _LIK_KEEP_CAPITAL.search(wikitext, 0, match.start()):
+        if _LIK_KEEP_CAPITAL.search(wikitext, _keep_capital_scan_start(wikitext,
+                                                                       match.start()),
+                                    match.start()):
             return word
         return word[0].lower() + word[1:]
 
