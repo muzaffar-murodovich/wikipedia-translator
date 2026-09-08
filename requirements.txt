@@ -1,0 +1,16 @@
+# Runtime dependencies — Python 3.12
+#
+# Install into a virtualenv:
+#   python -m venv .venv
+#   source .venv/bin/activate        # Windows: .venv\Scripts\activate
+#   pip install -r requirements.txt
+
+openai==2.21.0
+pywikibot==11.0.0
+mwparserfromhell==0.7.2
+python-dotenv==1.2.2
+
+# TLS trust store. Deliberately not pinned to an exact version: Python on
+# Windows cannot fall back on a complete OS certificate store, so an
+# outdated bundle here resurfaces as SSLCertVerificationError.
+certifi>=2026.2.25

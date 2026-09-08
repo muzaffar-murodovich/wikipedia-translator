@@ -15,16 +15,17 @@ Translation runs through a 5-phase pipeline:
 ## Requirements
 
 - Python 3.12
-- [pipenv](https://pipenv.pypa.io/)
 - An OpenAI API key
 
 ## Installation
 
 ```bash
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv install
+python3.12 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-> `PIPENV_IGNORE_VIRTUALENVS=1` is required because pipenv otherwise detects any already-active virtualenv and uses it instead of this project's own `.venv`, causing `ModuleNotFoundError` for dependencies like `pywikibot`.
+> Always work inside the project's virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and dependencies like `pywikibot` are missing, causing `ModuleNotFoundError`.
 
 Create a `.env` file (gitignored) with:
 
@@ -37,7 +38,7 @@ Create a `.env` file (gitignored) with:
 ## Usage
 
 ```bash
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python main.py input_en.txt output_uz.txt
+python main.py input_en.txt output_uz.txt
 ```
 
 1. Place English Wikipedia wikitext in `input_en.txt` (download it with `utils/wiki_fetcher.py` or paste it manually).
@@ -101,7 +102,8 @@ wikipedia-translator/
 ## Testing
 
 ```bash
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv run pytest
+pip install -r requirements-dev.txt
+pytest
 ```
 
 ## License

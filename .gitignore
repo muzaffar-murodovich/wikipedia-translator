@@ -35,6 +35,8 @@ temp_wiki/
 input_en.txt
 output_uz.txt
 *.txt
+!requirements.txt
+!requirements-dev.txt
 
 # Category checker outputs
 additional-tools/category_check_*.json
@@ -42,5 +44,6 @@ additional-tools/category_check_*.json
 # Runtime control files
 stop.flag
 
-# Pipfile lock (optional — uncomment if needed)
-# Pipfile.lock
+# Virtualenv
+.venv/
+venv/

@@ -18,7 +18,8 @@ wikipedia-translator/
 ├── translation_rules.md      # Post-translation review checklist (used by Phase 5)
 ├── pytest.ini                # Test configuration
 ├── .env                      # Environment variables (API keys — gitignored)
-├── Pipfile / Pipfile.lock    # Python 3.12 dependencies (pipenv)
+├── requirements.txt          # Runtime dependencies (pip)
+├── requirements-dev.txt      # Runtime + pytest
 ├── core/
 │   ├── __init__.py
 │   ├── translator.py         # AI translation engine (OpenAI)
@@ -98,14 +99,18 @@ output_uz.txt  +  quality report
 ## Running
 
 ```bash
+# Create and activate a virtualenv (Python 3.12)
+python3.12 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
 # Install dependencies
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv install
+pip install -r requirements.txt    # or requirements-dev.txt to get pytest too
 
 # Translate
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python main.py input_en.txt output_uz.txt
+python main.py input_en.txt output_uz.txt
 ```
 
-> **Note:** `PIPENV_IGNORE_VIRTUALENVS=1` is required because pipenv detects any active virtualenv (e.g. from another project) and uses it instead of the project's own `.venv`. Without this flag, `pywikibot` and other project dependencies won't be found, causing `ModuleNotFoundError`.
+> **Note:** always work inside the project's own virtualenv. Without activating it, an interpreter from another project (or the system Python) is used and `pywikibot` and the other dependencies are missing, causing `ModuleNotFoundError`.
 
 ### Workflow
 
@@ -316,7 +321,8 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 **Automated tests** — 171 tests under `tests/`, run with:
 
 ```bash
-PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python -m pytest
+pip install -r requirements-dev.txt
+python -m pytest
 ```
 
 `pytest.ini` sets `testpaths = tests` and `pythonpath = .`, so plain `pytest` works from the repo root. Coverage by module:
@@ -364,19 +370,21 @@ Single-maintainer project — there is no team and no PR review step.
 
 ---
 
-## Dependencies (Pipfile)
+## Dependencies (`requirements.txt`)
 
 | Package | Purpose |
 |---|---|
 | `openai` | OpenAI API client (primary provider) |
-| `aiohttp` | Async HTTP for API calls |
 | `pywikibot` | Wikidata / Wikipedia API |
 | `mwparserfromhell` | Wikitext parser (used in processor.py) |
-| `certifi` | CA bundle for TLS verification (see `utils/api_client.py`) |
 | `python-dotenv` | Loads `.env` file into environment |
-| `python-telegram-bot` | Optional Telegram bot interface |
-| `pytest` | Test runner (dev dependency) |
+| `certifi` | CA bundle for TLS verification (see `utils/api_client.py`) |
+| `pytest` | Test runner (`requirements-dev.txt`) |
+
+Runtime versions are pinned with `==` so every machine gets the same set.
+`certifi` is the deliberate exception (`>=`): an outdated CA bundle is what
+breaks TLS on Windows in the first place, so it must stay upgradable.
 
 Python version: **3.12**
 
-Install: `PIPENV_IGNORE_VIRTUALENVS=1 pipenv install`
+Install: `pip install -r requirements.txt`
