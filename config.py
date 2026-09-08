@@ -102,6 +102,15 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
 3) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
 
 4) Izoh yozmang. Faqat wikitext chiqaring.
+
+5) Kirish jumlasi oʻzbekcha tuzilishda boʻlsin: '''Ism''' (maʼlumotlar; muqobil nomlar) — taʼrif.
+   Qavsdan keyin em-dash (—) qoʻyiladi; inglizcha vergul uslubi emas.
+   - Notoʻgʻri: '''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan), '''Ismoil az-Zafir''' nomi bilan ham tanilgan, Toledo taifasining birinchi hukmdori
+   - Toʻgʻri: '''Ismoil ibn Abdurahmon''' (1043-yilda vafot etgan; '''Ismoil az-Zafir''' nomi bilan ham tanilgan) — Toledo taifasining birinchi hukmdori
+
+6) Yil raqami "hijriy"/"milodiy" soʻzidan keyin va -yil qoʻshimchasi bilan yoziladi.
+   - Notoʻgʻri: 132 hijriy/750 milodiy
+   - Toʻgʻri: hijriy 132-yil/milodiy 750-yil
 {forced_links}
 Matn:
 ```{text}```
@@ -112,7 +121,7 @@ Matn:
 # "target'ga tegilmaydi" degan naqshni oddiy havolalarga ham umumlashtiradi.
 # Umumiy qoida buni yenga olmadi, shuning uchun ular nomma-nom sanab oʻtiladi.
 FORCED_LINKS_TEMPLATE = """
-5) MAJBURIY — quyidagi wikilink target'lari oʻzbek Vikipediyasida mavjud emas:
+7) MAJBURIY — quyidagi wikilink target'lari oʻzbek Vikipediyasida mavjud emas:
 {titles}
    Ularning HAR BIRINI oʻzbekchaga tarjima yoki transliteratsiya qiling.
    Bu havolalarda target inglizcha qolishi MUMKIN EMAS — 1-qoidadagi

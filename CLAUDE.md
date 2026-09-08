@@ -71,6 +71,9 @@ Phase 2 — TRANSLATE (core/translator.py)
   - Placeholders pass through untouched (model instructed to preserve them)
   - Links with no uz.wiki article are listed by name in the prompt so the
     model translates their targets instead of copying the placeholder habit
+  - Prompt rules 5 and 6 restate the translation_rules.md rules that hold at
+    translation time (lead sentence, date format) — rules 2/2a cannot, they
+    need the Uzbek page name Phase 3 produces
     |
     v
 Phase 3 — FINALIZE (core/processor.py)
