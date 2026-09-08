@@ -8,6 +8,7 @@ core/translator.py - Translation via OpenAI
 from typing import Optional, Sequence
 from openai import OpenAI
 import config
+from core.usage_stats import new_usage_stats, record_usage, cache_hit_summary
 from utils.logger import logger
 
 
@@ -17,7 +18,7 @@ class WikiTranslator:
     def __init__(self):
         self.client = OpenAI(api_key=config.OPENAI_API_KEY)
         self.model = config.OPENAI_MODEL
-        self.stats = {"translations": 0, "tokens_used": 0, "cached_tokens": 0, "prompt_tokens": 0}
+        self.stats = new_usage_stats("translations")
         logger.info(f"🤖 Provider: OpenAI ({self.model})")
 
     @staticmethod
@@ -68,19 +69,7 @@ class WikiTranslator:
 
             translated = response.choices[0].message.content
             self.stats["translations"] += 1
-            # `usage` is present as an attribute but may be None. Reading
-            # through it unguarded raises inside the try below, and the
-            # except then throws away a finished, paid-for translation.
-            usage = getattr(response, "usage", None)
-            if usage:
-                prompt_tokens = usage.prompt_tokens or 0
-                self.stats["tokens_used"] += usage.total_tokens or 0
-                self.stats["prompt_tokens"] += prompt_tokens
-                details = getattr(usage, "prompt_tokens_details", None)
-                cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0
-                self.stats["cached_tokens"] += cached
-                hit_rate = (cached / prompt_tokens * 100) if prompt_tokens else 0
-                logger.info(f"Cache: {cached}/{prompt_tokens} token ({hit_rate:.1f}%)")
+            record_usage(self.stats, response)
             logger.success(f"Tarjima tugadi ({len(translated)} belgi)")
             return translated
         except Exception as e:
@@ -88,14 +77,10 @@ class WikiTranslator:
             return None
 
     def print_stats(self):
-        hit_rate = (
-            self.stats["cached_tokens"] / self.stats["prompt_tokens"] * 100
-            if self.stats["prompt_tokens"] else 0
-        )
         logger.stats(
             "Tarjima Statistikasi",
             model=self.model,
             translations=self.stats["translations"],
             tokens_used=self.stats["tokens_used"],
-            cached_tokens=f"{self.stats['cached_tokens']}/{self.stats['prompt_tokens']} ({hit_rate:.1f}%)",
+            cached_tokens=cache_hit_summary(self.stats),
         )

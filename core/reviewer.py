@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 from openai import OpenAI
 import config
+from core.usage_stats import new_usage_stats, record_usage, cache_hit_summary
 from utils.logger import logger
 
 
@@ -22,7 +23,7 @@ class WikiReviewer:
         self.client = OpenAI(api_key=config.OPENAI_API_KEY)
         self.model = config.REVIEW_MODEL
         self.rules = self._load_rules()
-        self.stats = {"reviews": 0, "tokens_used": 0, "cached_tokens": 0, "prompt_tokens": 0}
+        self.stats = new_usage_stats("reviews")
 
         if self.rules:
             logger.success(f"Tahrir qoidalari yuklandi ({len(self.rules)} belgi)")
@@ -75,18 +76,7 @@ class WikiReviewer:
                 reviewed = reviewed.rsplit("\n", 1)[0]
             reviewed = reviewed.strip()
             self.stats["reviews"] += 1
-            # `usage` may be None even though the attribute exists — see
-            # the same guard in core/translator.py.
-            usage = getattr(response, "usage", None)
-            if usage:
-                prompt_tokens = usage.prompt_tokens or 0
-                self.stats["tokens_used"] += usage.total_tokens or 0
-                self.stats["prompt_tokens"] += prompt_tokens
-                details = getattr(usage, "prompt_tokens_details", None)
-                cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0
-                self.stats["cached_tokens"] += cached
-                hit_rate = (cached / prompt_tokens * 100) if prompt_tokens else 0
-                logger.info(f"Cache: {cached}/{prompt_tokens} token ({hit_rate:.1f}%)")
+            record_usage(self.stats, response)
             logger.success(f"Tahrir tugadi ({len(reviewed)} belgi)")
             return reviewed
 
@@ -95,14 +85,10 @@ class WikiReviewer:
             return None
 
     def print_stats(self):
-        hit_rate = (
-            self.stats["cached_tokens"] / self.stats["prompt_tokens"] * 100
-            if self.stats["prompt_tokens"] else 0
-        )
         logger.stats(
             "Tahrir Statistikasi",
             model=self.model,
             reviews=self.stats["reviews"],
             tokens_used=self.stats["tokens_used"],
-            cached_tokens=f"{self.stats['cached_tokens']}/{self.stats['prompt_tokens']} ({hit_rate:.1f}%)",
+            cached_tokens=cache_hit_summary(self.stats),
         )
