@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 
+from utils.logger import logger
+
 
 class FileHandler:
     """Universal class for file I/O operations."""
@@ -30,10 +32,10 @@ class FileHandler:
             with open(filepath, 'r', encoding=encoding) as f:
                 return f.read()
         except FileNotFoundError:
-            print(f"❌ Fayl topilmadi: {filepath}")
+            logger.fail(f"Fayl topilmadi: {filepath}")
             return ""
         except Exception as e:
-            print(f"❌ File o'qishda xato: {e}")
+            logger.fail(f"File o'qishda xato: {e}")
             return ""
 
     @staticmethod
@@ -54,7 +56,7 @@ class FileHandler:
                 f.write(content)
             return True
         except Exception as e:
-            print(f"❌ File yozishda xato: {e}")
+            logger.fail(f"File yozishda xato: {e}")
             return False
 
     @staticmethod
@@ -74,10 +76,10 @@ class FileHandler:
         except FileNotFoundError:
             return {}
         except json.JSONDecodeError as e:
-            print(f"❌ JSON o'qishda xato: {e}")
+            logger.fail(f"JSON o'qishda xato: {e}")
             return {}
         except Exception as e:
-            print(f"❌ JSON faylida xato: {e}")
+            logger.fail(f"JSON faylida xato: {e}")
             return {}
 
     @staticmethod
@@ -98,7 +100,7 @@ class FileHandler:
                 json.dump(data, f, ensure_ascii=False, indent=indent)
             return True
         except Exception as e:
-            print(f"❌ JSON yozishda xato: {e}")
+            logger.fail(f"JSON yozishda xato: {e}")
             return False
 
     @staticmethod

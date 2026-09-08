@@ -9,6 +9,8 @@ Data fetched from the API is kept in memory only (no disk persistence).
 
 from typing import Optional
 
+from utils.logger import logger
+
 
 class WikiCache:
     """
@@ -118,17 +120,20 @@ class WikiCache:
 
     def print_stats(self):
         """Print cache statistics."""
-        print("\n📊 Cache Statistikasi:")
-
         labels = {"qid": "QID", "sitelink": "Sitelink", "redirect": "Redirect"}
+
+        rates = {}
         for tier, label in labels.items():
             hits = self.stats[f"{tier}_hits"]
             total = hits + self.stats[f"{tier}_misses"]
             if total:
-                print(f"  {label} Cache: {hits}/{total} hits ({100 * hits / total:.1f}%)")
+                rates[label] = f"{hits}/{total} ({100 * hits / total:.1f}%)"
+        if rates:
+            logger.stats("Cache Statistikasi", **rates)
 
         cache_size = self.get_cache_size()
-        print("\n💾 Cache Hajmi:")
-        for tier, label in labels.items():
-            print(f"  {label}: {cache_size[tier]}")
-        print(f"  Jami: {cache_size['total']}")
+        logger.stats(
+            "Cache Hajmi",
+            **{label: cache_size[tier] for tier, label in labels.items()},
+            Jami=cache_size["total"],
+        )

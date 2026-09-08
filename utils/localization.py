@@ -48,7 +48,7 @@ class LocalizationManager:
             return {}
 
         if config.VERBOSE:
-            print(f"✓ Localization map yuklandi: {len(data)} ta almashtirish")
+            logger.info(f"✓ Localization map yuklandi: {len(data)} ta almashtirish")
         return data
 
     def _compile_regex(self) -> Optional[re.Pattern]:
@@ -71,7 +71,7 @@ class LocalizationManager:
         try:
             return re.compile(pattern_str)
         except Exception as e:
-            print(f"❌ Regex compile qilishda xato: {e}")
+            logger.fail(f"Regex compile qilishda xato: {e}")
             return None
 
     def apply(self, text: str) -> str:
@@ -106,6 +106,8 @@ class LocalizationManager:
 
     def print_stats(self):
         """Print statistics."""
-        print("\n📚 Localization Statistikasi:")
-        print(f"  Qoidalar soni: {self.stats['patterns_count']}")
-        print(f"  Qoʻllangan almashtirishlar: {self.stats['replacements']}")
+        logger.stats(
+            "Localization Statistikasi",
+            qoidalar=self.stats["patterns_count"],
+            almashtirishlar=self.stats["replacements"],
+        )
