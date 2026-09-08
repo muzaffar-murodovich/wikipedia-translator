@@ -14,7 +14,7 @@ An **English-to-Uzbek Wikipedia article translator** that uses OpenAI to transla
 wikipedia-translator/
 ├── main.py                   # Entry point; orchestrates the 5-phase pipeline
 ├── config.py                 # All configuration (comments/values in Uzbek)
-├── localization_map.json     # 215 term replacement rules (auto-loaded)
+├── localization_map.json     # 223 term replacement rules (auto-loaded)
 ├── translation_rules.md      # Post-translation review checklist (used by Phase 5)
 ├── pytest.ini                # Test configuration
 ├── .env                      # Environment variables (API keys — gitignored)
@@ -85,7 +85,7 @@ Phase 3 — FINALIZE (core/processor.py)
     |
     v
 Phase 4 — LOCALIZE (utils/localization.py)
-  - Applies 215 regex replacements from localization_map.json
+  - Applies 223 regex replacements from localization_map.json
   - Examples: [[Category: -> [[Turkum:, == References == -> == Manbalar ==
     |
     v
@@ -229,7 +229,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Modify patterns here, not inline in other files.
 
 ### `utils/localization.py`
-- Reads `localization_map.json` at startup (215 entries).
+- Reads `localization_map.json` at startup (223 entries).
 - Patterns compiled once (longest-key-first for greedy matching).
 - `add_replacement()` / `remove_replacement()` for runtime edits.
 - To add a new term replacement, edit `localization_map.json` directly — no code changes needed.
@@ -272,7 +272,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 | **Patterns** | New regex patterns go into `utils/regex_patterns.py`, not inline |
 | **Config** | New settings go into `config.py` only; no magic strings scattered in code |
 | **Design patterns** | Singleton (Logger), Manager (Cache, Localization), Pipeline (main.py phases) |
-| **Bold markup** | Use `'''` (curly/typographic apostrophe U+2019) for bold article names, not `'''` (straight U+0027) |
+| **Apostrophes** | Bold markup is three straight ASCII apostrophes (`'''`, U+0027 x3) — a curly variant produces no bold at all. Inside Uzbek words the curly characters are letters, not markup: `ʻ` (U+02BB) in `oʻ`/`gʻ`, `ʼ` (U+02BC) for tutuq belgisi (`Saʼd`). `localization_map.json` converts straight apostrophes to those letters — never to the typographic quotes U+2018/U+2019 |
 
 ---
 
