@@ -75,6 +75,26 @@ class TestReview:
         reviewer.review("text")
         assert reviewer.stats["reviews"] == 1
 
+    def test_keeps_review_when_usage_is_none(self, reviewer, mock_client):
+        """A None `usage` must not cost us the corrected wikitext."""
+        resp = _make_response("tuzatilgan matn")
+        resp.usage = None
+        mock_client.chat.completions.create.return_value = resp
+
+        assert reviewer.review("original") == "tuzatilgan matn"
+        assert reviewer.stats["reviews"] == 1
+        assert reviewer.stats["tokens_used"] == 0
+
+    def test_keeps_review_when_token_counts_are_none(self, reviewer, mock_client):
+        resp = _make_response("tuzatilgan matn")
+        resp.usage.total_tokens = None
+        resp.usage.prompt_tokens = None
+        resp.usage.prompt_tokens_details.cached_tokens = None
+        mock_client.chat.completions.create.return_value = resp
+
+        assert reviewer.review("original") == "tuzatilgan matn"
+        assert reviewer.stats["tokens_used"] == 0
+
     def test_accumulates_token_stats(self, reviewer, mock_client):
         mock_client.chat.completions.create.return_value = _make_response(
             total=200, prompt=150, cached=30

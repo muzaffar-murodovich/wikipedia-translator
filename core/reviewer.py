@@ -75,14 +75,18 @@ class WikiReviewer:
                 reviewed = reviewed.rsplit("\n", 1)[0]
             reviewed = reviewed.strip()
             self.stats["reviews"] += 1
-            if hasattr(response, "usage"):
-                self.stats["tokens_used"] += response.usage.total_tokens
-                self.stats["prompt_tokens"] += response.usage.prompt_tokens
-                details = getattr(response.usage, "prompt_tokens_details", None)
-                cached = getattr(details, "cached_tokens", 0) if details else 0
+            # `usage` may be None even though the attribute exists — see
+            # the same guard in core/translator.py.
+            usage = getattr(response, "usage", None)
+            if usage:
+                prompt_tokens = usage.prompt_tokens or 0
+                self.stats["tokens_used"] += usage.total_tokens or 0
+                self.stats["prompt_tokens"] += prompt_tokens
+                details = getattr(usage, "prompt_tokens_details", None)
+                cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0
                 self.stats["cached_tokens"] += cached
-                hit_rate = (cached / response.usage.prompt_tokens * 100) if response.usage.prompt_tokens else 0
-                logger.info(f"Cache: {cached}/{response.usage.prompt_tokens} token ({hit_rate:.1f}%)")
+                hit_rate = (cached / prompt_tokens * 100) if prompt_tokens else 0
+                logger.info(f"Cache: {cached}/{prompt_tokens} token ({hit_rate:.1f}%)")
             logger.success(f"Tahrir tugadi ({len(reviewed)} belgi)")
             return reviewed
 

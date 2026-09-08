@@ -57,6 +57,31 @@ class TestTranslate:
         translator.translate("world")
         assert translator.stats["translations"] == 2
 
+    def test_keeps_translation_when_usage_is_none(self, translator, mock_client):
+        """`usage` exists as an attribute but is None on some responses.
+
+        Reading through it unguarded raised inside translate()'s try block,
+        the except swallowed it, and a finished translation was thrown away.
+        """
+        resp = _make_response("tarjima matni")
+        resp.usage = None
+        mock_client.chat.completions.create.return_value = resp
+
+        assert translator.translate("hello") == "tarjima matni"
+        assert translator.stats["translations"] == 1
+        assert translator.stats["tokens_used"] == 0
+
+    def test_keeps_translation_when_token_counts_are_none(self, translator, mock_client):
+        resp = _make_response("tarjima matni")
+        resp.usage.total_tokens = None
+        resp.usage.prompt_tokens = None
+        resp.usage.prompt_tokens_details.cached_tokens = None
+        mock_client.chat.completions.create.return_value = resp
+
+        assert translator.translate("hello") == "tarjima matni"
+        assert translator.stats["tokens_used"] == 0
+        assert translator.stats["cached_tokens"] == 0
+
     def test_accumulates_token_stats(self, translator, mock_client):
         mock_client.chat.completions.create.return_value = _make_response(
             total=100, prompt=80, cached=20
