@@ -352,12 +352,40 @@ class WikiTextProcessor:
         return final_text
 
     def _restore_references(self, wikitext: str, ref_map: Dict[str, str]) -> str:
-        """Restore compressed references."""
+        """
+        Restore compressed references.
+
+        The model occasionally reformats a placeholder — a stray space, a
+        dropped tag — and an exact string replace then silently misses it,
+        leaving a raw REF_a1b2c3d4 in the finished article. So fall back to
+        matching the id itself, and report whatever is still unresolved.
+        """
+        restored = 0
         for ref_id, original_ref in ref_map.items():
             placeholder = f"<ref>REF_{ref_id}</ref>"
-            wikitext = wikitext.replace(placeholder, original_ref)
+            if placeholder in wikitext:
+                wikitext = wikitext.replace(placeholder, original_ref)
+                restored += 1
+                continue
+
+            loosened = re.compile(
+                r"(?:<ref[^>]*>\s*)?REF_" + re.escape(ref_id) + r"(?:\s*</ref>)?"
+            )
+            # A lambda, not a template string: the reference text is arbitrary
+            # wikitext and may contain backslashes.
+            wikitext, hits = loosened.subn(lambda _m: original_ref, wikitext)
+            if hits:
+                restored += 1
 
         if ref_map:
-            logger.info(f"✓ Manbalar tiklandi: {len(ref_map)} ta")
+            logger.info(f"✓ Manbalar tiklandi: {restored}/{len(ref_map)} ta")
+
+        leftover = sorted(set(re.findall(RegexPatterns.REF_PLACEHOLDER, wikitext)))
+        if leftover:
+            logger.warning(
+                f"{len(leftover)} ta manba tiklanmadi — matnda xom qoldi "
+                "(model placeholder'ni oʻzgartirgan boʻlishi mumkin): "
+                + ", ".join(leftover)
+            )
 
         return wikitext
