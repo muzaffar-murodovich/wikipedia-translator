@@ -352,6 +352,14 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
 
 # ========== Combine All Fixes ==========
 
+def _fix_all_punctuation(wikitext: str) -> str:
+    """Both punctuation fixes, in order. Refs first: it normalises the tags
+    that fix_punctuation_with_sfn then treats as part of a citation chain."""
+    wikitext = fix_punctuation_with_refs(wikitext)
+    return fix_punctuation_with_sfn(wikitext)
+
+
+
 def apply_all_fixes(wikitext: str) -> str:
     """Apply all text fixes in sequence. Order matters!"""
 
@@ -367,11 +375,11 @@ def apply_all_fixes(wikitext: str) -> str:
     # 3. -lik suffix capitalization fix
     wikitext = fix_lik_suffix_capitalization(wikitext)
 
-    # 4. Punctuation with refs fix — skip infoboxes
-    wikitext = _apply_fix_outside_infoboxes(wikitext, fix_punctuation_with_refs)
-
-    # 5. SFN punctuation fix — skip infoboxes
-    wikitext = _apply_fix_outside_infoboxes(wikitext, fix_punctuation_with_sfn)
+    # 4. Punctuation around references and citations — skip infoboxes.
+    #    Both run inside one masking pass: each _apply_fix_outside_infoboxes
+    #    call parses the whole article to find the infoboxes, and the second
+    #    parse re-derived exactly what the first one had.
+    wikitext = _apply_fix_outside_infoboxes(wikitext, _fix_all_punctuation)
 
     # 6. fix template blank lines 
     wikitext = fix_template_blank_lines(wikitext)
