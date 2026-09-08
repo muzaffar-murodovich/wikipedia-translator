@@ -251,6 +251,15 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
         wikitext
     )
 
+    # 7. Add a period when a capitalised [[link]] starts the next sentence.
+    # Steps 4 and 5 deliberately skip '[', because a lowercase link continues
+    # the sentence; a capitalised one does not.
+    wikitext = re.sub(
+        r'(</ref>|/\s*>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
+        r'\1.\2\3',
+        wikitext
+    )
+
     return wikitext
 
 
@@ -353,78 +362,95 @@ def fix_year_with_dash(wikitext: str) -> str:
 
 # ========== Fix Punctuation With SFN Templates ==========
 
+# One citation: an {{sfn}}/{{efn}} template, or a <ref> tag of either kind.
+_SFN_EFN_TPL = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
+_REF_TAG_ANY = r'<ref[^/>]*>.*?</ref>|<ref[^>]*/\s*>'
+_CITATION = r'(?:' + _SFN_EFN_TPL + r'|' + _REF_TAG_ANY + r')'
+
+# A citation chain plus the punctuation mark in front of it. Citations may be
+# separated by stray punctuation and spaces, but never by a newline: joining
+# across one would swallow a paragraph break.
+_CITATION_CHAIN = re.compile(
+    r'(?P<lead>[.,;!?])?[ \t]*'
+    r'(?P<chain>' + _CITATION + r'(?:[ \t]*[.,;!?]*[ \t]*' + _CITATION + r')*)'
+    r'(?P<trail>[.,;!?]*)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+_ONE_CITATION = re.compile(_CITATION, re.IGNORECASE | re.DOTALL)
+_HAS_SFN_EFN = re.compile(_SFN_EFN_TPL, re.IGNORECASE)
+
+
+def _chain_closes_sentence(rest: str) -> bool:
+    """
+    True when a period should be invented after a citation chain.
+
+    `rest` is the text following the chain. A period is only invented when
+    the chain really ends a sentence: a lowercase word means the sentence is
+    still running, and markup that opens something new is left alone. A
+    capitalised [[link]] does start a new sentence, so it counts.
+    """
+    space = re.match(r'\s+', rest)
+    if not space:
+        return False
+
+    after = rest[space.end():]
+    if not after:
+        # End of the paragraph or of the document.
+        return True
+    if after[0] in '.,;!?<{':
+        return False
+    if after.startswith('[['):
+        nxt = after[2:3]
+        return bool(nxt) and (nxt.isupper() or nxt.isdigit())
+    if after[0] in "[ʼʻ‘’'":
+        return False
+    return not after[0].islower()
+
+
 def fix_punctuation_with_sfn(wikitext: str) -> str:
-    """Move punctuation to correct position around SFN/EFN templates."""
-    _sfn_efn = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
+    """
+    Put the sentence punctuation after a chain of {{sfn}}/{{efn}} citations.
 
-    # Step 1: Move punctuation from before SFN/EFN to after SFN/EFN.
-    # Looped, because a mark in front of a chain of templates has to travel
-    # past all of them. One hop leaves it stranded between two templates,
-    # where step 3/4 deletes it and step 5 then guesses a period in its
-    # place — silently turning a comma into a sentence break.
-    previous = None
-    while previous != wikitext:
-        previous = wikitext
-        wikitext = re.sub(
-            r'([.,;!?])\s*(' + _sfn_efn + r')',
-            r'\2\1',
-            wikitext, flags=re.IGNORECASE
-        )
+    A run of citations is treated as one unit rather than one hop at a time.
+    The first punctuation mark found — in front of the chain, or stranded
+    between two of its templates — becomes the chain's trailing mark, and any
+    further marks inside the chain are dropped.
 
-    # Step 2: </ref>.{{sfn/efn}} -> </ref>{{sfn/efn}}.
-    wikitext = re.sub(
-        r'(</ref>)([.,;!?])(\s*)(' + _sfn_efn + r')',
-        r'\1\3\4\2',
-        wikitext, flags=re.IGNORECASE
-    )
+    Moving the marks one template at a time is what used to pile them up:
 
-    # Step 3: {{sfn/efn}}.{{sfn/efn}} -> {{sfn/efn}}{{sfn/efn}}
-    wikitext = re.sub(
-        r'(\}\})([.,;!?])(\s*)(\{\{(?:sfn|efn))',
-        r'\1\3\4',
-        wikitext, flags=re.IGNORECASE
-    )
+        Matn.{{sfn|A}}.{{sfn|B}} Yana.  ->  Matn{{sfn|A}}{{sfn|B}}.. Yana.
 
-    # Step 4: Clean excess punctuation in sfn/efn/ref chains
-    for _ in range(5):
-        wikitext = re.sub(
-            r'(\}\}|</ref>)([.,;!?])(\s*)(\{\{(?:sfn|efn)|<ref)',
-            r'\1\3\4',
-            wikitext, flags=re.IGNORECASE
-        )
+    An existing mark is never destroyed and a period is never invented in
+    front of a word that continues the sentence.
 
-    # Step 5: Add period after last sfn/efn if missing. A lowercase word
-    # after the template means the sentence continues, so no period is
-    # invented there. The case-insensitive flag is scoped to the template
-    # itself — applied to the whole pattern it would defeat that check.
-    wikitext = re.sub(
-        r'((?i:' + _sfn_efn + r'))(\s+)(?![.,;!?<{\[])(?![a-z])',
-        r'\1.\2',
-        wikitext,
-    )
+    A chain of plain <ref> tags with no {{sfn}}/{{efn}} in it belongs to
+    fix_punctuation_with_refs and is left untouched here.
+    """
+    def rebuild(match: re.Match) -> str:
+        chain = match.group('chain')
+        if not _HAS_SFN_EFN.search(chain):
+            return match.group(0)
 
-    # Step 6: Remove punctuation before sfn/efn
-    wikitext = re.sub(
-        r'([.,;!?])\s*(' + _sfn_efn + r')',
-        r'\2',
-        wikitext, flags=re.IGNORECASE
-    )
+        citations = _ONE_CITATION.findall(chain)
+        # findall() with a non-capturing group returns whole matches.
+        joined = ''.join(citations)
 
-    # 7a. Add period after </ref> when followed by [[Capitalized link]] (new sentence)
-    wikitext = re.sub(
-        r'(</ref>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
-        r'\1.\2\3',
-        wikitext
-    )
+        # The first mark anywhere in the chain region is the sentence's own;
+        # the rest are artefacts of an earlier pass moving it template by
+        # template, and go.
+        marks = [match.group('lead')] if match.group('lead') else []
+        marks += re.findall(r'[.,;!?]', chain)
+        marks += list(match.group('trail'))
 
-    # 7b. Same for self-closing refs
-    wikitext = re.sub(
-        r'(/\s*>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
-        r'\1.\2\3',
-        wikitext
-    )
+        if marks:
+            return joined + marks[0]
+        if _chain_closes_sentence(match.string[match.end():]):
+            return joined + '.'
+        return joined
 
-    return wikitext
+    return _CITATION_CHAIN.sub(rebuild, wikitext)
+
 
 # ========== Combine All Fixes ==========
 

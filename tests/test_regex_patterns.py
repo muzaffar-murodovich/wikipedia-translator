@@ -262,6 +262,40 @@ class TestFixPunctuationWithSfn:
         result = fix_punctuation_with_sfn("matn tugadi{{sfn|A}} Yangi jumla.")
         assert result == "matn tugadi{{sfn|A}}. Yangi jumla."
 
+    def test_chain_of_two_does_not_double_the_period(self):
+        # Each mark used to be moved one template at a time, so they piled
+        # up behind the last one: "...}}{{sfn|B}}.. Yana."
+        result = fix_punctuation_with_sfn("Matn.{{sfn|A}}.{{sfn|B}} Yana.")
+        assert result == "Matn{{sfn|A}}{{sfn|B}}. Yana."
+
+    def test_chain_of_three_does_not_triple_the_period(self):
+        result = fix_punctuation_with_sfn("Matn.{{sfn|A}}.{{sfn|B}}.{{efn|c}} Yana.")
+        assert result == "Matn{{sfn|A}}{{sfn|B}}{{efn|c}}. Yana."
+
+    def test_no_doubled_punctuation_anywhere_in_a_long_chain(self):
+        result = fix_punctuation_with_sfn(
+            "Matn.{{sfn|A}}.{{sfn|B}}.{{sfn|C}}.{{efn|d}} Yana."
+        )
+        assert ".." not in result
+
+    def test_mark_stranded_inside_the_chain_is_kept(self):
+        # The period came from before the chain and an earlier pass pushed it
+        # inwards; dropping it would lose the sentence break entirely.
+        result = fix_punctuation_with_sfn("Matn<ref>x</ref>.{{sfn|A}} va yana")
+        assert result == "Matn<ref>x</ref>{{sfn|A}}. va yana"
+
+    def test_ref_before_sfn_hands_its_mark_to_the_chain(self):
+        result = fix_punctuation_with_sfn("Matn</ref>.{{sfn|A}} Word")
+        assert result == "Matn</ref>{{sfn|A}}. Word"
+
+    def test_paragraph_break_inside_a_run_is_not_swallowed(self):
+        result = fix_punctuation_with_sfn("Matn{{sfn|A}}\n\n{{sfn|B}} Boshqa.")
+        assert "\n\n" in result
+
+    def test_plain_ref_chain_is_left_to_the_ref_fix(self):
+        src = "Matn.<ref>a</ref><ref>b</ref> Word"
+        assert fix_punctuation_with_sfn(src) == src
+
 
 # ── fix_arabic_transliteration ────────────────────────────────────────────────
 
