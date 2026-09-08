@@ -11,7 +11,7 @@ from core.processor import WikiTextProcessor
 
 @pytest.fixture
 def processor():
-    return WikiTextProcessor(MagicMock(), MagicMock())
+    return WikiTextProcessor(MagicMock())
 
 
 REF_MAP = {

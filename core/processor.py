@@ -13,7 +13,6 @@ import mwparserfromhell as mwp
 
 import config
 from core.wikidata_fetcher import WikidataFetcher
-from core.cache_manager import WikiCache
 from utils.regex_patterns import RegexPatterns, remove_empty_params, clean_html_comments, apply_all_fixes
 from utils.logger import logger
 
@@ -21,14 +20,12 @@ from utils.logger import logger
 class WikiTextProcessor:
     """Wikitext preparation, translation support, and finalization."""
 
-    def __init__(self, fetcher: WikidataFetcher, cache: WikiCache):
+    def __init__(self, fetcher: WikidataFetcher):
         """
         Args:
             fetcher: WikidataFetcher instance
-            cache: WikiCache instance
         """
         self.fetcher = fetcher
-        self.cache = cache
         # Wikilink targets with no uz.wiki article: prepare() leaves them in
         # English for the model to translate, finalize() checks it actually did.
         self.unresolved_links: List[str] = []
@@ -170,13 +167,13 @@ class WikiTextProcessor:
                     wl.text = label
                 else:
                     # uz.wiki'da yoʻq — wikilinkga tegmaymiz, AI tarjima qilsin
-                    unresolved_links.append((qid, target))
+                    unresolved_links.append(target)
             else:
                 # QID umuman topilmadi
-                unresolved_links.append((None, target))
+                unresolved_links.append(target)
 
         # Deduplicate, keep document order — the list goes into the prompt.
-        self.unresolved_links = list(dict.fromkeys(t for _, t in unresolved_links))
+        self.unresolved_links = list(dict.fromkeys(unresolved_links))
 
         if unresolved_links:
             logger.info(f"  ℹ️  {len(self.unresolved_links)} havola uz.wiki'da yoʻq — AI tarjima qiladi")

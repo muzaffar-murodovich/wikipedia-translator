@@ -57,7 +57,7 @@ def main(input_file: str, output_file: str, article_title: Optional[str] = None)
     # Initialize managers
     cache = WikiCache()
     fetcher = WikidataFetcher(cache)
-    processor = WikiTextProcessor(fetcher, cache)
+    processor = WikiTextProcessor(fetcher)
     translator = WikiTranslator()
     localization = LocalizationManager()
     reviewer = WikiReviewer()
