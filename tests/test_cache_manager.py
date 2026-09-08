@@ -147,3 +147,41 @@ class TestCacheSizeAndIndependence:
         cache.set_sitelink("Q1", "uzwiki", "Y")
         cache.set_redirect("en", "Z", "W")
         assert cache.get_cache_size()["total"] == 3
+
+
+# ── has_*() — telling "cached as absent" from "never looked up" ───────────────
+
+class TestHasLookups:
+    def test_has_qid_false_before_any_lookup(self, cache):
+        assert cache.has_qid("en", "Nothing") is False
+
+    def test_has_qid_true_for_a_cached_none(self, cache):
+        """A cached "not found" must read as present, or it gets re-queried
+        on every call for the rest of the run."""
+        cache.set_qid("en", "NoSuchPage", None)
+        assert cache.has_qid("en", "NoSuchPage") is True
+        assert cache.get_qid("en", "NoSuchPage") is None
+
+    def test_has_qid_true_for_a_real_value(self, cache):
+        cache.set_qid("en", "Albert Einstein", "Q937")
+        assert cache.has_qid("en", "Albert Einstein") is True
+
+    def test_has_sitelink_true_for_a_cached_none(self, cache):
+        cache.set_sitelink("Q937", "uzwiki", None)
+        assert cache.has_sitelink("Q937", "uzwiki") is True
+        assert cache.get_sitelink("Q937", "uzwiki") is None
+
+    def test_has_sitelink_false_for_another_site(self, cache):
+        cache.set_sitelink("Q937", "uzwiki", "Albert Eynshteyn")
+        assert cache.has_sitelink("Q937", "ruwiki") is False
+
+    def test_has_redirect_true_for_a_cached_none(self, cache):
+        cache.set_redirect("en", "Ghost", None)
+        assert cache.has_redirect("en", "Ghost") is True
+
+    def test_has_does_not_touch_the_stats(self, cache):
+        before = dict(cache.stats)
+        cache.has_qid("en", "A")
+        cache.has_sitelink("Q1", "uzwiki")
+        cache.has_redirect("en", "B")
+        assert cache.stats == before

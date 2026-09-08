@@ -47,9 +47,9 @@ class WikidataFetcher:
         """
         target_site = f"{target_lang}wiki"
 
-        # Check cache via raw dict to correctly detect "NONE" sentinel entries.
-        cache_key = f"{qid}:{target_site}"
-        if cache_key in self.cache.sitelink_cache:
+        # has_sitelink(), not get_sitelink(): a cached "not found" also reads
+        # back as None, and re-querying it every time defeats the cache.
+        if self.cache.has_sitelink(qid, target_site):
             return self.cache.get_sitelink(qid, target_site)
 
         try:
@@ -117,8 +117,7 @@ class WikidataFetcher:
             if resolved is None:
                 uncached.append(title)
                 continue
-            qid_key = f"{site_code}:{resolved}"
-            if qid_key not in self.cache.qid_cache:
+            if not self.cache.has_qid(site_code, resolved):
                 uncached.append(title)
                 continue
             qid = self.cache.get_qid(site_code, resolved)
