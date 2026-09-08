@@ -103,14 +103,19 @@ class LocalizationManager:
         if not self.regex or not self.map:
             return text
 
+        applied = 0
+
         def replacer(match):
+            nonlocal applied
             matched_text = match.group(0)
-            return self.map.get(matched_text, matched_text)
+            replacement = self.map.get(matched_text)
+            if replacement is None:
+                return matched_text
+            applied += 1
+            return replacement
 
         result = self.regex.sub(replacer, text)
-
-        if result != text:
-            self.stats["replacements"] += 1
+        self.stats["replacements"] += applied
 
         return result
 
@@ -175,8 +180,8 @@ class LocalizationManager:
     def print_stats(self):
         """Print statistics."""
         print("\n📚 Localization Statistikasi:")
-        print(f"  Jami almashtirishlar: {self.stats['patterns_count']}")
-        print(f"  Qoʻllangan: {self.stats['replacements']}")
+        print(f"  Qoidalar soni: {self.stats['patterns_count']}")
+        print(f"  Qoʻllangan almashtirishlar: {self.stats['replacements']}")
 
     def search_replacements(self, keyword: str) -> Dict[str, str]:
         """
