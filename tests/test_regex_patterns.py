@@ -214,6 +214,25 @@ class TestFixPunctuationWithSfn:
         result = fix_punctuation_with_sfn("text{{sfn|A}}\n")
         assert "{{sfn|A}}" in result
 
+    def test_comma_survives_a_chain_of_sfns(self):
+        # The comma has to travel past every template, not be dropped
+        # between two of them and replaced by an invented period.
+        result = fix_punctuation_with_sfn("matn edi,{{sfn|A}}{{sfn|B}} u keldi.")
+        assert result == "matn edi{{sfn|A}}{{sfn|B}}, u keldi."
+
+    def test_period_survives_a_chain_of_sfns(self):
+        result = fix_punctuation_with_sfn("matn tugadi.{{sfn|A}}{{sfn|B}} Yangi.")
+        assert result == "matn tugadi{{sfn|A}}{{sfn|B}}. Yangi."
+
+    def test_no_period_invented_before_lowercase_word(self):
+        # A lowercase word means the sentence continues.
+        result = fix_punctuation_with_sfn("matn davom etadi{{sfn|A}} va yana.")
+        assert result == "matn davom etadi{{sfn|A}} va yana."
+
+    def test_missing_period_still_added_before_capital(self):
+        result = fix_punctuation_with_sfn("matn tugadi{{sfn|A}} Yangi jumla.")
+        assert result == "matn tugadi{{sfn|A}}. Yangi jumla."
+
 
 # ── fix_arabic_transliteration ────────────────────────────────────────────────
 

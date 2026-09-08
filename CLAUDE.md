@@ -35,7 +35,7 @@ wikipedia-translator/
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
 │   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
-├── tests/                    # pytest suite (174 tests)
+├── tests/                    # pytest suite (178 tests)
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
@@ -222,7 +222,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
   3. `fix_year_with_dash()` — `2025 yil` -> `2025-yil`
   4. `fix_lik_suffix_capitalization()` — lowercase `-lik` suffix words mid-sentence
   5. `fix_punctuation_with_refs()` — move punctuation after `<ref>` tags (applied outside infoboxes via `_apply_fix_outside_infoboxes()`)
-  6. `fix_punctuation_with_sfn()` — handle `{{sfn}}` template punctuation (applied outside infoboxes)
+  6. `fix_punctuation_with_sfn()` — handle `{{sfn}}` template punctuation (applied outside infoboxes). Punctuation moves past a whole chain of templates, and a period is never invented in front of a lowercase word — the sentence is still running there.
   7. `fix_template_blank_lines()` — remove blank lines inside multiline templates
   8. Collapse 3+ consecutive newlines to 2
 - `_apply_fix_outside_infoboxes(wikitext, fix_func)` — wraps a fix function to skip infobox templates.
@@ -324,7 +324,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-**Automated tests** — 174 tests under `tests/`, run with:
+**Automated tests** — 178 tests under `tests/`, run with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -335,7 +335,7 @@ python -m pytest
 
 | Test file | Tests | Covers |
 |---|---|---|
-| `test_regex_patterns.py` | 53 | `utils/regex_patterns.py` |
+| `test_regex_patterns.py` | 57 | `utils/regex_patterns.py` |
 | `test_file_handler.py` | 29 | `utils/file_handler.py` |
 | `test_cache_manager.py` | 27 | `core/cache_manager.py` |
 | `test_wiki_fetcher.py` | 23 | `utils/wiki_fetcher.py` |

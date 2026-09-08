@@ -334,12 +334,19 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
     """Move punctuation to correct position around SFN/EFN templates."""
     _sfn_efn = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
 
-    # Step 1: Move punctuation from before SFN/EFN to after SFN/EFN
-    wikitext = re.sub(
-        r'([.,;!?])\s*(' + _sfn_efn + r')',
-        r'\2\1',
-        wikitext, flags=re.IGNORECASE
-    )
+    # Step 1: Move punctuation from before SFN/EFN to after SFN/EFN.
+    # Looped, because a mark in front of a chain of templates has to travel
+    # past all of them. One hop leaves it stranded between two templates,
+    # where step 3/4 deletes it and step 5 then guesses a period in its
+    # place — silently turning a comma into a sentence break.
+    previous = None
+    while previous != wikitext:
+        previous = wikitext
+        wikitext = re.sub(
+            r'([.,;!?])\s*(' + _sfn_efn + r')',
+            r'\2\1',
+            wikitext, flags=re.IGNORECASE
+        )
 
     # Step 2: </ref>.{{sfn/efn}} -> </ref>{{sfn/efn}}.
     wikitext = re.sub(
@@ -363,12 +370,14 @@ def fix_punctuation_with_sfn(wikitext: str) -> str:
             wikitext, flags=re.IGNORECASE
         )
 
-    # Step 5: Add period after last sfn/efn if missing
+    # Step 5: Add period after last sfn/efn if missing. A lowercase word
+    # after the template means the sentence continues, so no period is
+    # invented there. The case-insensitive flag is scoped to the template
+    # itself — applied to the whole pattern it would defeat that check.
     wikitext = re.sub(
-        r'(' + _sfn_efn + r')(\s+)(?![.,;!?<{\[])',
+        r'((?i:' + _sfn_efn + r'))(\s+)(?![.,;!?<{\[])(?![a-z])',
         r'\1.\2',
         wikitext,
-        flags=re.IGNORECASE
     )
 
     # Step 6: Remove punctuation before sfn/efn
