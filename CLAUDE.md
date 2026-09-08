@@ -35,7 +35,7 @@ wikipedia-translator/
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
 │   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
-├── tests/                    # pytest suite (171 tests)
+├── tests/                    # pytest suite (174 tests)
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
@@ -69,6 +69,8 @@ Phase 1 — PREPARE (core/processor.py)
 Phase 2 — TRANSLATE (core/translator.py)
   - Sends prepared wikitext to OpenAI
   - Placeholders pass through untouched (model instructed to preserve them)
+  - Links with no uz.wiki article are listed by name in the prompt so the
+    model translates their targets instead of copying the placeholder habit
     |
     v
 Phase 3 — FINALIZE (core/processor.py)
@@ -76,6 +78,8 @@ Phase 3 — FINALIZE (core/processor.py)
   - Resolves CAT:Q12345 -> [[Turkum:...]] categories
   - Resolves {{TPL:Q12345}} -> Uzbek template names (with fallback map)
   - Falls back to English title when no Uzbek sitelink exists
+  - Guards the links Phase 1 handed to the model: a target still equal to the
+    English original takes the translated label as its page name
   - Restores compressed <ref> blocks
   - Applies regex fixes (punctuation, year formatting, -lik suffix, Arabic transliteration, etc.)
     |
@@ -177,10 +181,12 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 ### `core/processor.py`
 - Uses `mwparserfromhell` to parse and manipulate wikitext AST.
 - `prepare(raw_wikitext)` returns a **5-tuple**: `(prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map)`.
+- `self.unresolved_links` — wikilink targets with no uz.wiki article, left in English for the model. `main.py` feeds it to `translate()`, and `finalize()` checks the model actually translated them.
 - `finalize(translated_text, ref_map)` takes **2 arguments** — the QID-to-title resolution is done internally via `self.fetcher.get_sitelink()` during finalize, not from the maps returned by prepare. The in-memory cache populated during `prepare()` (especially uz sitelinks pre-cached by `batch_page_info()`) makes this near-free.
 
 ### `core/translator.py`
-- `translate(text)` sends prepared wikitext to OpenAI for translation.
+- `translate(text, forced_links=None)` sends prepared wikitext to OpenAI for translation.
+- `forced_links` names the targets with no uz.wiki article one by one (`config.FORCED_LINKS_TEMPLATE`). A general rule does not work: the prepared text is dominated by `[[Q12345|...]]` placeholders the model must not touch, and it generalises that to plain English wikilinks too.
 - Tracks `translations` count, `tokens_used`, `cached_tokens`, and `prompt_tokens` statistics.
 - The system prompt explicitly tells the model to pass all `[[Q...]]`, `CAT:...`, and `{{TPL:...}}` placeholders through unchanged.
 
@@ -318,7 +324,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-**Automated tests** — 171 tests under `tests/`, run with:
+**Automated tests** — 174 tests under `tests/`, run with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -334,7 +340,7 @@ python -m pytest
 | `test_cache_manager.py` | 27 | `core/cache_manager.py` |
 | `test_wiki_fetcher.py` | 23 | `utils/wiki_fetcher.py` |
 | `test_reviewer.py` | 19 | `core/reviewer.py` |
-| `test_translator.py` | 13 | `core/translator.py` |
+| `test_translator.py` | 16 | `core/translator.py` |
 | `test_api_client.py` | 7 | `utils/api_client.py` |
 
 No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/processor.py`, `core/wikidata_fetcher.py`, `utils/localization.py` and `main.py` are **not** covered yet.

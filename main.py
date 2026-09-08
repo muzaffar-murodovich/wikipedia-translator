@@ -86,7 +86,7 @@ def main(input_file: str, output_file: str):
     trans_start = time.time()
 
     try:
-        translated_text = translator.translate(prepared_text)
+        translated_text = translator.translate(prepared_text, processor.unresolved_links)
         if not translated_text:
             logger.fail("Tarjima muvaffaq bo'lmadi")
             return False

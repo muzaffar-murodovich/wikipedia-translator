@@ -29,6 +29,9 @@ class WikiTextProcessor:
         """
         self.fetcher = fetcher
         self.cache = cache
+        # Wikilink targets with no uz.wiki article: prepare() leaves them in
+        # English for the model to translate, finalize() checks it actually did.
+        self.unresolved_links: List[str] = []
 
     @staticmethod
     def _remove_templates(code, templates: List) -> int:
@@ -172,8 +175,11 @@ class WikiTextProcessor:
                 # QID umuman topilmadi
                 unresolved_links.append((None, target))
 
+        # Deduplicate, keep document order — the list goes into the prompt.
+        self.unresolved_links = list(dict.fromkeys(t for _, t in unresolved_links))
+
         if unresolved_links:
-            logger.info(f"  ℹ️  {len(unresolved_links)} havola uz.wiki'da yoʻq — AI tarjima qiladi")
+            logger.info(f"  ℹ️  {len(self.unresolved_links)} havola uz.wiki'da yoʻq — AI tarjima qiladi")
 
         # Templates
         unresolved_templates = []
@@ -243,6 +249,9 @@ class WikiTextProcessor:
         logger.info("🔧 Finalizatsiya qilinmoqda...")
 
         code = mwp.parse(translated_text)
+        unresolved = set(self.unresolved_links)
+        recovered = []     # (english target, uzbek label) — target taken from label
+        still_english = [] # targets the model left untouched and unlabelled
 
         # 1. Resolve wikilinks
         for wl in code.filter_wikilinks():
@@ -256,6 +265,29 @@ class WikiTextProcessor:
                     if not label or label == uz_title:
                         wl.text = None
                 # No `else` needed — Phase 1 garantees uz_title exists for QID-prefixed links
+            elif target in unresolved:
+                # The model was told by name to translate this target and did
+                # not: it matches the English string prepare() handed over.
+                # A translated label is the one Uzbek name available, and
+                # translation_rules.md rule 2 wants label and page name to
+                # agree anyway, so the label becomes the page name.
+                if label and label != target:
+                    wl.title = label
+                    wl.text = None
+                    recovered.append((target, label))
+                else:
+                    still_english.append(target)
+
+        if recovered:
+            logger.warning(f"{len(recovered)} havola target'i inglizcha qolgan — label'dan olindi:")
+            for en_target, uz_label in recovered:
+                logger.warning(f"    [[{en_target}]] → [[{uz_label}]]")
+
+        if still_english:
+            logger.warning(
+                f"{len(still_english)} havola inglizcha qoldi (label yoʻq, qoʻlda tekshiring): "
+                + ", ".join(f"[[{t}]]" for t in still_english)
+            )
 
         # 2. Resolve categories
         text_after_links = str(code)

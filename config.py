@@ -102,9 +102,22 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
 3) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
 
 4) Izoh yozmang. Faqat wikitext chiqaring.
-
+{forced_links}
 Matn:
 ```{text}```
+"""
+
+# Phase 2 uchun dinamik blok: uz.wiki'da maqolasi yoʻq havolalar roʻyxati.
+# Matndagi [[Q12345|...]] placeholder'lari koʻp boʻlgani uchun model
+# "target'ga tegilmaydi" degan naqshni oddiy havolalarga ham umumlashtiradi.
+# Umumiy qoida buni yenga olmadi, shuning uchun ular nomma-nom sanab oʻtiladi.
+FORCED_LINKS_TEMPLATE = """
+5) MAJBURIY — quyidagi wikilink target'lari oʻzbek Vikipediyasida mavjud emas:
+{titles}
+   Ularning HAR BIRINI oʻzbekchaga tarjima yoki transliteratsiya qiling.
+   Bu havolalarda target inglizcha qolishi MUMKIN EMAS — 1-qoidadagi
+   "oʻzgartirmang" koʻrsatmasi faqat Q/CAT/TPL placeholder'lariga tegishli.
+   Masalan: [[safe conduct]] → [[xavfsiz yoʻl]], [[Hawazin|Hawazinite]] → [[Havozin|havoziniy]]
 """
 
 # --- Error Messages ---

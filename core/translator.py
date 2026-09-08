@@ -5,7 +5,7 @@
 core/translator.py - Translation via OpenAI
 """
 
-from typing import Optional
+from typing import List, Optional, Sequence
 from openai import OpenAI
 import config
 from utils.logger import logger
@@ -20,17 +20,42 @@ class WikiTranslator:
         self.stats = {"translations": 0, "tokens_used": 0, "cached_tokens": 0, "prompt_tokens": 0}
         logger.info(f"🤖 Provider: OpenAI ({self.model})")
 
-    def translate(self, prepared_text: str) -> Optional[str]:
+    @staticmethod
+    def _forced_links_block(titles: Optional[Sequence[str]]) -> str:
+        """
+        Build the "translate these targets by name" prompt block.
+
+        A general rule is not enough: the prepared text is dominated by
+        [[Q12345|...]] placeholders that the model must not touch, and it
+        generalises that to plain English wikilinks too. Naming the
+        offending targets one by one is what actually gets through.
+
+        Returns:
+            Formatted block, or "" when every link resolved to uz.wiki
+        """
+        if not titles:
+            return ""
+        listing = "\n".join(f"   - [[{t}]]" for t in titles)
+        return config.FORCED_LINKS_TEMPLATE.format(titles=listing)
+
+    def translate(
+        self, prepared_text: str, forced_links: Optional[Sequence[str]] = None
+    ) -> Optional[str]:
         """
         Translate text to Uzbek.
 
         Args:
             prepared_text: Prepared text (with placeholders)
+            forced_links: Wikilink targets with no uz.wiki article — the model
+                is told by name to translate these, not just by a general rule
 
         Returns:
             Translated text or None
         """
-        user_prompt = config.TRANSLATION_USER_PROMPT.format(text=prepared_text)
+        user_prompt = config.TRANSLATION_USER_PROMPT.format(
+            text=prepared_text,
+            forced_links=self._forced_links_block(forced_links),
+        )
 
         try:
             response = self.client.chat.completions.create(

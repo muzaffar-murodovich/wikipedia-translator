@@ -101,6 +101,26 @@ class TestTranslate:
         assert len(user_msgs) == 1
         assert "my prepared text" in user_msgs[0]["content"]
 
+    def test_forced_links_listed_in_user_message(self, translator, mock_client):
+        translator.translate("text", ["safe conduct", "Hawazin"])
+        create_call = mock_client.chat.completions.create.call_args
+        messages = create_call.kwargs.get("messages") or create_call.args[0]
+        content = [m for m in messages if m["role"] == "user"][0]["content"]
+        assert "[[safe conduct]]" in content
+        assert "[[Hawazin]]" in content
+
+    def test_no_forced_links_block_when_all_resolved(self, translator, mock_client):
+        translator.translate("text")
+        create_call = mock_client.chat.completions.create.call_args
+        messages = create_call.kwargs.get("messages") or create_call.args[0]
+        content = [m for m in messages if m["role"] == "user"][0]["content"]
+        assert "MAJBURIY" not in content
+
+    def test_forced_links_block_deduplicates_nothing_when_empty(self, translator):
+        from core.translator import WikiTranslator
+        assert WikiTranslator._forced_links_block([]) == ""
+        assert WikiTranslator._forced_links_block(None) == ""
+
     def test_system_message_is_set(self, translator, mock_client):
         translator.translate("text")
         create_call = mock_client.chat.completions.create.call_args
