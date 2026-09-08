@@ -11,6 +11,7 @@ import re
 from typing import Dict, Optional
 import config
 from utils.file_handler import FileHandler
+from utils.logger import logger
 
 
 class LocalizationManager:
@@ -20,51 +21,35 @@ class LocalizationManager:
     """
 
     def __init__(self):
-        self.map = self._load_or_create_map()
+        self.map = self._load_map()
         self.regex = self._compile_regex()
         self.stats = {
             "replacements": 0,
             "patterns_count": len(self.map)
         }
 
-    def _load_or_create_map(self) -> Dict[str, str]:
-        """Load localization map, or create default if missing."""
+    def _load_map(self) -> Dict[str, str]:
+        """
+        Load the localization map.
+
+        A missing or unreadable file is reported loudly and leaves the map
+        empty. It used to write a ten-entry stub over config.LOCALIZATION_FILE
+        instead, which replaced the real 223-rule file and let the run finish
+        looking healthy while producing an unlocalized article.
+        """
         data = FileHandler.read_json(str(config.LOCALIZATION_FILE))
 
-        if data:
-            if config.VERBOSE:
-                print(f"✓ Localization map yuklandi: {len(data)} ta almashtirish")
-            return data
-
-        # Create default map
-        default_map = self._get_default_map()
-        FileHandler.write_json(str(config.LOCALIZATION_FILE), default_map)
+        if not data:
+            logger.fail(
+                f"Localization map yuklanmadi: {config.LOCALIZATION_FILE} — "
+                "fayl yoʻq yoki boʻsh. Lokalizatsiya bosqichi hech narsa "
+                "almashtirmaydi."
+            )
+            return {}
 
         if config.VERBOSE:
-            print(f"✓ Yaratildi: {config.LOCALIZATION_FILE} ({len(default_map)} ta almashtirish)")
-
-        return default_map
-
-    @staticmethod
-    def _get_default_map() -> Dict[str, str]:
-        """Default localization map."""
-        return {
-            # Templates
-            "{{Langx|": "{{Lang-",
-            "{{cite web": "{{veb havola",
-            "{{cite book": "{{kitob havola",
-
-            # Categories
-            "[[Category:": "[[Turkum:",
-            "[[Turkum:Islom olimlari]]": "[[Turkum:Islom ulamolari]]",
-
-            # Common words
-            "United States": "Amerika Qoʻshma Shtatlari",
-            "New York": "Nyu-York",
-            "University": "Universiteti",
-            "College": "Kollej",
-            "Department": "Kafedra",
-        }
+            print(f"✓ Localization map yuklandi: {len(data)} ta almashtirish")
+        return data
 
     def _compile_regex(self) -> Optional[re.Pattern]:
         """
@@ -119,85 +104,8 @@ class LocalizationManager:
 
         return result
 
-    def add_replacement(self, english: str, uzbek: str) -> bool:
-        """
-        Add a new replacement.
-
-        Args:
-            english: English text
-            uzbek: Uzbek translation
-
-        Returns:
-            True on success
-        """
-        try:
-            self.map[english] = uzbek
-            self.regex = self._compile_regex()
-
-            FileHandler.write_json(str(config.LOCALIZATION_FILE), self.map)
-
-            if config.VERBOSE:
-                print(f"✓ Qoʻshildi: '{english}' → '{uzbek}'")
-
-            return True
-        except Exception as e:
-            print(f"❌ Almashtirish qoʻshishda xato: {e}")
-            return False
-
-    def remove_replacement(self, english: str) -> bool:
-        """
-        Remove a replacement.
-
-        Args:
-            english: English text to remove
-
-        Returns:
-            True on success
-        """
-        if english in self.map:
-            del self.map[english]
-            self.regex = self._compile_regex()
-            FileHandler.write_json(str(config.LOCALIZATION_FILE), self.map)
-
-            if config.VERBOSE:
-                print(f"✓ Oʻchirildi: '{english}'")
-
-            return True
-        return False
-
-    def get_replacement(self, english: str) -> Optional[str]:
-        """Get a replacement value."""
-        return self.map.get(english)
-
-    def has_replacement(self, english: str) -> bool:
-        """Check if a replacement exists."""
-        return english in self.map
-
-    def get_all_replacements(self) -> Dict[str, str]:
-        """Get all replacements (copy)."""
-        return self.map.copy()
-
     def print_stats(self):
         """Print statistics."""
         print("\n📚 Localization Statistikasi:")
         print(f"  Qoidalar soni: {self.stats['patterns_count']}")
         print(f"  Qoʻllangan almashtirishlar: {self.stats['replacements']}")
-
-    def search_replacements(self, keyword: str) -> Dict[str, str]:
-        """
-        Search for replacements containing a keyword.
-
-        Args:
-            keyword: Keyword to search for
-
-        Returns:
-            Matching replacements
-        """
-        results = {}
-        keyword_lower = keyword.lower()
-
-        for english, uzbek in self.map.items():
-            if keyword_lower in english.lower() or keyword_lower in uzbek.lower():
-                results[english] = uzbek
-
-        return results

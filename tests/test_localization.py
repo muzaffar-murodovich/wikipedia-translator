@@ -44,3 +44,27 @@ class TestApply:
 
     def test_patterns_count_reports_the_map_size(self, manager):
         assert manager.stats["patterns_count"] == 3
+
+
+class TestMissingMap:
+    def test_missing_file_leaves_the_map_empty(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("config.LOCALIZATION_FILE", tmp_path / "absent.json")
+        assert LocalizationManager().map == {}
+
+    def test_missing_file_is_reported(self, tmp_path, monkeypatch, caplog):
+        monkeypatch.setattr("config.LOCALIZATION_FILE", tmp_path / "absent.json")
+        LocalizationManager()
+        assert "Localization map yuklanmadi" in caplog.text
+
+    def test_missing_file_does_not_get_a_stub_written_over_it(self, tmp_path, monkeypatch):
+        """It used to write a ten-entry default map, which would clobber the
+        real 223-rule file whenever it could not be read."""
+        target = tmp_path / "absent.json"
+        monkeypatch.setattr("config.LOCALIZATION_FILE", target)
+        LocalizationManager()
+        assert not target.exists()
+
+    def test_apply_is_a_no_op_without_a_map(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("config.LOCALIZATION_FILE", tmp_path / "absent.json")
+        manager = LocalizationManager()
+        assert manager.apply("[[Category:X]]") == "[[Category:X]]"
