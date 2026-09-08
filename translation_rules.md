@@ -35,3 +35,8 @@ Pipe-li shaklda ham xuddi shunday: `[[Isʼhoq al-Mavsiliy|Isḥāq al-Mawṣilī
 - Yil raqamlari "hijriy", "milodiy" soʻzlaridan keyin yoziladi va yil raqamidan keyin - (hyphen) belgisi yoziladi:
 - Notoʻgʻri: 132 hijriy/750 milodiy
 - Toʻgʻri: hijriy 132-yil/milodiy 750-yil
+
+Bu qoida faqat manbada allaqachon mavjud sanalarga tegishli. Manbada boʻlmagan
+sanani hisoblab qoʻshmang — bitta taqvim berilgan boʻlsa, shu holicha qoladi:
+- Notoʻgʻri: 1301-yilda tugʻilgan → hijriy 701-yil/milodiy 1301-yilda tugʻilgan
+- Toʻgʻri: 1301-yilda tugʻilgan
