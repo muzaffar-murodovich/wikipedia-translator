@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import config
+
 from core.processor import WikiTextProcessor
 
 
@@ -57,3 +59,36 @@ class TestRestoreReferences:
 
     def test_empty_ref_map_is_a_no_op(self, processor):
         assert processor._restore_references("Matn", {}) == "Matn"
+
+
+# ── _compress_references ──────────────────────────────────────────────────────
+
+class TestCompressReferences:
+    PLACEHOLDER_LEN = len("<ref>REF_a1b2c3d4</ref>")
+
+    def test_threshold_exceeds_the_placeholder_length(self):
+        # Below this, compressing a reference makes the text longer.
+        assert config.REF_COMPRESS_THRESHOLD >= self.PLACEHOLDER_LEN
+
+    def test_compression_never_lengthens_a_reference(self, processor):
+        for body_len in range(1, 60):
+            ref = "<ref>" + "x" * body_len + "</ref>"
+            compressed, _ = processor._compress_references(ref)
+            assert len(compressed) <= len(ref), f"grew for body of {body_len}"
+
+    def test_long_reference_is_compressed(self, processor):
+        ref = "<ref>" + "u" * 100 + "</ref>"
+        compressed, ref_map = processor._compress_references(ref)
+        assert len(ref_map) == 1
+        assert len(compressed) < len(ref)
+
+    def test_short_reference_is_left_alone(self, processor):
+        ref = "<ref>ab</ref>"
+        compressed, ref_map = processor._compress_references(ref)
+        assert compressed == ref
+        assert ref_map == {}
+
+    def test_compress_then_restore_round_trips(self, processor):
+        original = "Matn<ref>" + "manba " * 20 + "</ref> davomi"
+        compressed, ref_map = processor._compress_references(original)
+        assert processor._restore_references(compressed, ref_map) == original

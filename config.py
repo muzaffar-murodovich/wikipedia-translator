@@ -48,7 +48,10 @@ LOCALIZATION_FILE = Path("localization_map.json")
 
 # --- Reference Compression ---
 
-REF_COMPRESS_THRESHOLD = 20  # Compress refs longer than 20 characters
+# Manbani faqat qisqartirish foyda bergan holda siqamiz.
+# O'rniga qo'yiladigan '<ref>REF_a1b2c3d4</ref>' 23 belgi, shuning uchun
+# chegara undan past bo'lsa 21-23 belgili manba siqilgach UZAYADI.
+REF_COMPRESS_THRESHOLD = 30  # 23 belgili placeholder + zaxira
 
 # --- Fallback Mappings ---
 
