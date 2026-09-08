@@ -95,10 +95,9 @@ class WikidataFetcher:
         Uses the source Wikipedia API (not wikidata.org):
             action=query&redirects=1&prop=pageprops|langlinks
 
-        This replaces the old two-step flow (batch_resolve_redirects +
-        batch_get_qids_fast), halving the number of HTTP requests and
-        keeping all traffic on one host — which is what caused the
-        HTTP 429 rate limiting.
+        This replaces an older two-step flow (resolve redirects, then fetch
+        QIDs), halving the number of HTTP requests and keeping all traffic
+        on one host — which is what caused the HTTP 429 rate limiting.
 
         Args:
             titles: Article titles (redirects allowed)
@@ -185,37 +184,6 @@ class WikidataFetcher:
                     self.failed_titles.add(title)
 
         return results
-
-    def batch_resolve_redirects(self, titles: List[str], site_code: str = "en") -> Dict[str, str]:
-        """
-        Batch resolve redirects. Thin wrapper over batch_page_info().
-
-        Args:
-            titles: List of article titles
-            site_code: Site code (en, uz)
-
-        Returns:
-            {original_title: resolved_title} dict
-        """
-        info = self.batch_page_info(titles, site_code)
-        return {title: data["resolved"] for title, data in info.items()}
-
-    def batch_get_qids_fast(self, titles: List[str], site_code: str = "en") -> Dict[str, Optional[str]]:
-        """
-        Batch fetch QIDs. Thin wrapper over batch_page_info().
-
-        Target-language sitelinks are cached as a side effect (for Phase 3),
-        so a following batch_resolve_redirects()/get_sitelink() call is free.
-
-        Args:
-            titles: Article titles
-            site_code: Site code
-
-        Returns:
-            {title: QID} dict (QID or None)
-        """
-        info = self.batch_page_info(titles, site_code)
-        return {title: data["qid"] for title, data in info.items()}
 
     def get_en_sitelink(self, qid: str) -> Optional[str]:
         """Get English sitelink from QID."""
