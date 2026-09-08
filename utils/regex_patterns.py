@@ -3,7 +3,7 @@
 
 """
 utils/regex_patterns.py - All regex patterns in one place
-This file contains 20+ regex patterns used across the project.
+The class holds the named patterns; the functions below are the text fixes.
 """
 
 import re
@@ -33,12 +33,6 @@ class RegexPatterns:
     # <ref>...</ref> tag (closing, NOT self-closing)
     REF_TAG = r'<ref[^/>]*>.*?</ref>'
 
-    # Self-closing ref: <ref ... /> (NEVER compress)
-    REF_SELF_CLOSING = r'<ref[^>]*/\s*>'
-
-    # SFN template: {{sfn|...}} or {{harvnb|...}}
-    SFN_TEMPLATE = r'\{\{sfn\s*\|[^}]*\}\}'
-
     # Compressed reference placeholder: REF_a1b2c3d4
     REF_PLACEHOLDER = r'REF_[a-f0-9]{8}'
 
@@ -47,73 +41,16 @@ class RegexPatterns:
     # [[link|text]] or [[link]]
     WIKILINK = r'\[\[([^\]\|]+)(?:\|([^\]]+))?\]\]'
 
-    # Empty wikilink: [[]]
-    EMPTY_WIKILINK = r'\[\[\s*\]\]'
-
-    # QID: Q123456
-    QID_PATTERN = r'(Q\d+)'
-
-    # ========== Templates ==========
-
-    # Template placeholder: {{TPL:Q12345}}
-    TEMPLATE_PLACEHOLDER = r'\{\{TPL:(Q\d+)'
-
     # ========== HTML Comments ==========
 
     # <!-- comment -->
     HTML_COMMENT = r'<!--.*?-->'
-
-    # ========== Punctuation and References ==========
-
-    # Punctuation BEFORE ref: text.<ref>...</ref>
-    PUNCT_BEFORE_REF = r'([.,;!?])\s*(<ref[^>]*>.*?</ref>)'
-
-    # Punctuation BETWEEN refs: </ref>.<ref>
-    PUNCT_BETWEEN_REFS = r'(</ref>)([.,;!?])(\s*)(<ref)'
-
-    # Punctuation after ref end: </ref>\n
-    PUNCT_AFTER_REF_END = r'(</ref>)(\s*(?:\n|$))'
-
-    # Duplicate punctuation: </ref>.. -> </ref>.
-    DUPLICATE_PUNCT = r'(</ref>)([.,;!?])\.'
 
     # ========== Categories ==========
 
     # Category token: ⟦CAT:Q12345|cat_name|sort_key⟧ (sort_key may be empty)
     CAT_TOKEN = r'⟦CAT:(Q\d+)\|([^|⟧]+)\|([^⟧]*)⟧'
 
-    # ========== Bracket Check ==========
-
-    # Open brackets
-    OPEN_BRACKETS = r'[\[\{]'
-
-    # Close brackets
-    CLOSE_BRACKETS = r'[\]\}]'
-
-    # ========== English Words ==========
-
-    # Namespace prefixes
-    CATEGORY_PREFIX = r'\bcategory:'
-    TEMPLATE_PREFIX = r'\btemplate:'
-    FILE_PREFIX = r'\b(?:file|image):'
-
-    # Common English words
-    BIRTH_DATE = r'\bbirth_date\b'
-    DEATH_DATE = r'\bdeath_date\b'
-    BIRTH_PLACE = r'\bbirth_place\b'
-
-    # ========== Headings ==========
-
-    # == Heading ==
-    HEADING = r'^==+.+?==+$'
-
-    # ========== Miscellaneous ==========
-
-    # Extra spaces
-    EXTRA_SPACES = r'  +'
-
-    # Trailing whitespace
-    TRAILING_WHITESPACE = r'\s+$'
 
 # ========== Special Regex Functions ==========
 
