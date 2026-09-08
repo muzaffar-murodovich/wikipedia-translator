@@ -211,6 +211,20 @@ class TestFixYearWithDash:
         text = "Hello World"
         assert fix_year_with_dash(text) == text
 
+    def test_short_duration_keeps_space(self):
+        text = "u yerda 28 yil davomida ilm toʻplagan"
+        assert fix_year_with_dash(text) == text
+
+    def test_long_duration_keeps_space(self):
+        assert fix_year_with_dash("100 yil oldin") == "100 yil oldin"
+        assert fix_year_with_dash("500 yildan ortiq") == "500 yildan ortiq"
+
+    def test_year_range_tail(self):
+        assert fix_year_with_dash("1975/76 yillarda") == "1975/76-yillarda"
+
+    def test_year_with_case_suffix(self):
+        assert fix_year_with_dash("2011 yildan beri") == "2011-yildan beri"
+
 
 # ── fix_punctuation_with_sfn ──────────────────────────────────────────────────
 

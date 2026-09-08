@@ -312,6 +312,19 @@ def fix_lik_suffix_capitalization(wikitext: str) -> str:
 
 # ========== Year With Dash Fix ==========
 
+# A calendar year is 3-4 digits, optionally the two-digit tail of a range
+# (1975/76). A duration ("28 yil davomida") is not a year and keeps its space.
+_YEAR_BEFORE_YIL = re.compile(
+    r'(?<!\d)(\d{3,4}(?:/\d{2})?)\s+(yil(?:da|lar(?:i|da)?)?)'
+)
+
+# Words that mark the number as a length of time rather than a point in time.
+_DURATION_AFTER_YIL = re.compile(
+    r'\w*\s+(?:davom\w*|mobaynida|ichida|oldin|avval|keyin|burun'
+    r'|muqaddam|oʻtgach|ortiq|kam|koʻp)\b'
+)
+
+
 def fix_year_with_dash(wikitext: str) -> str:
     """
     Add dash between year numbers and -yil suffix.
@@ -319,9 +332,18 @@ def fix_year_with_dash(wikitext: str) -> str:
     Examples:
     2025 yil -> 2025-yil
     1975/76 yillarda -> 1975/76-yillarda
+
+    A duration keeps its space, because -yil marks a point in time only:
+    28 yil davomida -> 28 yil davomida
+    100 yil oldin   -> 100 yil oldin
     """
+    def replacer(match):
+        if _DURATION_AFTER_YIL.match(wikitext, match.end()):
+            return match.group(0)
+        return f"{match.group(1)}-{match.group(2)}"
+
     # Pattern 1: YYYY yil -> YYYY-yil
-    wikitext = re.sub(r'(\d+)\s+(yil(?:da|lar(?:i|da)?)?)', r'\1-\2', wikitext)
+    wikitext = _YEAR_BEFORE_YIL.sub(replacer, wikitext)
 
     # Pattern 2: {{Circa|910}} yilda -> {{Circa|910}}-yilda
     wikitext = re.sub(r'(\{\{\s*Circa[^}]*\}\})\s+(yil(?:da|lar(?:i|da)?)?)', r'\1-\2', wikitext)
