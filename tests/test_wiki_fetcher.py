@@ -125,14 +125,22 @@ class TestFetchWikitext:
         result = fetch_wikitext("X")
         assert result == (None, None)
 
-    def test_returns_none_and_error_string_on_network_error(self, monkeypatch):
+    def test_returns_none_none_on_network_error(self, monkeypatch):
+        """The second slot is a title everywhere else, so an error must not
+        be smuggled into it — callers cannot tell the two apart."""
         def raise_error(req, timeout=None, **kwargs):
             raise Exception("connection refused")
 
         monkeypatch.setattr("utils.wiki_fetcher.urllib.request.urlopen", raise_error)
-        wikitext, error = fetch_wikitext("Albert Einstein")
-        assert wikitext is None
-        assert "connection refused" in error
+        assert fetch_wikitext("Albert Einstein") == (None, None)
+
+    def test_network_error_is_logged(self, monkeypatch, caplog):
+        def raise_error(req, timeout=None, **kwargs):
+            raise Exception("connection refused")
+
+        monkeypatch.setattr("utils.wiki_fetcher.urllib.request.urlopen", raise_error)
+        fetch_wikitext("Albert Einstein")
+        assert "connection refused" in caplog.text
 
     def test_url_contains_article_name(self, monkeypatch):
         captured = []

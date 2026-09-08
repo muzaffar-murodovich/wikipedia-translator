@@ -75,8 +75,10 @@ def fetch_wikitext(article_name: str, lang: str = "en") -> Tuple[Optional[str], 
 
     except Exception as e:
         # Yuklab bo'lmadi — bu "maqola yo'q" degani EMAS.
+        # Ikkinchi qiymat hamma joyda sarlavha; xato matnini u yerga
+        # qo'yish kontraktni buzadi, xato allaqachon log qilingan.
         logger.error(f"Maqolani yuklab bo'lmadi: {article_name} - {e}")
-        return None, str(e)
+        return None, None
 
 
 def is_redirect(wikitext: str) -> Optional[str]:
