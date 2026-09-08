@@ -33,8 +33,48 @@ class RegexPatterns:
     # <ref>...</ref> tag (closing, NOT self-closing)
     REF_TAG = r'<ref[^/>]*>.*?</ref>'
 
+    # Self-closing ref: <ref ... />
+    REF_SELF_CLOSING = r'<ref[^>]*/\s*>'
+
+    # Either kind, as the tail of a tag: </ref> or the closing />
+    REF_TAG_END = r'</ref>|/\s*>'
+
     # Compressed reference placeholder: REF_a1b2c3d4
     REF_PLACEHOLDER = r'REF_[a-f0-9]{8}'
+
+    # ========== Citations ==========
+
+    # {{sfn|...}} / {{efn|...}}
+    SFN_EFN_TEMPLATE = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
+
+    # One citation of any kind: an sfn/efn template or a ref tag.
+    CITATION = r'(?:' + SFN_EFN_TEMPLATE + r'|' + REF_TAG + r'|' + REF_SELF_CLOSING + r')'
+
+    # ========== Punctuation Around References ==========
+    # These are the patterns fix_punctuation_with_refs actually applies.
+    # Keep them here rather than inline: an earlier set of near-miss copies
+    # lived in this class while the function ran its own, and the two drifted.
+
+    # text.<ref>...</ref>  ->  the mark belongs after the tag
+    PUNCT_BEFORE_REF = r'([.,;!?])\s*(' + REF_TAG + r')'
+
+    # text.<ref name="x"/>  ->  same, for a self-closing tag
+    PUNCT_BEFORE_SELF_CLOSING_REF = r'([.,;!?])\s*(' + REF_SELF_CLOSING + r')'
+
+    # </ref>.<ref>  ->  a mark stranded between two refs
+    PUNCT_BETWEEN_REFS = r'(' + REF_TAG_END + r')([.,;!?])(\s*)(<ref)'
+
+    # A ref that ends a sentence and has no mark. '[' is excluded here and
+    # handled by REF_BEFORE_CAPITALISED_LINK, because a lowercase link
+    # continues the sentence.
+    REF_NEEDS_PERIOD = r'(</ref>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])'
+    SELF_CLOSING_REF_NEEDS_PERIOD = r'(/\s*>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])'
+
+    # </ref>.. -> </ref>.
+    REPEATED_PUNCT_AFTER_REF = r'(' + REF_TAG_END + r')([.,;!?])\2+'
+
+    # </ref> [[Ism]] -> a capitalised link does start a new sentence
+    REF_BEFORE_CAPITALISED_LINK = r'(' + REF_TAG_END + r')(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])'
 
     # ========== Wikilinks ==========
 
@@ -72,68 +112,29 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
     Fix punctuation placement around references.
 
     Transformations:
-    - text.<ref>...</ref>  ->  text<ref>...</ref>.
+    - text.<ref>...</ref>   ->  text<ref>...</ref>.
     - text.<ref name="x"/>  ->  text<ref name="x"/>.
-    - </ref>.<ref> -> </ref><ref>.
-    - </ref>. -> </ref>. (keep as is)
-    - <ref/> (at end) -> <ref/>. (add period)
+    - </ref>.<ref>          ->  </ref><ref>
+    - </ref> (sentence end)  ->  </ref>.
+    - </ref>..              ->  </ref>.
     """
+    # 1. Move punctuation from before a ref to after it, either tag kind.
+    wikitext = re.sub(RegexPatterns.PUNCT_BEFORE_REF, r'\2\1', wikitext, flags=re.DOTALL)
+    wikitext = re.sub(RegexPatterns.PUNCT_BEFORE_SELF_CLOSING_REF, r'\2\1', wikitext)
 
-    # 1. Move punctuation from before ref to after ref (normal ref)
-    wikitext = re.sub(
-        r'([.,;!?])\s*(<ref[^/>]*>.*?</ref>)',
-        r'\2\1',
-        wikitext,
-        flags=re.DOTALL
-    )
+    # 2. Drop a mark stranded between two consecutive refs.
+    wikitext = re.sub(RegexPatterns.PUNCT_BETWEEN_REFS, r'\1\3\4', wikitext)
 
-    # 2. Move punctuation from before self-closing ref to after
-    wikitext = re.sub(
-        r'([.,;!?])\s*(<ref[^>]*/\s*>)',
-        r'\2\1',
-        wikitext
-    )
+    # 3. Add the sentence's period when a ref ends it and none is there.
+    wikitext = re.sub(RegexPatterns.REF_NEEDS_PERIOD, r'\1.\2', wikitext)
+    wikitext = re.sub(RegexPatterns.SELF_CLOSING_REF_NEEDS_PERIOD, r'\1.\2', wikitext)
 
-    # 3. Remove punctuation between consecutive refs, of either kind
-    # </ref>.<ref> -> </ref><ref>,  <ref />.<ref /> -> <ref /><ref />
-    wikitext = re.sub(
-        r'(</ref>|/\s*>)([.,;!?])(\s*)(<ref)',
-        r'\1\3\4',
-        wikitext
-    )
+    # 4. Collapse a mark that ended up repeated.
+    wikitext = re.sub(RegexPatterns.REPEATED_PUNCT_AFTER_REF, r'\1\2', wikitext)
 
-    # 4. Add period after normal ref if missing (when followed by space/newline, not punctuation/markup)
-    # Skip if next word starts with a lowercase letter (sentence continues, e.g. "<ref /> va ...")
-    wikitext = re.sub(
-        r'(</ref>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
-        r'\1.\2',
-        wikitext
-    )
-
-    # 5. Add period after self-closing ref if missing
-    # Skip if next word starts with a lowercase letter (sentence continues)
-    wikitext = re.sub(
-        r'(/\s*>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
-        r'\1.\2',
-        wikitext
-    )
-
-    # 6. Fix duplicate punctuation
-    # </ref>.. -> </ref>.
-    wikitext = re.sub(
-        r'(</ref>|/\s*>)([.,;!?])\2+',
-        r'\1\2',
-        wikitext
-    )
-
-    # 7. Add a period when a capitalised [[link]] starts the next sentence.
-    # Steps 4 and 5 deliberately skip '[', because a lowercase link continues
-    # the sentence; a capitalised one does not.
-    wikitext = re.sub(
-        r'(</ref>|/\s*>)(\s+)(\[\[)(?=[A-ZА-ЯЁʿʾ])',
-        r'\1.\2\3',
-        wikitext
-    )
+    # 5. A capitalised [[link]] starts a new sentence; step 3 skips '[' so
+    #    that a lowercase link, which continues the sentence, is left alone.
+    wikitext = re.sub(RegexPatterns.REF_BEFORE_CAPITALISED_LINK, r'\1.\2\3', wikitext)
 
     return wikitext
 
@@ -262,10 +263,7 @@ def fix_year_with_dash(wikitext: str) -> str:
 
 # ========== Fix Punctuation With SFN Templates ==========
 
-# One citation: an {{sfn}}/{{efn}} template, or a <ref> tag of either kind.
-_SFN_EFN_TPL = r'\{\{(?:sfn|efn)\s*\|[^}]*\}\}'
-_REF_TAG_ANY = r'<ref[^/>]*>.*?</ref>|<ref[^>]*/\s*>'
-_CITATION = r'(?:' + _SFN_EFN_TPL + r'|' + _REF_TAG_ANY + r')'
+_CITATION = RegexPatterns.CITATION
 
 # A citation chain plus the punctuation mark in front of it. Citations may be
 # separated by stray punctuation and spaces, but never by a newline: joining
@@ -278,7 +276,7 @@ _CITATION_CHAIN = re.compile(
 )
 
 _ONE_CITATION = re.compile(_CITATION, re.IGNORECASE | re.DOTALL)
-_HAS_SFN_EFN = re.compile(_SFN_EFN_TPL, re.IGNORECASE)
+_HAS_SFN_EFN = re.compile(RegexPatterns.SFN_EFN_TEMPLATE, re.IGNORECASE)
 
 
 def _chain_closes_sentence(rest: str) -> bool:
