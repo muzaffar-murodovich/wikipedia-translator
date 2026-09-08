@@ -101,7 +101,7 @@ class TestFetchWikitext:
     def test_returns_wikitext_and_title_on_success(self, monkeypatch):
         monkeypatch.setattr(
             "utils.wiki_fetcher.urllib.request.urlopen",
-            lambda req, timeout=None: _make_urlopen_ctx(self._success_payload())
+            lambda req, timeout=None, **kwargs: _make_urlopen_ctx(self._success_payload())
         )
         wikitext, title = fetch_wikitext("Albert Einstein")
         assert title == "Albert Einstein"
@@ -111,7 +111,7 @@ class TestFetchWikitext:
         payload = {"query": {"pages": [{"title": "X", "missing": True}]}}
         monkeypatch.setattr(
             "utils.wiki_fetcher.urllib.request.urlopen",
-            lambda req, timeout=None: _make_urlopen_ctx(payload)
+            lambda req, timeout=None, **kwargs: _make_urlopen_ctx(payload)
         )
         wikitext, title = fetch_wikitext("X")
         assert wikitext is None
@@ -121,13 +121,13 @@ class TestFetchWikitext:
         payload = {"query": {"pages": []}}
         monkeypatch.setattr(
             "utils.wiki_fetcher.urllib.request.urlopen",
-            lambda req, timeout=None: _make_urlopen_ctx(payload)
+            lambda req, timeout=None, **kwargs: _make_urlopen_ctx(payload)
         )
         result = fetch_wikitext("X")
         assert result == (None, None)
 
     def test_returns_none_and_error_string_on_network_error(self, monkeypatch):
-        def raise_error(req, timeout=None):
+        def raise_error(req, timeout=None, **kwargs):
             raise Exception("connection refused")
 
         monkeypatch.setattr("utils.wiki_fetcher.urllib.request.urlopen", raise_error)
@@ -138,7 +138,7 @@ class TestFetchWikitext:
     def test_url_contains_article_name(self, monkeypatch):
         captured = []
 
-        def capture(req, timeout=None):
+        def capture(req, timeout=None, **kwargs):
             captured.append(req.full_url)
             return _make_urlopen_ctx(self._success_payload())
 
@@ -151,7 +151,7 @@ class TestFetchWikitext:
     def test_lang_parameter_used_in_url(self, monkeypatch):
         captured = []
 
-        def capture(req, timeout=None):
+        def capture(req, timeout=None, **kwargs):
             captured.append(req.full_url)
             return _make_urlopen_ctx(self._success_payload())
 

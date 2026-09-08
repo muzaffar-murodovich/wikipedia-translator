@@ -9,14 +9,56 @@ fails must never be silently treated as "not found".
 """
 
 import json
+import os
+import ssl
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Optional
 
+import certifi
+
 import config
 from utils.logger import logger
+
+
+def _resolve_ca_file() -> str:
+    """
+    Pick the CA bundle used to verify every API request.
+
+    The certificate source must not depend on the platform. On Linux the
+    ssl module reads a complete, package-managed CA directory, but on
+    Windows it can only see the OS certificate store, which ships with a
+    minimal root set and fills up on demand — a root Python needs may
+    simply be absent, which surfaces as SSLCertVerificationError while
+    browsers work fine. certifi provides the same bundle everywhere.
+
+    SSL_CERT_FILE / REQUESTS_CA_BUNDLE still win when set, so a corporate
+    proxy or antivirus that intercepts HTTPS can be supported by pointing
+    them at a bundle containing its root certificate.
+    """
+    custom_ca = os.environ.get("SSL_CERT_FILE") or os.environ.get("REQUESTS_CA_BUNDLE")
+    if custom_ca:
+        if os.path.isfile(custom_ca):
+            return custom_ca
+        logger.warning(
+            f"CA fayli topilmadi ({custom_ca}) — certifi to'plamiga qaytilmoqda."
+        )
+    return certifi.where()
+
+
+_SSL_CONTEXT_CA = _resolve_ca_file()
+
+try:
+    _SSL_CONTEXT = ssl.create_default_context(cafile=_SSL_CONTEXT_CA)
+except (OSError, ssl.SSLError) as e:
+    logger.warning(
+        f"CA fayli o'qilmadi ({_SSL_CONTEXT_CA}): {e}. "
+        "certifi to'plamiga qaytilmoqda."
+    )
+    _SSL_CONTEXT_CA = certifi.where()
+    _SSL_CONTEXT = ssl.create_default_context(cafile=_SSL_CONTEXT_CA)
 
 
 def _retry_delay(attempt: int, error: Exception) -> float:
@@ -70,7 +112,7 @@ def wiki_api(params: dict, lang: str = "en", domain: str = "wikipedia",
     for attempt in range(config.API_MAX_RETRIES):
         req = urllib.request.Request(url, headers={"User-Agent": config.API_USER_AGENT})
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CONTEXT) as resp:
                 return json.loads(resp.read().decode("utf-8"))
 
         except urllib.error.HTTPError as e:
@@ -80,6 +122,18 @@ def wiki_api(params: dict, lang: str = "en", domain: str = "wikipedia",
             last_error = e
 
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            reason = getattr(e, "reason", None)
+            if isinstance(reason, ssl.SSLCertVerificationError):
+                # Sertifikat xatosi qayta urinishdan tuzalmaydi.
+                logger.fail(
+                    f"SSL sertifikati tekshiruvdan o'tmadi: {reason.verify_message or reason}\n"
+                    f"    Ishlatilgan CA fayli: {_SSL_CONTEXT_CA}\n"
+                    "    Sabablari: eskirgan certifi, tizim soati noto'g'ri, yoki "
+                    "HTTPS trafikni ushlab turgan antivirus/proksi.\n"
+                    "    Yechim: `pip install -U certifi`, yoki proksi ildiz "
+                    "sertifikatini SSL_CERT_FILE orqali ko'rsating."
+                )
+                raise
             last_error = e
 
         if attempt < config.API_MAX_RETRIES - 1:

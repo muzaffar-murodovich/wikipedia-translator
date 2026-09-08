@@ -9,6 +9,7 @@ aiohttp = "*"
 telegram = "*"
 python-telegram-bot = "*"
 pywikibot = "*"
+certifi = "*"
 python-dotenv = "*"
 
 [dev-packages]
