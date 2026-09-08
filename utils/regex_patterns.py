@@ -219,32 +219,15 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
         wikitext
     )
 
-    # 3. Remove punctuation between consecutive refs
-    # </ref>.<ref> -> </ref><ref>
-    wikitext = re.sub(
-        r'(</ref>)([.,;!?])(\s*)(<ref)',
-        r'\1\3\4',
-        wikitext,
-        flags=re.DOTALL
-    )
-
-    # 4. Remove punctuation between self-closing refs
-    # <ref />.<ref /> -> <ref /><ref />
-    wikitext = re.sub(
-        r'(/\s*>)([.,;!?])(\s*)(<ref)',
-        r'\1\3\4',
-        wikitext
-    )
-
-    # 5. Mixed normal ref and self-closing ref sequences
-    # </ref>.<ref /> -> </ref><ref />
+    # 3. Remove punctuation between consecutive refs, of either kind
+    # </ref>.<ref> -> </ref><ref>,  <ref />.<ref /> -> <ref /><ref />
     wikitext = re.sub(
         r'(</ref>|/\s*>)([.,;!?])(\s*)(<ref)',
         r'\1\3\4',
         wikitext
     )
 
-    # 6. Add period after normal ref if missing (when followed by space/newline, not punctuation/markup)
+    # 4. Add period after normal ref if missing (when followed by space/newline, not punctuation/markup)
     # Skip if next word starts with a lowercase letter (sentence continues, e.g. "<ref /> va ...")
     wikitext = re.sub(
         r'(</ref>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
@@ -252,7 +235,7 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
         wikitext
     )
 
-    # 7. Add period after self-closing ref if missing
+    # 5. Add period after self-closing ref if missing
     # Skip if next word starts with a lowercase letter (sentence continues)
     wikitext = re.sub(
         r'(/\s*>)(\s+)(?![.,;!?<{\[a-zʼ‘’\'])',
@@ -260,7 +243,7 @@ def fix_punctuation_with_refs(wikitext: str) -> str:
         wikitext
     )
 
-    # 8. Fix duplicate punctuation
+    # 6. Fix duplicate punctuation
     # </ref>.. -> </ref>.
     wikitext = re.sub(
         r'(</ref>|/\s*>)([.,;!?])\2+',

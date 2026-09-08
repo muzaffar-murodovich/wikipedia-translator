@@ -17,7 +17,6 @@ load_dotenv(override=True)
 import config
 from utils.file_handler import FileHandler
 from utils.localization import LocalizationManager
-from utils.regex_patterns import fix_arabic_transliteration
 from utils.logger import logger
 from core.cache_manager import WikiCache
 from core.wikidata_fetcher import WikidataFetcher
@@ -102,7 +101,6 @@ def main(input_file: str, output_file: str):
 
     try:
         result = localization.apply(finalized_text)
-        result = fix_arabic_transliteration(result)
         loc_time = time.time() - loc_start
         logger.info(f"  ⏱️  Vaqt: {loc_time:.2f}s")
     except Exception as e:
