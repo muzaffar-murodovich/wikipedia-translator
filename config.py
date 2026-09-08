@@ -19,14 +19,8 @@ ENABLE_REVIEW = True
 
 # --- Wikipedia Settings ---
 
-WIKIPEDIA_FAMILY = "wikipedia"
 SOURCE_LANG = "en"  # Source language
 TARGET_LANG = "uz"  # Target language
-
-# --- Parallel Processing Settings ---
-
-MAX_WORKERS = 1                    # Number of parallel threads
-REQUEST_DELAY = 1                  # Delay between requests (seconds)
 
 # --- Wikimedia API Settings ---
 
@@ -133,20 +127,9 @@ FORCED_LINKS_TEMPLATE = """
    Masalan: [[safe conduct]] → [[xavfsiz yoʻl]], [[Hawazin|Hawazinite]] → [[Havozin|havoziniy]]
 """
 
-# --- Error Messages ---
-
-ERROR_MESSAGES = {
-    "maxlag_timeout": "⚠️  Wikipedia serverlari band. Keyinroq urinib ko'ring.",
-    "api_error": "❌ API xatosi. Internet ulanishini tekshiring.",
-    "invalid_qid": "⚠️  Noto'g'ri QID formatı.",
-    "file_not_found": "❌ Fayl topilmadi.",
-    "json_error": "❌ JSON formatida xato.",
-}
-
 # --- Additional Settings ---
 
 VERBOSE = True  # Enable verbose output
-DEBUG = False   # Debug mode
 
 # --- Review Prompt Settings (Phase 5) ---
 # config.py ga "Translation Prompt Settings" blokidan KEYIN qo'shing
