@@ -89,7 +89,7 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
    - [[Rashiq al-Nasimi]] → [[Roshiq an-Nasimiy]] (arab ismlarini oʻzbek imlosiga moslashtiring)
    - [[Traditionalist theology (Islam)|Athari]] → [[Anʼanaviy ilohiyot (Islom)|asariy]] (qavs ichidagi disambiguation'ni ham tarjima qiling)
 
-3) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{...}} va boshqa wikitext sintaksisi buzilmasin.
+3) Strukturani saqlang: sarlavhalar, roʻyxatlar, {{{{...}}}} va boshqa wikitext sintaksisi buzilmasin.
 
 4) Izoh yozmang. Faqat wikitext chiqaring.
 
@@ -159,7 +159,7 @@ QOIDALAR:
 
 MUHIM CHEKLOVLAR:
 1) Faqat qoidalarda koʻrsatilgan xatolarni tuzating. Boshqa hech narsani oʻzgartirmang.
-2) Wikitext tuzilishini ({{...}}, [[...]], <ref>...</ref> va boshqalar) buzmang.
+2) Wikitext tuzilishini ({{{{...}}}}, [[...]], <ref>...</ref> va boshqalar) buzmang.
 3) Izoh yozmang. Faqat tuzatilgan wikitext chiqaring."""
 
 REVIEW_USER_PROMPT = """MATN:

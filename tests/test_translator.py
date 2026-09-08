@@ -168,3 +168,26 @@ class TestTranslate:
         result = translator.translate("text")
         # Should still return the content, not raise
         assert result == "ok"
+
+
+# ── Prompt rendering ──────────────────────────────────────────────────────────
+
+class TestPromptBraces:
+    """`str.format` collapses `{{` to `{`, so literal wikitext braces in the
+    prompt templates have to be doubled up in the source."""
+
+    def test_translation_prompt_keeps_double_braces(self):
+        rendered = config.TRANSLATION_USER_PROMPT.format(text="matn", forced_links="")
+        assert "{{...}}" in rendered
+        assert "{...}" not in rendered.replace("{{...}}", "")
+
+    def test_review_prompt_keeps_double_braces(self):
+        rendered = config.REVIEW_SYSTEM_PROMPT.format(rules="qoidalar")
+        assert "{{...}}" in rendered
+
+    def test_forced_links_block_renders_without_stray_braces(self):
+        from core.translator import WikiTranslator
+        block = WikiTranslator._forced_links_block(["Safar treaty"])
+        rendered = config.TRANSLATION_USER_PROMPT.format(text="matn", forced_links=block)
+        assert "[[Safar treaty]]" in rendered
+        assert "{{...}}" in rendered
