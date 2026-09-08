@@ -198,8 +198,6 @@ def main(input_file: str, output_file: str, article_title: Optional[str] = None)
     cache.print_stats()
     translator.print_stats()
     localization.print_stats()
-
-    # print_stats qatorlari oxiriga:
     reviewer.print_stats()
 
     # API xatosi tufayli aniqlanmagan sarlavhalar — ular QID olmagani uchun
@@ -225,15 +223,6 @@ def main(input_file: str, output_file: str, article_title: Optional[str] = None)
     return True
 
 
-def validate_inputs(input_file: str) -> bool:
-    """Validate input parameters."""
-    if not Path(input_file).exists():
-        print(f"❌ Fayl topilmadi: {input_file}")
-        return False
-
-    return True
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Inglizcha Vikipediya maqolasini oʻzbekchaga tarjima qilish."
@@ -248,7 +237,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_file, output_file = args.input_file, args.output_file
 
-    if not validate_inputs(input_file):
+    if not Path(input_file).exists():
+        print(f"❌ Fayl topilmadi: {input_file}")
         sys.exit(1)
 
     # Start the process

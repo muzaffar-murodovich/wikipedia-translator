@@ -132,7 +132,6 @@ FORCED_LINKS_TEMPLATE = """
 VERBOSE = True  # Enable verbose output
 
 # --- Review Prompt Settings (Phase 5) ---
-# config.py ga "Translation Prompt Settings" blokidan KEYIN qo'shing
 
 REVIEW_SYSTEM_PROMPT = """Siz oʻzbekcha Vikipediya muharririsiz.
 
