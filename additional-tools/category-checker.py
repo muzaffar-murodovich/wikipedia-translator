@@ -21,7 +21,6 @@ from typing import List, Tuple, Dict, Optional
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 os.chdir(_PROJECT_ROOT)
-os.environ.setdefault("PYWIKIBOT_NO_USER_CONFIG", "2")
 
 import config
 from core.cache_manager import WikiCache

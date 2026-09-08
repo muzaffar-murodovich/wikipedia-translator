@@ -42,16 +42,6 @@ API_BATCH_DELAY = 1.0        # Ketma-ket batch so'rovlar orasidagi pauza (soniya
 API_CONTACT = os.getenv("WIKI_CONTACT", "https://uz.wikipedia.org/wiki/Vikipediya:Bot")
 API_USER_AGENT = f"WikiTranslatorBot/1.0 ({API_CONTACT}) python-urllib/3.12"
 
-# --- Pywikibot Configuration ---
-
-PYWIKIBOT_CONFIG = {
-    "maxlag": 10,                   # Wait if server lag exceeds 5s
-    "put_throttle": 1,             # Wait 1s between edits
-    "noisysleep": False,           # Suppress "Sleeping..." messages
-    "max_retries": 8,              # Retry attempts
-    "retry_wait": 20,              # Wait time after error (seconds)
-}
-
 # --- Localization Settings ---
 
 LOCALIZATION_FILE = Path("localization_map.json")

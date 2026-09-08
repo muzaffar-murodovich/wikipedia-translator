@@ -11,18 +11,8 @@ import sys
 import time
 from pathlib import Path
 
-import os
-os.environ.setdefault("PYWIKIBOT_NO_USER_CONFIG", "2")
-
 from dotenv import load_dotenv
 load_dotenv(override=True)
-
-import pywikibot
-pywikibot.config.maxlag = 5
-pywikibot.config.put_throttle = 1
-pywikibot.config.noisysleep = False
-pywikibot.config.max_retries = 3
-pywikibot.config.retry_wait = 10
 
 import config
 from utils.file_handler import FileHandler

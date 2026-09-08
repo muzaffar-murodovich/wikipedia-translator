@@ -7,11 +7,8 @@ Fetch QIDs, get sitelinks, resolve redirects.
 Optimized with batch processing.
 """
 
-import re
 import time
 from typing import Optional, Dict, List
-
-import pywikibot
 
 import config
 from core.cache_manager import WikiCache
@@ -31,105 +28,10 @@ class WikidataFetcher:
             cache: WikiCache instance
         """
         self.cache = cache
-        self._site_en = None
-        self._site_uz = None
-        self._site_wd = None
 
         # Titles whose last batch lookup failed because of an API error.
         # These are NOT "not found" — callers must not report them as missing.
         self.failed_titles: set = set()
-
-    @property
-    def site_en(self):
-        """Lazy: en.wikipedia pywikibot Site."""
-        if self._site_en is None:
-            self._site_en = pywikibot.Site("en", "wikipedia")
-        return self._site_en
-
-    @property
-    def site_uz(self):
-        """Lazy: uz.wikipedia pywikibot Site."""
-        if self._site_uz is None:
-            self._site_uz = pywikibot.Site("uz", "wikipedia")
-        return self._site_uz
-
-    @property
-    def site_wd(self):
-        """Lazy: Wikidata pywikibot Site."""
-        if self._site_wd is None:
-            self._site_wd = pywikibot.Site("wikidata", "wikidata")
-        return self._site_wd
-
-    def resolve_redirect(self, title: str, site_code: str = "en") -> str:
-        """
-        Resolve a redirect to its target article.
-        E.g. CR7 -> Cristiano Ronaldo.
-
-        Args:
-            title: Article title
-            site_code: Site code (en, uz)
-
-        Returns:
-            Actual (resolved) title
-        """
-        cached = self.cache.get_redirect(site_code, title)
-        if cached is not None:
-            return cached
-
-        try:
-            site = self.site_en if site_code == "en" else self.site_uz
-            page = pywikibot.Page(site, title)
-
-            if page.isRedirectPage():
-                target = page.getRedirectTarget()
-                result = target.title()
-            else:
-                result = title
-
-            self.cache.set_redirect(site_code, title, result)
-            return result
-
-        except Exception as e:
-            logger.debug(f"Redirect hal qilishda xato: {title} - {e}")
-            self.cache.set_redirect(site_code, title, title)
-            return title
-
-    def get_qid(self, title: str, site_code: str = "en") -> Optional[str]:
-        """
-        Get the QID for a Wikipedia article.
-
-        Args:
-            title: Article title
-            site_code: Site code (en, uz)
-
-        Returns:
-            QID (Q12345) or None
-        """
-        cached = self.cache.get_qid(site_code, title)
-        if cached is not None:
-            return cached
-
-        try:
-            actual_title = self.resolve_redirect(title, site_code)
-
-            site = self.site_en if site_code == "en" else self.site_uz
-            page = pywikibot.Page(site, actual_title)
-
-            if not page.exists():
-                self.cache.set_qid(site_code, title, None)
-                return None
-
-            item = pywikibot.ItemPage.fromPage(page)
-            item.get()
-            qid = item.id
-
-            self.cache.set_qid(site_code, title, qid)
-            return qid
-
-        except Exception as e:
-            logger.debug(f"QID olishda xato: {title} - {e}")
-            self.cache.set_qid(site_code, title, None)
-            return None
 
     def get_sitelink(self, qid: str, target_lang: str = "uz") -> Optional[str]:
         """
@@ -318,18 +220,3 @@ class WikidataFetcher:
     def get_en_sitelink(self, qid: str) -> Optional[str]:
         """Get English sitelink from QID."""
         return self.get_sitelink(qid, "en")
-
-    def is_valid_qid(self, qid: str) -> bool:
-        """Check if QID format is valid."""
-        return bool(re.match(r'^Q\d+$', qid))
-
-    def test_connection(self) -> bool:
-        """Test connection to Wikidata."""
-        try:
-            item = pywikibot.ItemPage(self.site_wd, "Q1")
-            item.get()
-            logger.success("Wikidata'ga ulanish muvaffaqiyatli")
-            return True
-        except Exception as e:
-            logger.fail(f"Wikidata'ga ulanishda xato: {e}")
-            return False
