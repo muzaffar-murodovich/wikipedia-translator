@@ -69,7 +69,7 @@ def main(input_file: str, output_file: str, article_title: Optional[str] = None)
     prep_start = time.time()
 
     try:
-        prepared_text, link_map, cat_map, tpl_map, ref_map = processor.prepare(raw_text)
+        prepared_text, counts, ref_map = processor.prepare(raw_text)
         prep_time = time.time() - prep_start
         logger.info(f"  ⏱️  Vaqt: {prep_time:.2f}s")
     except Exception as e:
@@ -180,9 +180,9 @@ def main(input_file: str, output_file: str, article_title: Optional[str] = None)
         input_size=f"{len(raw_text)} belgi",
         output_size=f"{len(result)} belgi",
         size_change=f"{len(result) - len(raw_text):+d} ({100*(len(result)-len(raw_text))/len(raw_text):+.1f}%)",
-        links=len(link_map),
-        categories=len(cat_map),
-        templates=len(tpl_map),
+        links=counts["links"],
+        categories=counts["categories"],
+        templates=counts["templates"],
     )
 
     logger.stats(

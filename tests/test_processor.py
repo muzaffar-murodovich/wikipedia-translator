@@ -92,3 +92,61 @@ class TestCompressReferences:
         original = "Matn<ref>" + "manba " * 20 + "</ref> davomi"
         compressed, ref_map = processor._compress_references(original)
         assert processor._restore_references(compressed, ref_map) == original
+
+
+# ── prepare() return shape ────────────────────────────────────────────────────
+
+class FakeFetcher:
+    """Resolves a fixed title -> (qid, uz title) table, no network."""
+
+    def __init__(self, table):
+        self.table = table
+
+    def batch_page_info(self, titles, site_code="en"):
+        return {
+            t: {"resolved": t, "qid": self.table.get(t, (None, None))[0], "uz_title": None}
+            for t in titles
+        }
+
+    def get_sitelink(self, qid, target_lang="uz"):
+        for _qid, uz in self.table.values():
+            if _qid == qid:
+                return uz
+        return None
+
+
+class TestPrepareReturnsCounts:
+    TABLE = {
+        "Cairo": ("Q85", "Qohira"),
+        "Damascus": ("Q3766", "Damashq"),
+        "Category:Poets": ("Q100", "Turkum:Shoirlar"),
+        "Template:Infobox person": ("Q200", "Andoza:Shaxs"),
+    }
+
+    def _prepare(self, wikitext):
+        processor = WikiTextProcessor(FakeFetcher(self.TABLE))
+        return processor.prepare(wikitext)
+
+    def test_returns_three_values(self):
+        result = self._prepare("[[Cairo]] matn")
+        assert len(result) == 3
+
+    def test_counts_distinct_links_not_occurrences(self):
+        # The same article linked three times is one resolved link.
+        _, counts, _ = self._prepare("[[Cairo]] va [[Cairo]] va [[Cairo]]")
+        assert counts["links"] == 1
+
+    def test_counts_each_kind(self):
+        _, counts, _ = self._prepare(
+            "{{Infobox person}}\n[[Cairo]] va [[Damascus]]\n[[Category:Poets]]"
+        )
+        assert counts == {"links": 2, "categories": 1, "templates": 1}
+
+    def test_third_value_is_the_ref_map(self):
+        long_ref = "<ref>" + "manba " * 20 + "</ref>"
+        _, _, ref_map = self._prepare(f"[[Cairo]]{long_ref}")
+        assert len(ref_map) == 1
+
+    def test_counts_are_zero_without_matches(self):
+        _, counts, _ = self._prepare("hech qanday havola yoʻq")
+        assert counts == {"links": 0, "categories": 0, "templates": 0}

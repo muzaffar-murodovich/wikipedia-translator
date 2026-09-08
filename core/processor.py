@@ -53,7 +53,7 @@ class WikiTextProcessor:
                 continue
         return removed
 
-    def prepare(self, raw_wikitext: str) -> Tuple[str, Dict, Dict, Dict, Dict]:
+    def prepare(self, raw_wikitext: str) -> Tuple[str, Dict[str, int], Dict[str, str]]:
         """
         Prepare wikitext for translation (optimized with batch API).
         - Remove empty template parameters
@@ -63,7 +63,8 @@ class WikiTextProcessor:
         - Replace templates with placeholders
 
         Returns:
-            (prepared_text, link_map, cat_map, tpl_map, ref_map)
+            (prepared_text, counts, ref_map), where counts holds the number of
+            distinct links, categories and templates that resolved to a QID.
         """
         logger.info("📝 Wikitext tayyorlanmoqda...")
 
@@ -137,9 +138,11 @@ class WikiTextProcessor:
 
         # ===== Phase C: Apply results =====
 
-        link_qid_map = {}
-        cat_qid_map = {}
-        tpl_qid_map = {}
+        # Distinct QIDs per kind. Only their counts are ever wanted, and a
+        # set keeps the "distinct" part the old QID-keyed dicts gave for free.
+        link_qids = set()
+        cat_qids = set()
+        tpl_qids = set()
 
         # Categories
         for target, wl, sort_key in category_items:
@@ -147,7 +150,7 @@ class WikiTextProcessor:
             qid = qid_map.get(resolved)
             cat_name = target.split("Category:", 1)[-1]
             if qid:
-                cat_qid_map[qid] = target
+                cat_qids.add(qid)
                 token = f"⟦CAT:{qid}|{cat_name}|{sort_key}⟧"
                 code.replace(wl, token)
 
@@ -162,7 +165,7 @@ class WikiTextProcessor:
                 uz_title = self.fetcher.get_sitelink(qid, "uz")
                 if uz_title:
                     # uz.wiki'da maqola bor — QID bilan almashtiramiz
-                    link_qid_map[qid] = resolved
+                    link_qids.add(qid)
                     wl.title = qid
                     wl.text = label
                 else:
@@ -184,7 +187,7 @@ class WikiTextProcessor:
             resolved = redirect_map.get(en_tpl_title, en_tpl_title)
             qid = qid_map.get(resolved)
             if qid:
-                tpl_qid_map[qid] = original_name
+                tpl_qids.add(qid)
                 tpl.name = f"TPL:{qid}"
             else:
                 # No QID — try fallback map, else mark for removal
@@ -202,9 +205,17 @@ class WikiTextProcessor:
 
         prepared_text = str(code)
 
-        logger.success(f"Tayyorlandi: {len(link_qid_map)} havola, {len(cat_qid_map)} kategoriya, {len(tpl_qid_map)} andoza")
+        counts = {
+            "links": len(link_qids),
+            "categories": len(cat_qids),
+            "templates": len(tpl_qids),
+        }
+        logger.success(
+            f"Tayyorlandi: {counts['links']} havola, "
+            f"{counts['categories']} kategoriya, {counts['templates']} andoza"
+        )
 
-        return prepared_text, link_qid_map, cat_qid_map, tpl_qid_map, ref_map
+        return prepared_text, counts, ref_map
 
     def _compress_references(self, wikitext: str) -> Tuple[str, Dict[str, str]]:
         """Compress long references."""
