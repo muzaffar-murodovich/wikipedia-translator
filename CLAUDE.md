@@ -32,7 +32,9 @@ wikipedia-translator/
 │   ├── localization.py       # Loads and applies localization_map.json
 │   ├── logger.py             # Singleton logger (console-only)
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
+│   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
+├── tests/                    # pytest suite (171 tests)
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
@@ -184,7 +186,7 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `get_sitelink(qid, target_lang)` — returns the article title on the target Wikipedia (direct HTTP, called in Phase 3). Uses raw dict check on `cache.sitelink_cache` to correctly detect `"NONE"` sentinel entries and avoid redundant API calls.
 - `batch_page_info(titles, site_code)` — **the batch workhorse** used in Phase 1 (direct HTTP, no pywikibot). One `action=query&redirects=1&prop=pageprops|langlinks` request per 50 titles returns the redirect target, the QID and the uz title in a single round trip, and pre-caches uz/en sitelinks (bonus for Phase 3). Returns `{title: {"resolved", "qid", "uz_title"}}`.
 - `batch_resolve_redirects()` / `batch_get_qids_fast()` — thin wrappers over `batch_page_info()`, kept for compatibility. Calling both in sequence costs one request: the second is served from cache.
-- **Rate limiting:** `_wiki_api()` retries on HTTP 429/5xx, honouring the `Retry-After` header (`config.API_MAX_RETRIES`, `API_RETRY_BASE_DELAY`, `API_MAX_RETRY_DELAY`), and sleeps `API_BATCH_DELAY` between batches. On a failed lookup nothing is written to the cache — an API error must never be recorded as "not found", and the affected titles land in `fetcher.failed_titles`.
+- **Rate limiting:** `_wiki_api()` is a thin wrapper over `utils.api_client.wiki_api()`, which retries on HTTP 429/5xx honouring the `Retry-After` header (`config.API_MAX_RETRIES`, `API_RETRY_BASE_DELAY`, `API_MAX_RETRY_DELAY`); `batch_page_info()` sleeps `API_BATCH_DELAY` between batches. On a failed lookup nothing is written to the cache — an API error must never be recorded as "not found", and the affected titles land in `fetcher.failed_titles`.
 - All results pass through `cache_manager` automatically.
 
 ### `core/reviewer.py`
@@ -226,6 +228,13 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - Import with: `from utils.logger import logger`
 - Console-only output (no file logging).
 - Use `logger.section()`, `logger.success()`, `logger.fail()`, `logger.stats()`, `logger.progress()`, `logger.table()` for structured output.
+
+### `utils/api_client.py`
+- `wiki_api(params, lang, domain)` — the single place where HTTP requests to Wikipedia/Wikidata are made. Every module goes through it; a failed request is raised, never silently treated as "not found".
+- Retries on 429 and 5xx/network errors with exponential backoff, honouring `Retry-After`. A 4xx other than 429 is raised at once.
+- **TLS:** certificates are verified against the `certifi` bundle, not the platform default. Python's default CA source differs per OS — on Linux it is a complete package-managed directory, on Windows only the system certificate store, which ships with a minimal root set and fills up on demand, so a needed root can be missing and requests fail with `SSLCertVerificationError` while browsers work. `certifi` behaves identically everywhere.
+- `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` override the bundle when set (for an intercepting corporate proxy or antivirus); a missing or unreadable file logs a warning and falls back to `certifi`.
+- A certificate error is **not** retried — `urlopen` wraps it in `URLError`, so `e.reason` is inspected and the error re-raised immediately with a message naming the CA bundle in use.
 
 ### `utils/wiki_fetcher.py`
 - `fetch_wikitext(article_name, lang)` — downloads wikitext via Wikipedia API. Returns `(wikitext, title)` tuple.
@@ -304,7 +313,27 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-`pytest.ini` is present but there is no automated test suite yet. Validation is done by:
+**Automated tests** — 171 tests under `tests/`, run with:
+
+```bash
+PIPENV_IGNORE_VIRTUALENVS=1 pipenv run python -m pytest
+```
+
+`pytest.ini` sets `testpaths = tests` and `pythonpath = .`, so plain `pytest` works from the repo root. Coverage by module:
+
+| Test file | Tests | Covers |
+|---|---|---|
+| `test_regex_patterns.py` | 53 | `utils/regex_patterns.py` |
+| `test_file_handler.py` | 29 | `utils/file_handler.py` |
+| `test_cache_manager.py` | 27 | `core/cache_manager.py` |
+| `test_wiki_fetcher.py` | 23 | `utils/wiki_fetcher.py` |
+| `test_reviewer.py` | 19 | `core/reviewer.py` |
+| `test_translator.py` | 13 | `core/translator.py` |
+| `test_api_client.py` | 7 | `utils/api_client.py` |
+
+No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/processor.py`, `core/wikidata_fetcher.py`, `utils/localization.py` and `main.py` are **not** covered yet.
+
+Beyond the suite, translation quality is validated by:
 
 1. **Automatic Phase 5 review** — `core/reviewer.py` applies `translation_rules.md` rules via OpenAI before the final output is written. This catches the most common rule violations automatically.
 2. **Manual inspection** of `output_uz.txt` — **always read `translation_rules.md` first** and verify:
@@ -314,6 +343,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
    - Wikilink label/target consistency
    - Date formatting (hijriy/milodiy prefix, YYYY-yil)
 3. **Logger statistics** printed at the end of each run (cache hit rates, token counts, timing).
+4. **Failed-title warning** — if any lookup failed with an API error, `main.py` lists the affected titles after the statistics. Those links, categories and templates never got a QID, so they stay in English in the output: check them, or re-run the translation.
 
 ---
 
@@ -342,6 +372,7 @@ Single-maintainer project — there is no team and no PR review step.
 | `aiohttp` | Async HTTP for API calls |
 | `pywikibot` | Wikidata / Wikipedia API |
 | `mwparserfromhell` | Wikitext parser (used in processor.py) |
+| `certifi` | CA bundle for TLS verification (see `utils/api_client.py`) |
 | `python-dotenv` | Loads `.env` file into environment |
 | `python-telegram-bot` | Optional Telegram bot interface |
 | `pytest` | Test runner (dev dependency) |
