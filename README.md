@@ -39,10 +39,14 @@ Create a `.env` file (gitignored) with:
 
 ```bash
 python main.py input_en.txt output_uz.txt
+
+# Name the temp_wiki copy after the real page title
+python main.py input_en.txt output_uz.txt --title "Mian Wada"
 ```
 
 1. Place English Wikipedia wikitext in `input_en.txt` (download it with `utils/wiki_fetcher.py` or paste it manually).
-2. Run `main.py` with the input and output file paths.
+2. Run `main.py` with the input and output file paths, plus `--title` when you know
+   the page title (otherwise the temp_wiki copy is named after the bolded lead name).
 3. Review `output_uz.txt` against the checklist in `translation_rules.md`.
 4. The output is also auto-saved to `temp_wiki/<Article Name>.txt` (gitignored).
 
@@ -60,7 +64,8 @@ for title in articles:
     with open("input_en.txt", "w", encoding="utf-8") as f:
         f.write(wikitext)
     safe = title.replace(" ", "_")
-    subprocess.run(["python", "main.py", "input_en.txt", f"output_{safe}.txt"])
+    subprocess.run(["python", "main.py", "input_en.txt", f"output_{safe}.txt",
+                    "--title", title])
 ```
 
 ## Additional tools
