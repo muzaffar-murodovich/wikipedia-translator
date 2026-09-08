@@ -68,8 +68,6 @@ class WikiReviewer:
                 ],
             )
 
-            reviewed = response.choices[0].message.content
-
             reviewed = response.choices[0].message.content.strip()
             if reviewed.startswith("```"):
                 reviewed = reviewed.split("\n", 1)[-1]

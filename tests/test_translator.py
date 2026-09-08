@@ -1,7 +1,7 @@
 """Tests for core/translator.py — WikiTranslator with mocked OpenAI."""
 
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import config
 
 

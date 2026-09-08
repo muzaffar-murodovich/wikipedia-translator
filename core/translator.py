@@ -5,7 +5,7 @@
 core/translator.py - Translation via OpenAI
 """
 
-from typing import List, Optional, Sequence
+from typing import Optional, Sequence
 from openai import OpenAI
 import config
 from utils.logger import logger

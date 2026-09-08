@@ -174,7 +174,7 @@ class LocalizationManager:
 
     def print_stats(self):
         """Print statistics."""
-        print(f"\n📚 Localization Statistikasi:")
+        print("\n📚 Localization Statistikasi:")
         print(f"  Jami almashtirishlar: {self.stats['patterns_count']}")
         print(f"  Qoʻllangan: {self.stats['replacements']}")
 

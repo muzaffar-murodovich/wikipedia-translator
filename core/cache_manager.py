@@ -167,7 +167,7 @@ class WikiCache:
             print(f"  Redirect Cache: {self.stats['redirect_hits']}/{total_redirect} hits ({hit_rate:.1f}%)")
 
         cache_size = self.get_cache_size()
-        print(f"\n💾 Cache Hajmi:")
+        print("\n💾 Cache Hajmi:")
         print(f"  QID: {cache_size['qid']}")
         print(f"  Sitelink: {cache_size['sitelink']}")
         print(f"  Redirect: {cache_size['redirect']}")

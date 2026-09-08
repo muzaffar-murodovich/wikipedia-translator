@@ -1,7 +1,6 @@
 """Tests for core/reviewer.py — WikiReviewer with mocked OpenAI and rules file."""
 
 import pytest
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 import config
 

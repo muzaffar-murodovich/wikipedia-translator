@@ -1,7 +1,6 @@
 """Tests for utils/file_handler.py — file I/O operations via tmp_path."""
 
 import json
-import pytest
 from utils.file_handler import FileHandler
 
 
@@ -164,7 +163,7 @@ class TestCreateBackup:
     def test_backup_contains_original_content(self, tmp_path):
         f = tmp_path / "original.txt"
         f.write_text("original data", encoding="utf-8")
-        backup_path = FileHandler.create_backup(str(f))
+        FileHandler.create_backup(str(f))
         backup = (tmp_path / "original.txt.backup")
         assert backup.read_text(encoding="utf-8") == "original data"
 

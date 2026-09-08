@@ -132,7 +132,7 @@ class FileHandler:
         """Get file size in bytes."""
         try:
             return Path(filepath).stat().st_size
-        except:
+        except OSError:
             return 0
 
     @staticmethod

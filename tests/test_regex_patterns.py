@@ -1,6 +1,5 @@
 """Tests for utils/regex_patterns.py — all pure string/regex transformations."""
 
-import pytest
 from utils.regex_patterns import (
     RegexPatterns,
     remove_empty_params,

@@ -1,7 +1,6 @@
 """Tests for utils/wiki_fetcher.py — URL parsing, redirect detection, API fetching."""
 
 import json
-import pytest
 from unittest.mock import MagicMock
 from utils.wiki_fetcher import extract_article_name, fetch_wikitext, is_redirect
 

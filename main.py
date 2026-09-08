@@ -57,7 +57,7 @@ def main(input_file: str, output_file: str):
     localization = LocalizationManager()
     reviewer = WikiReviewer()
 
-    logger.success(f"Tizimlar initialize qilindi")
+    logger.success("Tizimlar initialize qilindi")
     logger.info(f"  Localization: {len(localization.map)} ta almashtirish")
 
     logger.section("📝 PHASE 1: PREPARE")
@@ -204,7 +204,7 @@ def main(input_file: str, output_file: str):
     return True
 
 
-def validate_inputs(input_file: str, output_file: str) -> bool:
+def validate_inputs(input_file: str) -> bool:
     """Validate input parameters."""
     if not Path(input_file).exists():
         print(f"❌ Fayl topilmadi: {input_file}")
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
     input_file, output_file = sys.argv[1], sys.argv[2]
 
-    if not validate_inputs(input_file, output_file):
+    if not validate_inputs(input_file):
         sys.exit(1)
 
     # Start the process
