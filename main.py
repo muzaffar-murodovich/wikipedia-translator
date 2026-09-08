@@ -193,6 +193,23 @@ def main(input_file: str, output_file: str):
     # print_stats qatorlari oxiriga:
     reviewer.print_stats()
 
+    # API xatosi tufayli aniqlanmagan sarlavhalar — ular QID olmagani uchun
+    # havola/turkum/andoza sifatida ingliz tilida qolib ketgan bo'ladi.
+    failed = sorted(fetcher.failed_titles)
+    if failed:
+        logger.warning(
+            f"⚠️  {len(failed)} ta sarlavha aniqlanmadi (API xatosi) — "
+            "ular ingliz tilida qolgan bo'lishi mumkin:"
+        )
+        for title in failed[:20]:
+            logger.warning(f"    • {title}")
+        if len(failed) > 20:
+            logger.warning(f"    … va yana {len(failed) - 20} ta")
+        logger.warning(
+            "Natijadagi havolalar, turkumlar va andozalarni tekshiring "
+            "yoki tarjimani qaytadan yuriting."
+        )
+
     logger.success("Tarjima muvaffaqiyatli tugadi!")
     logger.info(f"Natija: {output_file}\n")
 
