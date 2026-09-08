@@ -33,9 +33,10 @@ wikipedia-translator/
 │   ├── localization.py       # Loads and applies localization_map.json
 │   ├── logger.py             # Singleton logger (console-only)
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
+│   ├── link_labels.py        # Wikilink label cleanup (rule 2), runs after Phase 5
 │   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
-├── tests/                    # pytest suite (178 tests)
+├── tests/                    # pytest suite (216 tests)
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
@@ -96,6 +97,14 @@ Phase 5 — REVIEW (core/reviewer.py)
   - Sends localized wikitext to OpenAI with translation_rules.md as rules
   - Model fixes only rule violations; wikitext structure preserved
   - Enabled by `ENABLE_REVIEW` in `config.py`; also skipped if `translation_rules.md` is missing
+    |
+    v
+LINK CLEANUP (utils/link_labels.py)
+  - Drops the pipe of a label that only re-spells its target
+    ([[Lohur|Lahor]] -> [[Lohur]]), keeps one that carries grammar
+    ([[Somalilar|somalilik]])
+  - Runs last, after Phase 5, because the reviewer edits links of its own
+  - Mismatches it cannot decide mechanically are logged for manual review
     |
     v
 output_uz.txt  +  quality report
@@ -227,6 +236,14 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `_apply_fix_outside_infoboxes(wikitext, fix_func)` — wraps a fix function to skip infobox templates.
 - Modify patterns here, not inline in other files.
 
+### `utils/link_labels.py`
+- Implements `translation_rules.md` rule 2: a wikilink label must not disagree with its page name.
+- The target comes from Wikidata, the label from the translation model, so the two regularly spell one name differently — `[[Lohur|Lahor]]`.
+- `is_same_name(target, label)` decides whether the label only re-spells the target. Deliberately strict: a wrong collapse silently corrupts a sentence, a missed one is only reported. It rejects a namespace/interwiki prefix, a parenthetical disambiguator (rule 2's own exception), a lowercase label (a common-noun gloss such as `[[Tasavvuf|soʻfiy]]` carries the sentence grammar), a differing length, and finally compares the consonant skeleton with vowels folded and the Arabic article stripped.
+- `collapse_redundant_labels(text)` returns the cleaned text plus the deduplicated list of mismatches left for a human.
+- Uzbek case suffixes sit outside the brackets, so a collapse leaves the sentence intact: `[[Lohur|Lahor]]ga` -> `[[Lohur]]ga`.
+- Called from `main.py` **after** Phase 5 — the reviewer does not fix these violations and sometimes re-introduces a redundant pipe.
+
 ### `utils/localization.py`
 - Reads `localization_map.json` at startup (223 entries).
 - Patterns compiled once (longest-key-first for greedy matching).
@@ -323,7 +340,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-**Automated tests** — 178 tests under `tests/`, run with:
+**Automated tests** — 216 tests under `tests/`, run with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -334,8 +351,9 @@ python -m pytest
 
 | Test file | Tests | Covers |
 |---|---|---|
-| `test_regex_patterns.py` | 57 | `utils/regex_patterns.py` |
+| `test_regex_patterns.py` | 65 | `utils/regex_patterns.py` |
 | `test_file_handler.py` | 29 | `utils/file_handler.py` |
+| `test_link_labels.py` | 30 | `utils/link_labels.py` |
 | `test_cache_manager.py` | 27 | `core/cache_manager.py` |
 | `test_wiki_fetcher.py` | 23 | `utils/wiki_fetcher.py` |
 | `test_reviewer.py` | 19 | `core/reviewer.py` |

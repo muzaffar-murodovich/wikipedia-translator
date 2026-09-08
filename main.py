@@ -16,6 +16,7 @@ load_dotenv(override=True)
 
 import config
 from utils.file_handler import FileHandler
+from utils.link_labels import collapse_redundant_labels
 from utils.localization import LocalizationManager
 from utils.logger import logger
 from core.cache_manager import WikiCache
@@ -128,6 +129,16 @@ def main(input_file: str, output_file: str):
     else:
         logger.warning("Phase 5 o'tkazib yuborildi (qoidalar fayli topilmadi)")
         review_time = 0.0
+
+    # Rule 2 cleanup — last, because Phase 5 edits links of its own.
+    result, label_mismatches = collapse_redundant_labels(result)
+    if label_mismatches:
+        logger.warning(
+            f"{len(label_mismatches)} havolada nom va koʻrinadigan matn farq qiladi "
+            "(2-qoida) — qoʻlda tekshiring:"
+        )
+        for target, label in label_mismatches:
+            logger.warning(f"    [[{target}|{label}]]")
 
     logger.section("💾 SAVE")
     logger.info(f"Yozilmoqda: {output_file}")
