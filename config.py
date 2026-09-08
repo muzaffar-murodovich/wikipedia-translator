@@ -101,6 +101,17 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
 6) Yil raqami "hijriy"/"milodiy" soʻzidan keyin va -yil qoʻshimchasi bilan yoziladi.
    - Notoʻgʻri: 132 hijriy/750 milodiy
    - Toʻgʻri: hijriy 132-yil/milodiy 750-yil
+   Manbada boʻlmagan sanani oʻzingiz qoʻshmang: faqat "1301" yozilgan boʻlsa,
+   hijriy muqobilini hisoblab qoʻshmang — "1301-yil" deb qoldiring.
+
+7) Jumla ichidagi geografik nomlarda inglizcha "Shahar, Mamlakat" tartibi
+   oʻzbekcha egalik qurilishiga aylanadi.
+   - Notoʻgʻri: U Damashq, Suriyada yashagan
+   - Toʻgʻri: U Suriyaning Damashq shahrida yashagan
+   - Notoʻgʻri: Masjid al-Hindiyda, Najaf, Iroqda
+   - Toʻgʻri: Iroqning Najaf shahridagi Masjid al-Hindiyda
+   Bu qoida faqat matn ichidagi jumlalarga tegishli. Bilgiquti (infobox)
+   parametrlari qiymatida "Shahar, Mamlakat" tartibi oʻz holicha qoladi.
 {forced_links}
 Matn:
 ```{text}```
@@ -111,7 +122,7 @@ Matn:
 # "target'ga tegilmaydi" degan naqshni oddiy havolalarga ham umumlashtiradi.
 # Umumiy qoida buni yenga olmadi, shuning uchun ular nomma-nom sanab oʻtiladi.
 FORCED_LINKS_TEMPLATE = """
-7) MAJBURIY — quyidagi wikilink target'lari oʻzbek Vikipediyasida mavjud emas:
+8) MAJBURIY — quyidagi wikilink target'lari oʻzbek Vikipediyasida mavjud emas:
 {titles}
    Ularning HAR BIRINI oʻzbekchaga tarjima yoki transliteratsiya qiling.
    Bu havolalarda target inglizcha qolishi MUMKIN EMAS — 1-qoidadagi
