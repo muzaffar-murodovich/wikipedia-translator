@@ -325,7 +325,25 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 | **Patterns** | New regex patterns go into `utils/regex_patterns.py`, not inline |
 | **Config** | New settings go into `config.py` only; no magic strings scattered in code |
 | **Design patterns** | Singleton (Logger), Manager (Cache, Localization), Pipeline (main.py phases) |
-| **Apostrophes** | Bold markup is three straight ASCII apostrophes (`'''`, U+0027 x3) — a curly variant produces no bold at all. Inside Uzbek words the curly characters are letters, not markup: `ʻ` (U+02BB) in `oʻ`/`gʻ`, `ʼ` (U+02BC) for tutuq belgisi (`Saʼd`). `localization_map.json` converts straight apostrophes to those letters — never to the typographic quotes U+2018/U+2019 |
+| **Apostrophes** | Bold markup is three straight ASCII apostrophes (`'''`, U+0027 x3) — a curly variant produces no bold at all. Inside Uzbek words the curly characters are letters, not markup: `ʻ` (U+02BB) in `oʻ`/`gʻ`, `ʼ` (U+02BC) for tutuq belgisi (`Saʼd`). Write these in code and in `localization_map.json` values. **Nothing in the pipeline normalises apostrophes**, and that is deliberate — see below |
+
+### Apostrophes in the output
+
+The translation model writes `oʻ`/`gʻ` inconsistently: sometimes the correct letter
+U+02BB, sometimes the typographic quote U+2018 (`bo‘lib`, `qishlog‘ida`), sometimes a
+straight `'`. The same goes for tutuq belgisi (U+02BC vs U+2019).
+
+**The pipeline does not fix this, on purpose.** Uzbek Wikipedia's **Vikifikator**
+script normalises exactly these characters when a page is saved, so doing it here
+would duplicate work that the wiki already does reliably.
+
+`localization_map.json` does **not** convert apostrophes. Around thirty of its
+entries contain one, but every single one is a whole-term replacement that happens
+to spell a particular term correctly (`Turkum:Ash'ariylar` → `Turkum:Ashʼariylar`).
+There is no general `'` → `ʻ` rule, and none is wanted.
+
+So: do not add apostrophe-normalising rules to the map or a regex fix for them, and
+do not treat U+2018/U+2019 in `output_uz.txt` as a bug to chase.
 
 ---
 
