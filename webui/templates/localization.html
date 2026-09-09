@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lokalizatsiya lug'ati</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Lokalizatsiya lug'ati</h1>
+    <div class="topbar-controls">
+      <a href="{{ url_for('index') }}">&larr; Asosiy sahifa</a>
+    </div>
+  </header>
+
+  <main class="loc-main">
+    <div class="loc-toolbar">
+      <input type="text" id="filter-box" placeholder="Qidirish...">
+      <button id="add-row-btn">+ Yangi qator</button>
+      <button id="save-btn">Saqlash</button>
+      <span id="save-status"></span>
+    </div>
+    <div id="error-box" class="error-box" hidden></div>
+
+    <table id="loc-table">
+      <thead>
+        <tr>
+          <th>Inglizcha atama</th>
+          <th>O'zbekcha almashtirish</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="loc-tbody"></tbody>
+    </table>
+  </main>
+
+  <script src="{{ url_for('static', filename='localization.js') }}"></script>
+</body>
+</html>
