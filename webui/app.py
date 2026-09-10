@@ -13,6 +13,19 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 import os
+from pathlib import Path
+
+# config.LOCALIZATION_FILE, WikiReviewer.RULES_FILE and the temp_wiki/ save
+# in pipeline.py are all relative paths, resolved against the process's
+# working directory - exactly like main.py assumes it's run from the repo
+# root. app.py has no such guarantee (a colleague could launch it from
+# inside webui/, or a shortcut could start it anywhere), so this pins the
+# CWD to the repo root before anything reads or writes one of those paths.
+# Without it, a save from the browser would silently create/edit a second
+# webui/localization_map.json instead of the shared project one.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+os.chdir(REPO_ROOT)
+
 import threading
 import time
 from typing import List, Tuple
@@ -23,6 +36,12 @@ from utils.file_handler import FileHandler
 import config as project_config
 
 from . import pipeline, settings, state
+
+# Anchored to REPO_ROOT rather than left as the bare relative
+# project_config.LOCALIZATION_FILE: the one shared localization_map.json
+# lives at the repo root, and this endpoint must never depend on whatever
+# the process's CWD happens to be at request time.
+LOCALIZATION_PATH = REPO_ROOT / project_config.LOCALIZATION_FILE
 
 PORT = int(os.environ.get("WEBUI_PORT", 5057))
 
@@ -118,7 +137,7 @@ def api_settings():
 
 
 def _load_localization_pairs() -> List[Tuple[str, str]]:
-    data = FileHandler.read_json(str(project_config.LOCALIZATION_FILE))
+    data = FileHandler.read_json(str(LOCALIZATION_PATH))
     return list(data.items())
 
 
@@ -151,7 +170,7 @@ def api_localization():
         seen.add(en)
         result_map[en] = uz
 
-    if not FileHandler.write_json(str(project_config.LOCALIZATION_FILE), result_map):
+    if not FileHandler.write_json(str(LOCALIZATION_PATH), result_map):
         return jsonify({"error": "Faylga yozishda xato"}), 500
 
     return jsonify({"status": "saved", "count": len(result_map)})
