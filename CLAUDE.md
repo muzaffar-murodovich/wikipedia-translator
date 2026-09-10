@@ -38,6 +38,13 @@ wikipedia-translator/
 │   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
 ├── tests/                    # pytest suite (232 tests)
+├── webui/                    # Local browser UI (Flask) — see webui/CLAUDE.md
+│   ├── app.py                # Flask routes; pins the CWD to the repo root
+│   ├── pipeline.py           # Replays main.py's phases with progress reporting
+│   ├── state.py              # The single in-flight translation job
+│   ├── settings.py           # Per-machine overrides (webui/settings.json)
+│   ├── templates/, static/   # Two pages, vanilla JS, no build step
+│   └── *.ps1                 # Windows autostart (Task Scheduler) scripts
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
 ```
@@ -176,6 +183,31 @@ Set these in `.env` or export before running:
 | `WIKI_CONTACT` | (optional) Contact info for the Wikimedia API User-Agent (email or wiki user page) |
 
 The `.env` file is gitignored — never commit API keys.
+
+---
+
+## Web UI (`webui/`)
+
+An alternative to the CLI for colleagues who do not use a terminal: a local
+Flask page at `http://127.0.0.1:5057` where one textbox takes an article
+link, an article name, or raw wikitext, and the translation appears beside it
+with copy/download buttons, per-phase progress, a Phase 5 on/off switch, and
+an editor for `localization_map.json`.
+
+```bash
+pip install -r webui/requirements.txt   # into the project's existing .venv
+python -m webui.app
+```
+
+It **imports** `core/`, `utils/` and `config.py` and changes none of them; it
+replays the same five phases as `main.py` in `webui/pipeline.py`, which means
+**a change to `main.py`'s phases must be mirrored there**. Each colleague runs
+their own copy on their own Windows machine, started at logon by a Task
+Scheduler task.
+
+> **See `webui/CLAUDE.md`** for the architecture, the invariants of the
+> localization editor, and the Windows/CWD traps. `webui/README.md` is the
+> colleague-facing setup guide (in Uzbek).
 
 ---
 
@@ -417,7 +449,7 @@ python -m pytest
 | `test_localization.py` | 10 | `utils/localization.py` |
 | `test_api_client.py` | 7 | `utils/api_client.py` |
 
-No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/wikidata_fetcher.py` and `main.py` are **not** covered yet.
+No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/wikidata_fetcher.py`, `main.py` and `webui/` are **not** covered yet — the web UI is verified by running it and using both pages in a browser (see `webui/CLAUDE.md`).
 
 Beyond the suite, translation quality is validated by:
 
