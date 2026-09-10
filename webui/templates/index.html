@@ -3,26 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vikipediya Tarjimon</title>
+  <title>Tarjimon</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <h1>Vikipediya Tarjimon</h1>
+    <h1>Tarjimon</h1>
     <div class="topbar-controls">
       <label class="switch-label">
         <input type="checkbox" id="review-toggle">
         Phase 5 (tahrir)
       </label>
-      <a href="{{ url_for('localization_page') }}">Lokalizatsiya lug'ati</a>
+      <a href="{{ url_for('localization_page') }}">Lokalizatsiya lugʻati</a>
     </div>
   </header>
 
   <main class="panels">
     <section class="panel">
-      <h2>Manba</h2>
-      <p class="hint">Maqola havolasi yoki nomini kiriting (to'liq maqola tarjima qilinadi),
-        yoki bevosita wikitext joylang (aynan shu matn tarjima qilinadi).</p>
+      <h2>Inglizcha</h2>
       <textarea id="input-box" placeholder="https://en.wikipedia.org/wiki/... yoki maqola nomi yoki wikitext"></textarea>
       <button id="translate-btn">Tarjima qilish</button>
       <div id="progress" class="progress" hidden>
@@ -32,8 +30,8 @@
     </section>
 
     <section class="panel">
-      <h2>Natija</h2>
-      <textarea id="output-box" readonly placeholder="Tarjima shu yerda ko'rinadi"></textarea>
+      <h2>Oʻzbekcha tarjima</h2>
+      <textarea id="output-box" readonly placeholder="Tarjima shu yerda koʻrinadi"></textarea>
       <div class="result-actions">
         <button id="copy-btn" disabled>Nusxalash</button>
         <a id="download-link" class="button-link disabled" href="#">Yuklab olish (.txt)</a>
