@@ -126,8 +126,6 @@ controversy.** These generate exactly the articles you would have to reject:
 - movements and schools of activism — `Salafi Quietists`, `Islamists`, `Wahhabis`,
   `Ahl-i Hadith people`, anything with Salafi or jihadist in the name
 - sectarian polemic — `Critics of Shia Islam`, `Anti-Sunni sentiment`
-- modern institutional affiliation — `Islamic University of Madinah alumni`,
-  `Academic staff of ...`
 - nationality, occupation or religion of a different faith — `Arab Christians`,
   `11th-century bishops`, `Indian royal consorts`
 
