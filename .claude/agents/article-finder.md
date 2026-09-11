@@ -49,7 +49,10 @@ python -m finder.cli cat-list "Hadith scholars" --limit 40 --source "seed"
 python -m finder.cli screen "Al-Nawawi" "Al-Shawkani" "Hassan Kettani"
 #   CLEAR	Al-Nawawi
 #   RISK	Al-Shawkani	Category:Proto-Salafists
-#   RISK	Hassan Kettani	Category:Living people|Category:Moroccan Salafis|Category:People imprisoned on terrorism charges
+#   RISK	Hassan Kettani	Category:Moroccan Salafis|Category:People imprisoned on terrorism charges
+#
+# A living scholar is not flagged for being alive. If a modern figure belongs
+# to a movement, the screen says so; if it says CLEAR, take it.
 
 # Add to the queue. Pass several titles in ONE call.
 python -m finder.cli queue-add "Al-Nawawi" "Ibn Jurayj" --category "Hadith scholars"
@@ -75,6 +78,10 @@ python -m finder.cli cat-tree "Hadith scholars"
 #   PARENT	NEW	Category:Hadith
 #   SUB	NEW	Category:Sunni hadith scholars
 
+# Put a rejected article back (the mirror of reject) - only the maintainer
+# normally needs this; you reject, you do not un-reject.
+python -m finder.cli requeue "Some Name"
+
 # Mark a category finished
 python -m finder.cli cat-done "Hadith scholars" --note "18 of 40 queued, 22 rejected"
 
@@ -99,12 +106,8 @@ python -m finder.cli status
 4. Run `screen` on **all** the remaining candidates in one call.
 5. Decide:
    - `CLEAR` → queue it.
-   - `RISK` with a movement, violence or imprisonment category
-     (Salafi, Wahhabi, Islamist, jihadist, terrorism, convicted, imprisoned) → **reject**,
-     and put the category name in the reason.
-   - `RISK` with only `Category:Living people` → this is not disqualifying on its own.
-     Judge the person: a living traditional madrasa teacher or hadith professor is fine;
-     anyone tied to a movement or to politics is not. If you are unsure, reject.
+   - `RISK` → **reject**, and put the category name in the reason. Every pattern the
+     screen matches is a movement, an armed group, violence or a conviction.
 6. Add the accepted ones in **one** `queue-add` call. Reject the rest, grouping titles
    that share a reason into one `reject` call.
 7. Run `status`. If `QUEUED` is 16 or more, stop and report.

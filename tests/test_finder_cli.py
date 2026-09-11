@@ -289,12 +289,46 @@ class TestScreen:
 
     def test_several_risky_categories_are_joined(self, capsys, queue, monkeypatch):
         monkeypatch.setattr(wiki, "fetch_titles_categories", lambda t: {
-            "X": ["Category:Living people", "Category:Moroccan Salafis"],
+            "X": ["Category:Wahhabis", "Category:Moroccan Salafis"],
         })
         _, out = run(capsys, "screen", "X")
-        assert out[0] == "RISK\tX\tCategory:Living people|Category:Moroccan Salafis"
+        assert out[0] == "RISK\tX\tCategory:Wahhabis|Category:Moroccan Salafis"
 
     def test_unknown_title_counts_as_clear(self, capsys, queue, monkeypatch):
         monkeypatch.setattr(wiki, "fetch_titles_categories", lambda t: {})
         _, out = run(capsys, "screen", "Nope")
         assert out == ["CLEAR\tNope", "END"]
+
+
+class TestRequeue:
+    """The mirror of reject: a judgment can be revised."""
+
+    def test_rejected_article_comes_back(self, capsys, queue, titles):
+        titles({"X": {"uz": None, "size": 5000, "missing": False}})
+        run(capsys, "reject", "X", "--reason", "screen: living-figure category")
+        _, out = run(capsys, "requeue", "X")
+        assert out == ["REQUEUED\tX\tmode=full\tsize=5000", "END"]
+        rec = store.load()["articles"]["X"]
+        assert rec["status"] == "queued"
+        assert rec["reject_reason"] is None
+
+    def test_mode_is_recomputed_from_the_current_size(self, capsys, queue, titles):
+        titles({"X": {"uz": None, "size": 20000, "missing": False}})
+        run(capsys, "reject", "X", "--reason", "a")
+        _, out = run(capsys, "requeue", "X")
+        assert out[0] == "REQUEUED\tX\tmode=trim\tsize=20000"
+
+    def test_published_article_is_not_touched(self, capsys, queue, titles):
+        titles({"X": {"uz": None, "size": 100, "missing": False}})
+        run(capsys, "queue-add", "X")
+        data = store.load()
+        store.mark(data, "X", "published")
+        store.save(data)
+        _, out = run(capsys, "requeue", "X")
+        assert out == ["SKIP\tX\tstatus=published", "END"]
+        assert store.load()["articles"]["X"]["status"] == "published"
+
+    def test_unknown_title(self, capsys, queue, titles):
+        titles({})
+        _, out = run(capsys, "requeue", "Nope")
+        assert out == ["UNKNOWN\tNope", "END"]

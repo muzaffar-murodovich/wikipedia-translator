@@ -227,6 +227,42 @@ def cmd_reject(args) -> int:
     return EXIT_OK
 
 
+def cmd_requeue(args) -> int:
+    """
+    Put rejected articles back in the queue.
+
+    The mirror of `reject` pulling a queued article out. A rejection is a
+    judgment, and judgments get revised - when the screening rules change, or
+    when the maintainer disagrees with one. Only a rejected article can come
+    back: anything translated or published never left.
+    """
+    info = wiki.fetch_titles_info(args.titles)
+    data = store.load()
+    category = wiki.normalize_category_name(args.category) if args.category else None
+
+    for title in args.titles:
+        rec = data.get("articles", {}).get(title)
+        if rec is None:
+            print(f"UNKNOWN\t{title}")
+            continue
+        if rec.get("status") != "rejected":
+            print(f"SKIP\t{title}\tstatus={rec.get('status')}")
+            continue
+
+        size = (info.get(title) or {}).get("size") or rec.get("size") or 0
+        mode = _mode_for(size)
+        store.mark(data, title, "queued", mode=mode, size=size,
+                   category=category or rec.get("category"))
+        # The old reason would otherwise sit on a queued article and read as
+        # though it still applied.
+        rec["reject_reason"] = None
+        print(f"REQUEUED\t{title}\tmode={mode}\tsize={size}")
+
+    store.save(data)
+    print("END")
+    return EXIT_OK
+
+
 def cmd_cat_done(args) -> int:
     category = wiki.normalize_category_name(args.category)
     data = store.load()
@@ -319,6 +355,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--reason", required=True)
     p.add_argument("--category")
     p.set_defaults(func=cmd_reject)
+
+    p = sub.add_parser("requeue", help="Put rejected articles back in the queue")
+    p.add_argument("titles", nargs="+")
+    p.add_argument("--category")
+    p.set_defaults(func=cmd_requeue)
 
     p = sub.add_parser("cat-done", help="Mark a category as finished")
     p.add_argument("category")

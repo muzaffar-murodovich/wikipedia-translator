@@ -221,16 +221,19 @@ def fetch_titles_info(titles: List[str]) -> Dict[str, Dict[str, Any]]:
 # nationality-scoped variants ("Moroccan Salafis", "Albanian Salafis") are
 # covered without enumerating them.
 #
-# "Living people" is in the list not because it is disqualifying but because
-# a living religious figure needs a human-grade look, which is exactly what
-# the screening agent is for.
+# "Living people" is deliberately NOT here. It is one of the largest
+# categories on en.wiki (~1.15M articles) and says nothing about radicalism:
+# in Darul Uloom Deoband alumni it would flag 23 scholars against 4 real
+# risks, and in Al-Azhar University alumni 45 against 16. A living scholar
+# who is a movement figure is caught by the patterns above; one who is not
+# is simply a living scholar.
 _RISK_PATTERNS = [
     r'salafi', r'wahhab', r'jihad', r'terroris[tm]', r'militant',
     r'al-qaeda', r'taliban', r'islamic state', r'isil\b', r'boko haram',
     r'al-shabaab', r'lashkar', r'muslim brotherhood', r'hizb ut-tahrir',
     r'ahl-i hadith', r'ahl al-hadith', r'islamis[tm]', r'extremis',
     r'insurgen', r'suicide bomb', r'takfir', r'assassin',
-    r'people convicted', r'prisoners', r'living people',
+    r'people convicted', r'prisoners',
     # Armed movements that name themselves after a cause rather than a creed.
     # "Moro Islamic Liberation Front members" was read as CLEAR until this
     # line existed - the words Salafi, jihad and militant never appear in it.

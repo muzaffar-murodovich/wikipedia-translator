@@ -170,12 +170,15 @@ class TestRiskScreening:
         "Category:Al-Qaeda members",
         "Category:Islamic terrorism",
         "Category:People imprisoned on terrorism charges",
-        "Category:Living people",
     ])
     def test_decisive_categories_are_flagged(self, category):
         assert wiki.risky_categories([category]) == [category]
 
     @pytest.mark.parametrize("category", [
+        # Being alive says nothing about radicalism: Category:Living people
+        # holds ~1.15M articles, and flagging it buries the real signal under
+        # every modern scholar the project exists to translate.
+        "Category:Living people",
         "Category:Hadith scholars",
         "Category:Shafi'is",
         "Category:Quranic exegesis scholars",

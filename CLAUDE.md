@@ -258,7 +258,15 @@ exhausted it navigates to a related one. All state is in `data/queue.json`, so
 losing context costs nothing.
 
 The CLI is usable directly too — `python -m finder.cli status`,
-`cat-list`, `screen`, `queue-add`, `reject`, `next`.
+`cat-list`, `screen`, `queue-add`, `reject`, `requeue`, `next`.
+
+`screen` is a **filter, not a guarantee**: it answers from en.wiki's own
+categories, so it is only as complete as they are. It deliberately does *not*
+flag `Category:Living people` — that category holds ~1.15M articles and says
+nothing about radicalism, while burying the real signal (in
+`Darul Uloom Deoband alumni` it would flag 23 scholars against 4 real risks).
+`reject` can pull a queued article back out and `requeue` can undo a
+rejection, because both judgments get revised.
 
 ### 2. Translate the batch
 
