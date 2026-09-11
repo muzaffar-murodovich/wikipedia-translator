@@ -12,85 +12,24 @@ import sys
 import time
 import argparse
 import webbrowser
-import urllib.parse
 from pathlib import Path
 from datetime import datetime
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Optional
 
 # Project root setup — must happen before any project imports
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 os.chdir(_PROJECT_ROOT)
 
-import config
-from core.cache_manager import WikiCache
-from core.wikidata_fetcher import WikidataFetcher
+from finder.wiki import (
+    fetch_category_uz_status,
+    make_url,
+    normalize_category_name,
+)
 from utils.file_handler import FileHandler
 from utils.logger import logger
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
-
-
-def normalize_category_name(name: str) -> str:
-    """Ensure category name has 'Category:' prefix."""
-    if name.lower().startswith("category:"):
-        return "Category:" + name[len("Category:"):]
-    return "Category:" + name
-
-
-def fetch_category_uz_status(
-    fetcher: WikidataFetcher, category: str
-) -> Dict[str, Optional[str]]:
-    """
-    Fetch all article members of a category together with their Uzbek
-    interwiki link — in a single API request per 500 members.
-
-    Uses generator=categorymembers + prop=langlinks&lllang=uz, so category
-    membership and Uzbek existence come back in one round trip. Interwiki
-    links on Wikipedia are served from Wikidata sitelinks, so the result
-    matches a per-article Wikidata lookup without the extra requests.
-
-    Args:
-        fetcher: WikidataFetcher instance (for its retrying _wiki_api)
-        category: Full category name with "Category:" prefix
-
-    Returns:
-        {article_title: uz_title or None}
-    """
-    params = {
-        "action": "query",
-        "generator": "categorymembers",
-        "gcmtitle": category,
-        "gcmlimit": "500",
-        "gcmnamespace": "0",
-        "gcmtype": "page",
-        "prop": "langlinks",
-        "lllang": config.TARGET_LANG,
-        "lllimit": "max",
-        "redirects": "1",
-    }
-
-    pages: Dict[str, Optional[str]] = {}
-    cont: Dict[str, str] = {}
-    requests_made = 0
-
-    while True:
-        data = fetcher._wiki_api({**params, **cont}, lang=config.SOURCE_LANG)
-        requests_made += 1
-
-        for page in data.get("query", {}).get("pages", []):
-            langlinks = page.get("langlinks", [])
-            uz_title = langlinks[0]["title"] if langlinks else None
-            # Continuation can split a page's props across responses —
-            # never overwrite a known title with None.
-            pages[page["title"]] = pages.get(page["title"]) or uz_title
-
-        if "continue" not in data:
-            break
-        cont = data["continue"]
-
-    logger.debug(f"{requests_made} ta API so'rovi bajarildi.")
-    return pages
 
 
 def parse_open_arg(value: str) -> Tuple[int, int]:
@@ -123,12 +62,6 @@ def parse_open_arg(value: str) -> Tuple[int, int]:
     if n < 1:
         raise argparse.ArgumentTypeError("Qiymat 1 dan katta bo'lishi kerak.")
     return 1, n
-
-
-def make_url(title: str) -> str:
-    """Build English Wikipedia URL for an article title."""
-    encoded = urllib.parse.quote(title.replace(" ", "_"))
-    return f"https://en.wikipedia.org/wiki/{encoded}"
 
 
 def open_in_browser(titles: List[str], start: int, end: int):
@@ -264,10 +197,6 @@ def main():
     logger.section(f"Kategoriya tekshirilmoqda: {category}")
 
     try:
-        # Cache is required by WikidataFetcher; the category query itself
-        # needs no per-title lookups.
-        fetcher = WikidataFetcher(WikiCache())
-
         saved = None if args.refresh else load_saved_results(category)
 
         if saved:
@@ -279,7 +208,7 @@ def main():
             print("   Yangilash uchun: --refresh")
         else:
             logger.info("Kategoriya a'zolari va o'zbekcha havolalar olinmoqda...")
-            pages = fetch_category_uz_status(fetcher, category)
+            pages = fetch_category_uz_status(category)
 
             if not pages:
                 print(f"\n⚠️  Kategoriyada maqola topilmadi: {category}")

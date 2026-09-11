@@ -28,6 +28,9 @@ config.env
 # API cache
 apicache/
 
+# Article queue and daily run reports
+data/
+
 # Temp wiki files
 temp_wiki/
 temp_wiki_new/

@@ -57,7 +57,7 @@ FALLBACK_TEMPLATE_MAP_EN2UZ = {
 
 FALLBACK_CATEGORY_PREFIX = "Turkum"
 
-# --- Uzun maqolalarni qisqartirish ---
+# --- Maqola topish va paketli tarjima ---
 
 # Bundan katta maqolalar qisqartirib tarjima qilinadi (bayt).
 # Qisqartirishda faqat kirish qismi, manbalar va turkumlar qoladi.
@@ -66,6 +66,12 @@ TRIM_SIZE_THRESHOLD = 10000
 # Qisqartirilgandan keyin kirish qismi shundan kichik boʻlsa — ogohlantirish.
 # 40 KB maqoladan 200 baytlik lead qolsa, u chop etishga yaroqsiz.
 TRIM_MIN_LEAD_BYTES = 400
+
+DAILY_BATCH_SIZE = 8  # Bir kunda tarjima qilinadigan maqolalar soni
+
+# Topilgan maqolalar navbati va kunlik hisobotlar (CWD ga nisbatan).
+QUEUE_FILE = Path("data/queue.json")
+RUNS_DIR = Path("data/runs")
 
 # --- Logging Settings ---
 
