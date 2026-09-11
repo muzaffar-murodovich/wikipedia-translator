@@ -100,12 +100,12 @@ Quyidagi wikitext'ni oʻzbek tiliga tarjima qiling. MUHIM QOIDALAR:
    - Toʻgʻri: hijriy 132-yil/milodiy 750-yil
    Manbada boʻlmagan sanani oʻzingiz qoʻshmang: faqat "1301" yozilgan boʻlsa, hijriy muqobilini hisoblab qoʻshmang — "1301-yil" deb qoldiring.
 
-7) Jumla ichidagi geografik nomlarda inglizcha "Shahar, Mamlakat" tartibioʻzbekcha egalik qurilishiga aylanadi.
+7) Jumla ichidagi geografik nomlarda inglizcha "Shahar, Shtat, Mamlakat" tartibi oʻzbekcha egalik qurilishiga aylanadi.
    - Notoʻgʻri: U Damashq, Suriyada yashagan
    - Toʻgʻri: U Suriyaning Damashq shahrida yashagan
    - Notoʻgʻri: Masjid al-Hindiyda, Najaf, Iroqda
    - Toʻgʻri: Iroqning Najaf shahridagi Masjid al-Hindiyda
-   Bu qoida faqat matn ichidagi jumlalarga tegishli. Bilgiquti (infobox) parametrlari qiymatida "Shahar, Mamlakat" tartibi oʻz holicha qoladi.
+   Bu qoida faqat matn ichidagi jumlalarga tegishli. Bilgiquti (infobox) parametrlari qiymatida "Shahar, Shtat, Mamlakat" tartibi oʻz holicha qoladi.
 {forced_links}
 Matn:
 ```{text}```
