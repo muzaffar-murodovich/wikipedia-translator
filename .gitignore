@@ -30,6 +30,7 @@ apicache/
 
 # Temp wiki files
 temp_wiki/
+temp_wiki_new/
 
 # Translation outputs
 input_en.txt
