@@ -13,6 +13,7 @@ An **English-to-Uzbek Wikipedia article translator** that uses OpenAI to transla
 ```
 wikipedia-translator/
 ├── main.py                   # Entry point; orchestrates the 5-phase pipeline
+├── batch_translate.py        # Drains the discovery queue; writes a daily run report
 ├── config.py                 # All configuration (comments/values in Uzbek)
 ├── localization_map.json     # 223 term replacement rules (auto-loaded)
 ├── translation_rules.md      # Post-translation review checklist (used by Phase 5)
@@ -36,14 +37,24 @@ wikipedia-translator/
 │   ├── regex_patterns.py     # Centralised regex patterns and fix functions
 │   ├── link_labels.py        # Wikilink label cleanup (rule 2), runs after Phase 5
 │   ├── api_client.py         # Shared Wikimedia HTTP client (TLS, retries)
+│   ├── trimmer.py            # Cuts a long article to lead + references + categories
 │   └── wiki_fetcher.py       # Downloads English Wikipedia wikitext via API
-├── tests/                    # pytest suite (232 tests)
+├── finder/                   # Article discovery — feeds the translation queue
+│   ├── store.py              # data/queue.json: categories seen, articles queued/done
+│   ├── wiki.py               # Category listing, sizes, uz existence, risk screening
+│   ├── runs.py               # data/runs/<date>.json: daily batch reports
+│   ├── logcapture.py         # Collects the pipeline's console-only warnings
+│   └── cli.py                # `python -m finder.cli` — the discovery agent's tool
+├── .claude/agents/
+│   └── article-finder.md     # Haiku subagent that fills the queue (tracked in git)
+├── data/                     # Queue and run reports (gitignored, per-machine)
+├── tests/                    # pytest suite (445 tests)
 ├── webui/                    # Local browser UI (Flask) — see webui/CLAUDE.md
 │   ├── app.py                # Flask routes; pins the CWD to the repo root
 │   ├── pipeline.py           # Replays main.py's phases with progress reporting
 │   ├── state.py              # The single in-flight translation job
 │   ├── settings.py           # Per-machine overrides (webui/settings.json)
-│   ├── templates/, static/   # Two pages, vanilla JS, no build step
+│   ├── templates/, static/   # Three pages, vanilla JS, no build step
 │   └── *.ps1                 # Windows autostart (Task Scheduler) scripts
 └── additional-tools/
     └── category-checker.py   # Check which category articles are missing from uz.wiki
@@ -211,6 +222,74 @@ Scheduler task.
 
 ---
 
+## Daily Workflow (discovery → batch → review)
+
+The five-phase pipeline translates **one** article. On top of it sits a daily
+loop that decides *which* articles to translate and hands the results to a
+human. Publishing is never automated — there is no login or edit code in the
+project and none is wanted.
+
+```
+article-finder agent (Haiku)  ──►  finder/cli.py  ──►  data/queue.json
+                                                            │
+                                   batch_translate.py  ◄─────┘
+                                            │
+                                   data/runs/<date>.json
+                                            │
+                                   webui /kunlik  ──►  human reads, copies, publishes
+```
+
+The governing principle: **all mechanical work is in the CLI, only judgment is
+in the model.** Deduplication, the size-to-mode decision, maintenance-category
+filtering and risk screening are Python. The agent decides only "is this
+category on topic" and "is this article about a radical subject".
+
+### 1. Fill the queue
+
+```bash
+# In Claude Code — the agent is defined in .claude/agents/article-finder.md
+"use the article-finder agent, start from Category:Hadith scholars"
+```
+
+It lists a category's articles that are missing from uz.wiki, screens them
+against their own en.wiki categories (`finder.cli screen`), queues the
+acceptable ones and records a reason for every rejection. When a category is
+exhausted it navigates to a related one. All state is in `data/queue.json`, so
+losing context costs nothing.
+
+The CLI is usable directly too — `python -m finder.cli status`,
+`cat-list`, `screen`, `queue-add`, `reject`, `next`.
+
+### 2. Translate the batch
+
+```bash
+python batch_translate.py -n 8
+```
+
+Takes the smallest queued articles first, trims the ones over
+`TRIM_SIZE_THRESHOLD`, runs each through `webui/pipeline.py`'s `run_pipeline()`
+and writes `data/runs/<date>.json`. One article failing never stops the batch,
+and the report is rewritten after **every** article so a crash cannot lose work
+already paid for in tokens.
+
+### 3. Review and publish
+
+```bash
+python -m webui.app     # http://127.0.0.1:5057/kunlik
+```
+
+The Kunlik page lists the day's articles with their quality flags — Phase 5
+skipped, references left raw, links that stayed English, label/target
+mismatches, a lead too thin to publish — plus a copy button and a "Nashr
+qilindi" checkbox that writes back to the queue.
+
+> **`batch_translate.py` does not use the web UI's Phase 5 switch.** It follows
+> `config.ENABLE_REVIEW`, overridable with `--review` / `--no-review`. The
+> browser checkbox is per-machine UI state; a colleague turning it off must not
+> silently disable review for an unattended batch.
+
+---
+
 ## Configuration (`config.py`)
 
 All configuration is in a single file. Comments and string values are written in **Uzbek**. Key settings:
@@ -225,6 +304,12 @@ All configuration is in a single file. Comments and string values are written in
 - **Reference compression**: `REF_COMPRESS_THRESHOLD = 30` characters — must stay
   above the 23-character `<ref>REF_a1b2c3d4</ref>` placeholder, or a short
   reference gets *longer* when compressed.
+- **Article discovery / batch**: `TRIM_SIZE_THRESHOLD` (10000 bytes — above this an
+  article is translated trimmed, not whole), `TRIM_MIN_LEAD_BYTES` (400 — below this the
+  trimmed result is flagged as too thin to publish), `DAILY_BATCH_SIZE` (8),
+  `QUEUE_FILE` (`data/queue.json`), `RUNS_DIR` (`data/runs`). The last two are relative,
+  and both `finder/store.py` and `finder/runs.py` anchor them to the repo root — the CLI,
+  the batch runner and the web UI reach them from different working directories.
 - **Wikimedia API**: `API_BATCH_SIZE` (50), `API_MAX_RETRIES`, `API_RETRY_BASE_DELAY`, `API_MAX_RETRY_DELAY`, `API_BATCH_DELAY` — 429 rate-limit handling. `API_USER_AGENT` is built from `API_CONTACT` (env `WIKI_CONTACT`); Wikimedia's User-Agent policy requires real contact info, so set it to your email or wiki user page.
 
 Do **not** hardcode API keys into `config.py`. Use environment variables.
@@ -309,6 +394,64 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `collapse_redundant_labels(text)` returns the cleaned text plus the deduplicated list of mismatches left for a human.
 - Uzbek case suffixes sit outside the brackets, so a collapse leaves the sentence intact: `[[Lohur|Lahor]]ga` -> `[[Lohur]]ga`.
 - Called from `main.py` **after** Phase 5 — the reviewer does not fix these violations and sometimes re-introduces a redundant pipe.
+
+### `utils/trimmer.py`
+- `trim_article(wikitext)` returns `(text, info)`. It keeps the lead and the citation
+  apparatus and drops the body sections, for articles over `TRIM_SIZE_THRESHOLD`.
+- The section split uses **mwparserfromhell, not regex** — `==` also appears inside
+  `<ref>` bodies and template parameters, where it is not a heading. The parser already
+  knows the difference; only the heading *title* is matched, against
+  `RegexPatterns.APPARATUS_HEADING`.
+- **A named `<ref>` defined in a cut section is inlined into its first surviving
+  invocation.** Without this, `<ref name="x"/>` in the lead renders on uz.wiki as a red
+  "Cite error: The named reference x was invoked but never defined" — and a reviewer
+  reading Uzbek prose would never catch it. This step is not optional.
+- `info["trimmed"] is False` is **not an error**: it means there was nothing to cut (no
+  sections, or the lead runs straight into References). The caller falls back to a full
+  translation. `info["thin_lead"]` flags a result too short to be worth publishing.
+
+### `finder/store.py`
+- Owns `data/queue.json` and is the only module that touches it.
+- `upsert_article()` **never downgrades a status.** An article that has been published
+  cannot fall back to "queued" because the agent met it again in a second category; a
+  re-add returns `("dup", existing_status)`.
+- `reject` is the one exception, in `finder/cli.py`: a *queued* article can still be
+  pulled back out, because a second look overrules the first. Anything translated or
+  published has left the queue and is the human's to undo.
+- Articles that already exist on uz.wiki are deliberately **not** stored — that is ~70%
+  of every category. `categories[c].status == "exhausted"` plus the counts is enough
+  memory to avoid re-listing.
+- Writes are atomic (`os.replace`): the CLI and the web UI both write this file.
+- `FINDER_QUEUE` in the environment points the whole toolchain at another file.
+
+### `finder/wiki.py`
+- `fetch_category_members(category)` — one request per 500 members returns membership,
+  Uzbek existence **and** byte size together (`prop=langlinks|info`; the size field is
+  `length`, not `size`).
+- `risky_categories(categories)` — the decisive evidence for the radical-topic screen.
+  Matched as substrings, so the nationality-scoped variants (`Moroccan Salafis`,
+  `Albanian Salafis`) are covered without enumerating them.
+- **Screening on the article title alone is not enough.** A trial run of the agent
+  correctly rejected al-Albani but queued six figures categorised as Salafis, Wahhabis or
+  Islamists, one imprisoned on terrorism charges. The screen is a hard step in the
+  agent's loop, not a fallback for when the model feels unsure.
+- `is_maintenance_category()` filters the housekeeping and date buckets so the agent
+  never spends context on them.
+
+### `finder/logcapture.py`
+- `capture_warnings()` collects what `core/processor.py` reports only to the console —
+  links whose target stayed English, references whose placeholder never came back.
+  `utils/logger.py` wraps the stdlib logger, so a temporary handler picks them up
+  **without modifying processor.py**.
+
+### `batch_translate.py`
+- `os.chdir(REPO_ROOT)` runs **before** `webui.pipeline` is imported.
+  `config.LOCALIZATION_FILE`, `WikiReviewer.RULES_FILE` and the `temp_wiki/` save are all
+  relative; without it Phase 5 is silently skipped and the run still reports success.
+- One article's failure is recorded and the batch continues. The report is saved after
+  every article.
+- Phase 5 follows `config.ENABLE_REVIEW`, **not** `webui/settings.json` — see the Daily
+  Workflow note above.
 
 ### `utils/localization.py`
 - Reads `localization_map.json` at startup (223 entries).
@@ -427,7 +570,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-**Automated tests** — 232 tests under `tests/`, run with:
+**Automated tests** — 445 tests under `tests/`, run with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -439,17 +582,27 @@ python -m pytest
 | Test file | Tests | Covers |
 |---|---|---|
 | `test_regex_patterns.py` | 69 | `utils/regex_patterns.py` |
+| `test_finder_wiki.py` | 50 | `finder/wiki.py` |
 | `test_cache_manager.py` | 34 | `core/cache_manager.py` |
+| `test_link_labels.py` | 30 | `utils/link_labels.py` |
+| `test_trimmer.py` | 29 | `utils/trimmer.py` |
+| `test_finder_cli.py` | 28 | `finder/cli.py` |
 | `test_wiki_fetcher.py` | 24 | `utils/wiki_fetcher.py` |
+| `test_batch_translate.py` | 24 | `batch_translate.py` |
+| `test_finder_store.py` | 23 | `finder/store.py` |
 | `test_reviewer.py` | 21 | `core/reviewer.py` |
 | `test_translator.py` | 21 | `core/translator.py` |
+| `test_runs.py` | 20 | `finder/runs.py` |
 | `test_processor.py` | 18 | `core/processor.py` |
 | `test_file_handler.py` | 16 | `utils/file_handler.py` |
-| `test_link_labels.py` | 12 | `utils/link_labels.py` |
+| `test_webui_kunlik.py` | 14 | `webui/` Kunlik routes |
 | `test_localization.py` | 10 | `utils/localization.py` |
+| `test_logcapture.py` | 7 | `finder/logcapture.py` |
 | `test_api_client.py` | 7 | `utils/api_client.py` |
 
-No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/wikidata_fetcher.py`, `main.py` and `webui/` are **not** covered yet — the web UI is verified by running it and using both pages in a browser (see `webui/CLAUDE.md`).
+No network or OpenAI calls are made — `urlopen` and the OpenAI client are monkeypatched (`tests/conftest.py` holds the shared fixtures). `core/wikidata_fetcher.py` and `main.py` are **not** covered yet. Of `webui/`, only the Kunlik routes are tested (skipped when Flask is absent, since it lives in `webui/requirements.txt`); the translate and localization pages are still verified by hand in a browser (see `webui/CLAUDE.md`).
+
+`tests/test_finder_cli.py` asserts **exact stdout lines** on purpose: that format is the contract the `article-finder` agent is written against, and changing it silently would break the agent without failing any other test.
 
 Beyond the suite, translation quality is validated by:
 

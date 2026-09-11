@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kunlik</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Kunlik</h1>
+    <div class="topbar-controls">
+      <select id="run-select" aria-label="Paket"></select>
+      <span id="run-summary" class="run-summary"></span>
+      <a href="{{ url_for('index') }}">Tarjimon</a>
+      <a href="{{ url_for('localization_page') }}">Lokalizatsiya lugʻati</a>
+    </div>
+  </header>
+
+  <main class="loc-main">
+    <div id="error-box" class="error-box" hidden></div>
+    <div id="articles"></div>
+  </main>
+
+  <script src="{{ url_for('static', filename='kunlik.js') }}"></script>
+</body>
+</html>

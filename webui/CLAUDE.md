@@ -48,7 +48,7 @@ supported way to add a rule.
 | `setup_autostart.ps1` | One-time: `pip install` + register the logon task |
 | `start_webui.ps1` | Start it once, hidden, without waiting for a logon |
 | `uninstall_autostart.ps1` | Remove the scheduled task |
-| `templates/`, `static/` | Two pages, vanilla JS, no build step |
+| `templates/`, `static/` | Three pages, vanilla JS, no build step |
 | `requirements.txt` | `-r ../requirements.txt` + `Flask` (installed into the project's existing `.venv`, not a second one) |
 
 ---
@@ -81,13 +81,14 @@ under. The browser download is the output in that case.
 
 `run_pipeline()` takes two keyword-only overrides, both for callers outside
 the browser. `review=` decides Phase 5, defaulting to the browser's own
-switch only when left as `None` — a batch runner passes `config.ENABLE_REVIEW`
-instead, so a checkbox ticked in the UI cannot silently disable review for an
-unattended run. `article_title=` overrides the resolved title, for input that
-cannot name its own article — trimmed wikitext, which `resolve_input()` can
-only treat as a literal snippet. Both follow the "caller's title wins" rule
-`main.py`'s `main()` already has, so they narrow the drift rather than widen
-it.
+switch only when left as `None` — `batch_translate.py` passes
+`config.ENABLE_REVIEW` instead, so a checkbox ticked in the UI cannot
+silently disable review for an unattended nightly run. `article_title=`
+overrides the resolved title. `batch_translate.py` needs it: a trimmed article is literal
+wikitext as far as `resolve_input()` can tell, so without the override the
+batch would lose both the title and the `temp_wiki/` copy. The browser never
+passes it. This is the same "caller's title wins" rule `main.py`'s `main()`
+already follows, so it narrows the drift rather than widening it.
 
 Unlike `main.py`, nothing is written to a fixed `output_uz.txt`: it would
 clobber the file of a maintainer who also uses the CLI.
@@ -121,9 +122,36 @@ lives on the server.
 | `GET /download` | The result as a `.txt` attachment |
 | `GET/POST /api/settings` | `{review_enabled}` |
 | `GET/POST /api/localization` | The map as `[{en, uz}, ...]` |
+| `GET /kunlik` | The day's batch, ready to read and publish |
+| `GET /api/runs` | Run summaries, newest first — never the translated text |
+| `GET /api/run/<id>` | One report; `latest` is an alias. `published` is joined in |
+| `POST /api/publish` | Body `{title, published}` → writes to `data/queue.json` |
 
 There is deliberately **no `/shutdown`**: it is an unauthenticated way to kill
 the process, for a convenience the Task Manager already provides.
+
+---
+
+## The Kunlik page
+
+`batch_translate.py` translates the day's queue overnight and writes
+`data/runs/<date>.json`. This page is where the human reads the result: each
+article with its quality flags, a copy button, and a "Nashr qilindi" checkbox.
+
+Two things worth keeping:
+
+- **"Published" lives only in `data/queue.json`**, never in the run report.
+  The report is a dated snapshot of what the batch produced; publication is
+  running state the human changes later. `GET /api/run/<id>` joins the two at
+  read time. Two copies of "did I publish this" would go out of sync on the
+  first re-run.
+- **`run_id` becomes a filename**, so it is validated (`finder.runs`
+  `RUN_ID_RE`) before being joined to a path, and `RUNS_DIR` is anchored to
+  `REPO_ROOT` — the same reasoning as `LOCALIZATION_PATH`.
+
+Deliberately **not** here: in-browser editing, diffing, a quality score, and a
+"run the batch now" button. The batch takes 10-20 minutes, which is the wrong
+shape for an HTTP request, and `state.py` would refuse a second job anyway.
 
 ---
 
@@ -196,8 +224,10 @@ python -m webui.app          # http://127.0.0.1:5057
 Port: `WEBUI_PORT`, read from the environment or a `webui/.env` (separate from
 the project `.env`).
 
-There is **no automated test coverage for `webui/`** — the pytest suite covers
-`core/` and `utils/` only. Changes here are verified by running the server and
-using both pages in a browser. The Windows-specific parts (the `.ps1` scripts,
+`tests/test_webui_kunlik.py` covers the Kunlik routes through Flask's
+`test_client` (skipped when Flask is absent — it is in `webui/requirements.txt`,
+not the project's own). The translate and localization pages have **no
+automated coverage**: they are verified by running the server and using them in
+a browser. The Windows-specific parts (the `.ps1` scripts,
 `schtasks`, `pythonw`) cannot be exercised on the maintainer's Linux machine
 and need a real Windows box.

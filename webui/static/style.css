@@ -234,3 +234,36 @@ td button:hover {
   background: var(--error-bg);
   border-color: var(--error-text);
 }
+
+/* Kunlik page */
+.run-summary { color: var(--muted); }
+
+#run-select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.article-panel { margin-bottom: 18px; }
+.article-panel .en-link { font-size: 0.8rem; font-weight: normal; }
+
+/* A published article stays on the page - the day's work should still read
+   as a list - but steps back so the unfinished ones stand out. */
+.article-panel.published { opacity: 0.55; }
+
+.article-text { min-height: 260px; margin-top: 10px; }
+
+.flag-box {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #f0c36d;
+  border-left-width: 4px;
+  border-radius: 2px;
+  background: #fef6e7;
+  color: #7a5300;
+  font-size: 0.82rem;
+}

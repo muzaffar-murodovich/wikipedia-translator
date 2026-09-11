@@ -35,6 +35,8 @@ from flask import Flask, jsonify, render_template, request, Response
 from utils.file_handler import FileHandler
 import config as project_config
 
+from finder import runs, store
+
 from . import pipeline, settings, state
 
 # Anchored to REPO_ROOT rather than left as the bare relative
@@ -76,6 +78,11 @@ def index():
 @app.route("/localization")
 def localization_page():
     return render_template("localization.html")
+
+
+@app.route("/kunlik")
+def kunlik_page():
+    return render_template("kunlik.html")
 
 
 @app.route("/api/translate", methods=["POST"])
@@ -175,6 +182,54 @@ def api_localization():
 
     return jsonify({"status": "saved", "count": len(result_map)})
 
+
+# ── Kunlik: the day's batch, ready to read and publish ────────────────────────
+
+@app.route("/api/runs")
+def api_runs():
+    return jsonify(runs.list_runs())
+
+
+@app.route("/api/run/<run_id>")
+def api_run(run_id: str):
+    if run_id == "latest":
+        latest = runs.latest_run_id()
+        if latest is None:
+            return jsonify({"error": "Hali birorta paket ishga tushmagan"}), 404
+        run_id = latest
+
+    if not runs.is_valid_run_id(run_id):
+        return jsonify({"error": "Noto'g'ri paket nomi"}), 400
+
+    report = runs.load_report(run_id)
+    if report is None:
+        return jsonify({"error": f"Paket topilmadi: {run_id}"}), 404
+
+    # "Published" lives only in the queue. Keeping a second copy in the run
+    # report would be two sources of truth for the one thing the human
+    # actually changes.
+    articles = store.load().get("articles", {})
+    for entry in report.get("articles", []):
+        rec = articles.get(entry["title"], {})
+        entry["published"] = rec.get("status") == "published"
+
+    return jsonify(report)
+
+
+@app.route("/api/publish", methods=["POST"])
+def api_publish():
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "").strip()
+    published = bool(data.get("published"))
+    if not title:
+        return jsonify({"error": "Maqola nomi yo'q"}), 400
+
+    queue = store.load()
+    if not store.mark(queue, title, "published" if published else "translated"):
+        return jsonify({"error": f"Navbatda yo'q: {title}"}), 404
+    store.save(queue)
+
+    return jsonify({"status": "ok", "published": published})
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=PORT, threaded=True, debug=False, use_reloader=False)
