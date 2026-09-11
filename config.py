@@ -57,6 +57,16 @@ FALLBACK_TEMPLATE_MAP_EN2UZ = {
 
 FALLBACK_CATEGORY_PREFIX = "Turkum"
 
+# --- Uzun maqolalarni qisqartirish ---
+
+# Bundan katta maqolalar qisqartirib tarjima qilinadi (bayt).
+# Qisqartirishda faqat kirish qismi, manbalar va turkumlar qoladi.
+TRIM_SIZE_THRESHOLD = 10000
+
+# Qisqartirilgandan keyin kirish qismi shundan kichik boʻlsa — ogohlantirish.
+# 40 KB maqoladan 200 baytlik lead qolsa, u chop etishga yaroqsiz.
+TRIM_MIN_LEAD_BYTES = 400
+
 # --- Logging Settings ---
 
 LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL

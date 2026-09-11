@@ -91,6 +91,20 @@ class RegexPatterns:
     # Category token: ⟦CAT:Q12345|cat_name|sort_key⟧ (sort_key may be empty)
     CAT_TOKEN = r'⟦CAT:(Q\d+)\|([^|⟧]+)\|([^⟧]*)⟧'
 
+    # ========== Apparatus Headings (trimmer) ==========
+
+    # A section heading whose body is citation apparatus rather than prose.
+    # Matched against the heading TITLE only: mwparserfromhell already
+    # guarantees the caller is looking at a real heading and not a "==" that
+    # happens to sit inside a <ref> body or a template parameter.
+    #
+    # "See also" is deliberately absent. It sits before == References == and
+    # holds en.wiki links that become red links in uz, so the trim drops it.
+    APPARATUS_HEADING = (
+        r'^\s*(?:references?|sources?|notes?|footnotes?|citations?'
+        r'|works\s+cited|bibliography|further\s+reading|external\s+links)\s*$'
+    )
+
 
 # ========== Special Regex Functions ==========
 
