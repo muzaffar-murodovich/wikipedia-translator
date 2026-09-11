@@ -248,10 +248,35 @@ _RISK_PATTERNS = [
 
 _RISK_RE = re.compile("|".join(_RISK_PATTERNS), re.IGNORECASE)
 
+# A category can name a movement while placing its subject on the opposite
+# side of it. "Critics of Wahhabism" holds Ibn Abidin, Ahmad Zayni Dahlan and
+# Anwar Shah Kashmiri - the traditional scholars this project most wants -
+# and "People killed by the Taliban" holds the Taliban's victims. Matching
+# the movement word alone would reject every one of them.
+#
+# These are checked per category, and only clear that one category: someone
+# in both "Victims of al-Qaeda" and "Syrian Salafis" still flags on the
+# second. Note "Assassinated Hamas members" is NOT cleared - it has no "by",
+# because the subject is the member, not the victim.
+_EXONERATING_PATTERNS = [
+    r'^(?:critics?|opponents?|opposition|detractors)\s+of\b',
+    r'^anti-',
+    r'\b(?:killed|murdered|assassinated|executed|kidnapped|abducted|targeted)\s+by\b',
+    r'^victims?\s+of\b',
+    r'\bvictims\s+of\b',
+]
+
+_EXONERATING_RE = re.compile("|".join(_EXONERATING_PATTERNS), re.IGNORECASE)
+
 
 def risky_categories(categories: List[str]) -> List[str]:
-    """The subset of an article's categories that call for a human judgment."""
-    return [c for c in categories if _RISK_RE.search(strip_category_prefix(c))]
+    """The subset of an article's categories that mark a radical topic."""
+    out = []
+    for c in categories:
+        name = strip_category_prefix(c)
+        if _RISK_RE.search(name) and not _EXONERATING_RE.search(name):
+            out.append(c)
+    return out
 
 
 def fetch_titles_categories(titles: List[str]) -> Dict[str, List[str]]:

@@ -265,6 +265,12 @@ categories, so it is only as complete as they are. It deliberately does *not*
 flag `Category:Living people` — that category holds ~1.15M articles and says
 nothing about radicalism, while burying the real signal (in
 `Darul Uloom Deoband alumni` it would flag 23 scholars against 4 real risks).
+It also exonerates categories that name a movement while placing their subject
+on the other side of it — `Critics of Wahhabism` holds Ibn Abidin and Ahmad
+Zayni Dahlan, `People killed by the Taliban` holds the Taliban's victims.
+Exoneration is per category, so someone in both `Victims of al-Qaeda` and
+`Syrian Salafis` still flags on the second.
+
 `reject` can pull a queued article back out and `requeue` can undo a
 rejection, because both judgments get revised.
 

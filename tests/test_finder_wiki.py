@@ -240,3 +240,30 @@ class TestRiskScreening:
     ])
     def test_the_movement_spellings_still_flag(self, category):
         assert wiki.risky_categories([category]) == [category]
+
+    @pytest.mark.parametrize("category", [
+        # Opposing a movement is the opposite of belonging to it. This
+        # category holds Ibn Abidin, Ahmad Zayni Dahlan and Anwar Shah
+        # Kashmiri - the traditional scholars the project most wants.
+        "Category:Critics of Wahhabism",
+        "Category:Critics of Salafism",
+        "Category:Opponents of Salafism",
+        "Category:Anti-Wahhabism",
+        # A victim of a movement is not a member of it.
+        "Category:People killed by the Taliban",
+        "Category:People assassinated by al-Shabaab (militant group)",
+        "Category:Victims of al-Qaeda",
+        "Category:Journalists murdered by Islamic State",
+    ])
+    def test_critics_and_victims_are_not_flagged(self, category):
+        assert wiki.risky_categories([category]) == []
+
+    def test_membership_is_still_flagged_when_the_member_was_assassinated(self):
+        # "Assassinated Hamas members" has no "by": the subject is the
+        # member, not the victim.
+        cats = ["Category:Assassinated Hamas members"]
+        assert wiki.risky_categories(cats) == cats
+
+    def test_exoneration_clears_only_its_own_category(self):
+        cats = ["Category:Critics of Wahhabism", "Category:Syrian Salafis"]
+        assert wiki.risky_categories(cats) == ["Category:Syrian Salafis"]
