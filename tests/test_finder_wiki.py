@@ -206,3 +206,17 @@ class TestRiskScreening:
             "pages": [{"title": "Full Title", "categories": [{"title": "Category:X"}]}],
         }})
         assert wiki.fetch_titles_categories(["Short"])["Short"] == ["Category:X"]
+
+    @pytest.mark.parametrize("category", [
+        "Category:Moro Islamic Liberation Front members",
+        "Category:Palestine Liberation Organisation members",
+        "Category:Afghan mujahideen",
+        "Category:Hamas members",
+        "Category:Hezbollah members",
+        "Category:Chechen separatists",
+        "Category:Warlords",
+    ])
+    def test_armed_movements_without_a_creed_word_are_flagged(self, category):
+        # These name a cause, not a doctrine: "Salafi", "jihad" and "militant"
+        # never appear in them, so they slipped through the first version.
+        assert wiki.risky_categories([category]) == [category]

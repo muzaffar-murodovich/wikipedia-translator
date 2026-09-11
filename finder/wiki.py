@@ -231,6 +231,12 @@ _RISK_PATTERNS = [
     r'ahl-i hadith', r'ahl al-hadith', r'islamis[tm]', r'extremis',
     r'insurgen', r'suicide bomb', r'takfir', r'assassin',
     r'people convicted', r'prisoners', r'living people',
+    # Armed movements that name themselves after a cause rather than a creed.
+    # "Moro Islamic Liberation Front members" was read as CLEAR until this
+    # line existed - the words Salafi, jihad and militant never appear in it.
+    r'liberation front', r'liberation movement', r'liberation organisation',
+    r'mujahid', r'separatis', r'paramilitary', r'guerrilla', r'warlord',
+    r'hamas', r'hezbollah|hizbullah|hizballah', r'armed group', r'rebel',
 ]
 
 _RISK_RE = re.compile("|".join(_RISK_PATTERNS), re.IGNORECASE)
