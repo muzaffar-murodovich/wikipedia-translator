@@ -220,3 +220,20 @@ class TestRiskScreening:
         # These name a cause, not a doctrine: "Salafi", "jihad" and "militant"
         # never appear in them, so they slipped through the first version.
         assert wiki.risky_categories([category]) == [category]
+
+    @pytest.mark.parametrize("category", [
+        "Category:Mujahid ibn Jabr",          # classical mufassir, not a movement
+        "Category:People from the Bahamas",   # not Hamas
+        "Category:Rebellions in the Ottoman Empire",  # medieval history is fine
+        "Category:Basil of Caesarea",         # not ISIL
+    ])
+    def test_substring_lookalikes_are_not_flagged(self, category):
+        assert wiki.risky_categories([category]) == []
+
+    @pytest.mark.parametrize("category", [
+        "Category:Afghan mujahideen",
+        "Category:Hamas members",
+        "Category:Syrian rebels",
+    ])
+    def test_the_movement_spellings_still_flag(self, category):
+        assert wiki.risky_categories([category]) == [category]

@@ -235,8 +235,12 @@ _RISK_PATTERNS = [
     # "Moro Islamic Liberation Front members" was read as CLEAR until this
     # line existed - the words Salafi, jihad and militant never appear in it.
     r'liberation front', r'liberation movement', r'liberation organisation',
-    r'mujahid', r'separatis', r'paramilitary', r'guerrilla', r'warlord',
-    r'hamas', r'hezbollah|hizbullah|hizballah', r'armed group', r'rebel',
+    r'separatis', r'paramilitary', r'guerrilla', r'warlord', r'armed group',
+    r'hezbollah|hizbullah|hizballah',
+    # Word boundaries, not substrings: "mujahid" alone matches Mujahid ibn
+    # Jabr, a classical mufassir, and "hamas" matches the Bahamas. Only the
+    # movement spellings should flag.
+    r'\bmujahid(?:e?en|in)\b', r'\bhamas\b', r'\brebels?\b',
 ]
 
 _RISK_RE = re.compile("|".join(_RISK_PATTERNS), re.IGNORECASE)
