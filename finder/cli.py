@@ -7,7 +7,8 @@ finder/cli.py - The discovery agent's only tool.
 The agent runs on a small model, so everything mechanical lives here and
 only the judgment calls are left to it: is this category on topic, is this
 article about a radical subject. Deduplication, the size-to-mode decision
-and the maintenance-category filter are all decided in Python.
+and the maintenance-category filter are all decided in Python - but the
+radical-topic call is not, because it needs to read a name, not match one.
 
 Output is deliberately terse and machine-shaped - one record per line, no
 emoji, no log noise, an END sentinel - because every token it prints comes
@@ -145,15 +146,21 @@ def cmd_cat_tree(args) -> int:
 
 
 def cmd_screen(args) -> int:
-    """Flag the candidates whose categories call for a closer look."""
+    """
+    Show each candidate's own categories, so the agent can judge from them.
+
+    This used to answer RISK or CLEAR from a keyword list. It does not any
+    more: the list could not distinguish a movement from its critics or its
+    victims, and every fix it took added another pattern. Reading the names
+    is the model's job; the mechanical part is fetching them and dropping
+    the date and cleanup buckets.
+    """
     cats = wiki.fetch_titles_categories(args.titles)
 
     for title in args.titles:
-        risky = wiki.risky_categories(cats.get(title, []))
-        if risky:
-            print(f"RISK\t{title}\t" + "|".join(risky))
-        else:
-            print(f"CLEAR\t{title}")
+        topical = wiki.topical_categories(cats.get(title, []))
+        names = [wiki.strip_category_prefix(c) for c in topical]
+        print(f"{title}\t" + ("|".join(names) if names else "(none)"))
     print("END")
     return EXIT_OK
 
@@ -340,7 +347,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("category")
     p.set_defaults(func=cmd_cat_tree)
 
-    p = sub.add_parser("screen", help="Flag candidates whose categories need a closer look")
+    p = sub.add_parser("screen", help="Show each candidate's own categories")
     p.add_argument("titles", nargs="+")
     p.set_defaults(func=cmd_screen)
 

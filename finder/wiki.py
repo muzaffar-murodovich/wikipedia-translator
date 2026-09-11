@@ -216,67 +216,19 @@ def fetch_titles_info(titles: List[str]) -> Dict[str, Dict[str, Any]]:
     return out
 
 
-# Categories that settle the question of whether an article is on a radical
-# topic. They are matched as substrings of the category name, so the
-# nationality-scoped variants ("Moroccan Salafis", "Albanian Salafis") are
-# covered without enumerating them.
-#
-# "Living people" is deliberately NOT here. It is one of the largest
-# categories on en.wiki (~1.15M articles) and says nothing about radicalism:
-# in Darul Uloom Deoband alumni it would flag 23 scholars against 4 real
-# risks, and in Al-Azhar University alumni 45 against 16. A living scholar
-# who is a movement figure is caught by the patterns above; one who is not
-# is simply a living scholar.
-_RISK_PATTERNS = [
-    r'salafi', r'wahhab', r'jihad', r'terroris[tm]', r'militant',
-    r'al-qaeda', r'taliban', r'islamic state', r'isil\b', r'boko haram',
-    r'al-shabaab', r'lashkar', r'muslim brotherhood', r'hizb ut-tahrir',
-    r'ahl-i hadith', r'ahl al-hadith', r'islamis[tm]', r'extremis',
-    r'insurgen', r'suicide bomb', r'takfir', r'assassin',
-    r'people convicted', r'prisoners',
-    # Armed movements that name themselves after a cause rather than a creed.
-    # "Moro Islamic Liberation Front members" was read as CLEAR until this
-    # line existed - the words Salafi, jihad and militant never appear in it.
-    r'liberation front', r'liberation movement', r'liberation organisation',
-    r'separatis', r'paramilitary', r'guerrilla', r'warlord', r'armed group',
-    r'hezbollah|hizbullah|hizballah',
-    # Word boundaries, not substrings: "mujahid" alone matches Mujahid ibn
-    # Jabr, a classical mufassir, and "hamas" matches the Bahamas. Only the
-    # movement spellings should flag.
-    r'\bmujahid(?:e?en|in)\b', r'\bhamas\b', r'\brebels?\b',
-]
+def topical_categories(categories):
+    """
+    An article's categories with the housekeeping and date buckets removed.
 
-_RISK_RE = re.compile("|".join(_RISK_PATTERNS), re.IGNORECASE)
-
-# A category can name a movement while placing its subject on the opposite
-# side of it. "Critics of Wahhabism" holds Ibn Abidin, Ahmad Zayni Dahlan and
-# Anwar Shah Kashmiri - the traditional scholars this project most wants -
-# and "People killed by the Taliban" holds the Taliban's victims. Matching
-# the movement word alone would reject every one of them.
-#
-# These are checked per category, and only clear that one category: someone
-# in both "Victims of al-Qaeda" and "Syrian Salafis" still flags on the
-# second. Note "Assassinated Hamas members" is NOT cleared - it has no "by",
-# because the subject is the member, not the victim.
-_EXONERATING_PATTERNS = [
-    r'^(?:critics?|opponents?|opposition|detractors)\s+of\b',
-    r'^anti-',
-    r'\b(?:killed|murdered|assassinated|executed|kidnapped|abducted|targeted)\s+by\b',
-    r'^victims?\s+of\b',
-    r'\bvictims\s+of\b',
-]
-
-_EXONERATING_RE = re.compile("|".join(_EXONERATING_PATTERNS), re.IGNORECASE)
-
-
-def risky_categories(categories: List[str]) -> List[str]:
-    """The subset of an article's categories that mark a radical topic."""
-    out = []
-    for c in categories:
-        name = strip_category_prefix(c)
-        if _RISK_RE.search(name) and not _EXONERATING_RE.search(name):
-            out.append(c)
-    return out
+    This is the evidence the discovery agent judges on. It is deliberately
+    *not* a verdict: an earlier version matched category names against a
+    keyword list, and a keyword list cannot tell "Wahhabis" from "Critics of
+    Wahhabism", "Hamas members" from "People from the Bahamas", or a Taliban
+    member from someone the Taliban killed. Each of those took another
+    pattern, and the next one would have taken another. The model reads the
+    names instead, and the human reviews everything before it is published.
+    """
+    return [c for c in categories if not is_maintenance_category(c)]
 
 
 def fetch_titles_categories(titles: List[str]) -> Dict[str, List[str]]:

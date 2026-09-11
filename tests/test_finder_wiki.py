@@ -159,38 +159,41 @@ class TestCategoryNavigation:
         assert api.calls[0]["cmtype"] == "subcat"
 
 
-class TestRiskScreening:
+class TestCategoryEvidence:
+    """
+    What the discovery agent is shown before it judges an article.
+
+    There is no keyword verdict here any more. A name-matching screen could
+    not tell "Wahhabis" from "Critics of Wahhabism", "Hamas members" from
+    "People from the Bahamas", or a Taliban member from someone the Taliban
+    killed - and each fix only bought the next false positive. The agent
+    reads the names, and the human reviews the translation before publishing.
+    """
+
     @pytest.mark.parametrize("category", [
-        "Category:Moroccan Salafis",
-        "Category:Albanian Salafis",
         "Category:Wahhabis",
-        "Category:Proto-Salafists",
-        "Category:Ahl-i Hadith people",
-        "Category:Indian Islamists",
-        "Category:Al-Qaeda members",
-        "Category:Islamic terrorism",
-        "Category:People imprisoned on terrorism charges",
+        "Category:Critics of Wahhabism",
+        "Category:People killed by the Taliban",
+        "Category:Hadith scholars",
+        "Category:Living people",
+        "Category:Moro Islamic Liberation Front members",
     ])
-    def test_decisive_categories_are_flagged(self, category):
-        assert wiki.risky_categories([category]) == [category]
+    def test_topical_categories_are_kept_whatever_they_say(self, category):
+        assert wiki.topical_categories([category]) == [category]
 
     @pytest.mark.parametrize("category", [
-        # Being alive says nothing about radicalism: Category:Living people
-        # holds ~1.15M articles, and flagging it buries the real signal under
-        # every modern scholar the project exists to translate.
-        "Category:Living people",
-        "Category:Hadith scholars",
-        "Category:Shafi'is",
-        "Category:Quranic exegesis scholars",
-        "Category:Sufi mystics",
-        "Category:12th-century Arabic writers",
+        "Category:1258 deaths",
+        "Category:All articles with unsourced statements",
+        "Category:Islam stubs",
+        "Category:Year of birth unknown",
     ])
-    def test_classical_categories_are_clear(self, category):
-        assert wiki.risky_categories([category]) == []
+    def test_housekeeping_and_date_buckets_are_dropped(self, category):
+        assert wiki.topical_categories([category]) == []
 
-    def test_only_the_risky_subset_is_returned(self):
-        cats = ["Category:Hadith scholars", "Category:Wahhabis", "Category:Shafi'is"]
-        assert wiki.risky_categories(cats) == ["Category:Wahhabis"]
+    def test_order_is_preserved(self):
+        cats = ["Category:Hadith scholars", "Category:1277 deaths", "Category:Shafi'is"]
+        assert wiki.topical_categories(cats) == [
+            "Category:Hadith scholars", "Category:Shafi'is"]
 
     def test_categories_batched_and_continued(self, api, monkeypatch):
         monkeypatch.setattr(wiki.config, "API_BATCH_SIZE", 50)
@@ -209,61 +212,3 @@ class TestRiskScreening:
             "pages": [{"title": "Full Title", "categories": [{"title": "Category:X"}]}],
         }})
         assert wiki.fetch_titles_categories(["Short"])["Short"] == ["Category:X"]
-
-    @pytest.mark.parametrize("category", [
-        "Category:Moro Islamic Liberation Front members",
-        "Category:Palestine Liberation Organisation members",
-        "Category:Afghan mujahideen",
-        "Category:Hamas members",
-        "Category:Hezbollah members",
-        "Category:Chechen separatists",
-        "Category:Warlords",
-    ])
-    def test_armed_movements_without_a_creed_word_are_flagged(self, category):
-        # These name a cause, not a doctrine: "Salafi", "jihad" and "militant"
-        # never appear in them, so they slipped through the first version.
-        assert wiki.risky_categories([category]) == [category]
-
-    @pytest.mark.parametrize("category", [
-        "Category:Mujahid ibn Jabr",          # classical mufassir, not a movement
-        "Category:People from the Bahamas",   # not Hamas
-        "Category:Rebellions in the Ottoman Empire",  # medieval history is fine
-        "Category:Basil of Caesarea",         # not ISIL
-    ])
-    def test_substring_lookalikes_are_not_flagged(self, category):
-        assert wiki.risky_categories([category]) == []
-
-    @pytest.mark.parametrize("category", [
-        "Category:Afghan mujahideen",
-        "Category:Hamas members",
-        "Category:Syrian rebels",
-    ])
-    def test_the_movement_spellings_still_flag(self, category):
-        assert wiki.risky_categories([category]) == [category]
-
-    @pytest.mark.parametrize("category", [
-        # Opposing a movement is the opposite of belonging to it. This
-        # category holds Ibn Abidin, Ahmad Zayni Dahlan and Anwar Shah
-        # Kashmiri - the traditional scholars the project most wants.
-        "Category:Critics of Wahhabism",
-        "Category:Critics of Salafism",
-        "Category:Opponents of Salafism",
-        "Category:Anti-Wahhabism",
-        # A victim of a movement is not a member of it.
-        "Category:People killed by the Taliban",
-        "Category:People assassinated by al-Shabaab (militant group)",
-        "Category:Victims of al-Qaeda",
-        "Category:Journalists murdered by Islamic State",
-    ])
-    def test_critics_and_victims_are_not_flagged(self, category):
-        assert wiki.risky_categories([category]) == []
-
-    def test_membership_is_still_flagged_when_the_member_was_assassinated(self):
-        # "Assassinated Hamas members" has no "by": the subject is the
-        # member, not the victim.
-        cats = ["Category:Assassinated Hamas members"]
-        assert wiki.risky_categories(cats) == cats
-
-    def test_exoneration_clears_only_its_own_category(self):
-        cats = ["Category:Critics of Wahhabism", "Category:Syrian Salafis"]
-        assert wiki.risky_categories(cats) == ["Category:Syrian Salafis"]

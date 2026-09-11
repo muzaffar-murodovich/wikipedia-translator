@@ -48,7 +48,7 @@ wikipedia-translator/
 ├── .claude/agents/
 │   └── article-finder.md     # Haiku subagent that fills the queue (tracked in git)
 ├── data/                     # Queue and run reports (gitignored, per-machine)
-├── tests/                    # pytest suite (445 tests)
+├── tests/                    # pytest suite (444 tests)
 ├── webui/                    # Local browser UI (Flask) — see webui/CLAUDE.md
 │   ├── app.py                # Flask routes; pins the CWD to the repo root
 │   ├── pipeline.py           # Replays main.py's phases with progress reporting
@@ -260,16 +260,15 @@ losing context costs nothing.
 The CLI is usable directly too — `python -m finder.cli status`,
 `cat-list`, `screen`, `queue-add`, `reject`, `requeue`, `next`.
 
-`screen` is a **filter, not a guarantee**: it answers from en.wiki's own
-categories, so it is only as complete as they are. It deliberately does *not*
-flag `Category:Living people` — that category holds ~1.15M articles and says
-nothing about radicalism, while burying the real signal (in
-`Darul Uloom Deoband alumni` it would flag 23 scholars against 4 real risks).
-It also exonerates categories that name a movement while placing their subject
-on the other side of it — `Critics of Wahhabism` holds Ibn Abidin and Ahmad
-Zayni Dahlan, `People killed by the Taliban` holds the Taliban's victims.
-Exoneration is per category, so someone in both `Victims of al-Qaeda` and
-`Syrian Salafis` still flags on the second.
+`screen` reports **evidence, not a verdict**: it prints each candidate's own
+en.wiki categories with the date and cleanup buckets removed, and the agent
+reads them. It used to answer RISK/CLEAR from a keyword list, which could not
+tell `Wahhabis` from `Critics of Wahhabism` (Ibn Abidin, Ahmad Zayni Dahlan),
+`Hamas members` from `People from the Bahamas`, or a Taliban member from
+someone `killed by the Taliban` — and each fix only bought the next false
+positive. **The human reviews and publishes every article**, so a wrong call by
+the agent costs one article, caught before it reaches the wiki; that is what
+pays for the judgment being in the model rather than in a regex.
 
 `reject` can pull a queued article back out and `requeue` can undo a
 rejection, because both judgments get revised.
@@ -442,12 +441,13 @@ Do **not** hardcode API keys into `config.py`. Use environment variables.
 - `fetch_category_members(category)` — one request per 500 members returns membership,
   Uzbek existence **and** byte size together (`prop=langlinks|info`; the size field is
   `length`, not `size`).
-- `risky_categories(categories)` — the decisive evidence for the radical-topic screen.
-  Matched as substrings, so the nationality-scoped variants (`Moroccan Salafis`,
-  `Albanian Salafis`) are covered without enumerating them.
+- `topical_categories(categories)` — an article's categories minus the housekeeping and
+  date buckets. This is the evidence the agent judges on, and it is deliberately **not**
+  a verdict: see the `screen` note in the Daily Workflow above for why the keyword
+  version was removed.
 - **Screening on the article title alone is not enough.** A trial run of the agent
   correctly rejected al-Albani but queued six figures categorised as Salafis, Wahhabis or
-  Islamists, one imprisoned on terrorism charges. The screen is a hard step in the
+  Islamists, one imprisoned on terrorism charges. Reading the categories is a step in the
   agent's loop, not a fallback for when the model feels unsure.
 - `is_maintenance_category()` filters the housekeeping and date buckets so the agent
   never spends context on them.
@@ -584,7 +584,7 @@ python additional-tools/category-checker.py "Uzbek writers" --refresh
 
 ## Testing & Quality
 
-**Automated tests** — 445 tests under `tests/`, run with:
+**Automated tests** — 444 tests under `tests/`, run with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -596,11 +596,11 @@ python -m pytest
 | Test file | Tests | Covers |
 |---|---|---|
 | `test_regex_patterns.py` | 69 | `utils/regex_patterns.py` |
-| `test_finder_wiki.py` | 50 | `finder/wiki.py` |
+| `test_finder_wiki.py` | 45 | `finder/wiki.py` |
 | `test_cache_manager.py` | 34 | `core/cache_manager.py` |
 | `test_link_labels.py` | 30 | `utils/link_labels.py` |
+| `test_finder_cli.py` | 32 | `finder/cli.py` |
 | `test_trimmer.py` | 29 | `utils/trimmer.py` |
-| `test_finder_cli.py` | 28 | `finder/cli.py` |
 | `test_wiki_fetcher.py` | 24 | `utils/wiki_fetcher.py` |
 | `test_batch_translate.py` | 24 | `batch_translate.py` |
 | `test_finder_store.py` | 23 | `finder/store.py` |

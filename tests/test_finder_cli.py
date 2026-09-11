@@ -279,25 +279,37 @@ class TestRejectOverridesQueued:
 
 
 class TestScreen:
-    def test_risk_and_clear_lines(self, capsys, queue, monkeypatch):
+    """
+    `screen` reports evidence, not a verdict.
+
+    Its job is to put an article's own category names in front of the agent
+    with the date and cleanup buckets removed. It deliberately does not
+    decide: a keyword list read "Critics of Wahhabism" as Wahhabism.
+    """
+
+    def test_categories_are_listed_per_title(self, capsys, queue, monkeypatch):
         monkeypatch.setattr(wiki, "fetch_titles_categories", lambda t: {
             "Risky": ["Category:Hadith scholars", "Category:Wahhabis"],
             "Fine": ["Category:Hadith scholars"],
         })
         _, out = run(capsys, "screen", "Risky", "Fine")
-        assert out == ["RISK\tRisky\tCategory:Wahhabis", "CLEAR\tFine", "END"]
+        assert out == [
+            "Risky\tHadith scholars|Wahhabis",
+            "Fine\tHadith scholars",
+            "END",
+        ]
 
-    def test_several_risky_categories_are_joined(self, capsys, queue, monkeypatch):
+    def test_date_and_cleanup_categories_are_dropped(self, capsys, queue, monkeypatch):
         monkeypatch.setattr(wiki, "fetch_titles_categories", lambda t: {
-            "X": ["Category:Wahhabis", "Category:Moroccan Salafis"],
+            "X": ["Category:1277 deaths", "Category:Shafi'is", "Category:Islam stubs"],
         })
         _, out = run(capsys, "screen", "X")
-        assert out[0] == "RISK\tX\tCategory:Wahhabis|Category:Moroccan Salafis"
+        assert out[0] == "X\tShafi'is"
 
-    def test_unknown_title_counts_as_clear(self, capsys, queue, monkeypatch):
+    def test_unknown_title_reports_no_categories(self, capsys, queue, monkeypatch):
         monkeypatch.setattr(wiki, "fetch_titles_categories", lambda t: {})
         _, out = run(capsys, "screen", "Nope")
-        assert out == ["CLEAR\tNope", "END"]
+        assert out == ["Nope\t(none)", "END"]
 
 
 class TestRequeue:
