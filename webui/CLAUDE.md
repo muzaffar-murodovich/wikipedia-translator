@@ -79,6 +79,16 @@ in `main.py`, `pipeline.py` must be changed to match — nothing enforces it.
 `temp_wiki/<title>.txt` copy — a snippet has no article identity to file it
 under. The browser download is the output in that case.
 
+`run_pipeline()` takes two keyword-only overrides, both for callers outside
+the browser. `review=` decides Phase 5, defaulting to the browser's own
+switch only when left as `None` — a batch runner passes `config.ENABLE_REVIEW`
+instead, so a checkbox ticked in the UI cannot silently disable review for an
+unattended run. `article_title=` overrides the resolved title, for input that
+cannot name its own article — trimmed wikitext, which `resolve_input()` can
+only treat as a literal snippet. Both follow the "caller's title wins" rule
+`main.py`'s `main()` already has, so they narrow the drift rather than widen
+it.
+
 Unlike `main.py`, nothing is written to a fixed `output_uz.txt`: it would
 clobber the file of a maintainer who also uses the CLI.
 

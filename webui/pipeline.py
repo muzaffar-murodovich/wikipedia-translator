@@ -114,15 +114,32 @@ def resolve_input(raw_input: str) -> Tuple[str, Optional[str]]:
     return trimmed, None
 
 
-def run_pipeline(raw_input: str, on_progress: Callable[[str], None]) -> dict:
+def run_pipeline(
+    raw_input: str,
+    on_progress: Callable[[str], None],
+    *,
+    article_title: Optional[str] = None,
+    review: Optional[bool] = None,
+) -> dict:
     """
     Run the full translation pipeline for one submission.
+
+    `article_title` names the article when the caller already knows it and
+    `raw_input` cannot say so on its own - trimmed wikitext, for instance,
+    which resolve_input() can only treat as a literal snippet. The caller's
+    title wins, exactly as it does in main.py's main().
+
+    `review` decides Phase 5. Left as None it follows the browser's own
+    switch in webui/settings.json; a caller outside the browser passes the
+    gate it actually means, so a checkbox ticked in the UI cannot silently
+    turn review off for an unattended batch run.
 
     Returns {"text", "title", "stats"} on success; raises PipelineError (or
     lets an unexpected exception propagate) on failure.
     """
     on_progress("resolve")
-    wikitext, article_title = resolve_input(raw_input)
+    wikitext, resolved_title = resolve_input(raw_input)
+    article_title = article_title or resolved_title
 
     cache = WikiCache()
     fetcher = WikidataFetcher(cache)
@@ -159,7 +176,8 @@ def run_pipeline(raw_input: str, on_progress: Callable[[str], None]) -> dict:
     on_progress("review")
     t = time.time()
     review_ran = False
-    if settings.get_review_enabled() and reviewer.is_available():
+    review_wanted = settings.get_review_enabled() if review is None else review
+    if review_wanted and reviewer.is_available():
         reviewed = reviewer.review(result)
         if reviewed:
             result = reviewed
